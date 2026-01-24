@@ -1,0 +1,467 @@
+-- User table
+CREATE TABLE UserEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    firstName TEXT NOT NULL,
+    lastName TEXT NOT NULL,
+    role TEXT NOT NULL,
+    phoneNumber TEXT,
+    profileImageUrl TEXT,
+    isActive INTEGER NOT NULL DEFAULT 1,
+    isEmailVerified INTEGER NOT NULL DEFAULT 0,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    lastLoginAt TEXT,
+    associatedBeneficiaryIds TEXT NOT NULL DEFAULT '[]',
+    notificationPreferences TEXT NOT NULL DEFAULT '{}'
+);
+
+-- Visit table
+CREATE TABLE VisitEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    beneficiaryId TEXT NOT NULL,
+    visitorId TEXT NOT NULL,
+    scheduledDate TEXT NOT NULL,
+    startTime TEXT NOT NULL,
+    endTime TEXT NOT NULL,
+    status TEXT NOT NULL,
+    visitType TEXT NOT NULL DEFAULT 'IN_PERSON',
+    purpose TEXT,
+    notes TEXT,
+    additionalVisitors TEXT NOT NULL DEFAULT '[]',
+    checkInTime TEXT,
+    checkOutTime TEXT,
+    approvedBy TEXT,
+    approvedAt TEXT,
+    denialReason TEXT,
+    cancellationReason TEXT,
+    cancelledBy TEXT,
+    cancelledAt TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+-- Beneficiary table
+CREATE TABLE BeneficiaryEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    firstName TEXT NOT NULL,
+    lastName TEXT NOT NULL,
+    dateOfBirth TEXT,
+    facilityId TEXT NOT NULL,
+    roomNumber TEXT,
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
+    specialInstructions TEXT,
+    maxVisitorsPerSlot INTEGER NOT NULL DEFAULT 2,
+    maxVisitsPerDay INTEGER NOT NULL DEFAULT 2,
+    maxVisitsPerWeek INTEGER NOT NULL DEFAULT 7,
+    photoUrl TEXT,
+    emergencyContact TEXT,
+    restrictions TEXT NOT NULL DEFAULT '[]',
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+-- TimeSlot table
+CREATE TABLE TimeSlotEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    facilityId TEXT NOT NULL,
+    date TEXT NOT NULL,
+    startTime TEXT NOT NULL,
+    endTime TEXT NOT NULL,
+    maxCapacity INTEGER NOT NULL,
+    currentBookings INTEGER NOT NULL DEFAULT 0,
+    isAvailable INTEGER NOT NULL DEFAULT 1,
+    slotType TEXT NOT NULL DEFAULT 'REGULAR',
+    notes TEXT
+);
+
+-- Restriction table
+CREATE TABLE RestrictionEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    type TEXT NOT NULL,
+    scope TEXT NOT NULL,
+    priority INTEGER NOT NULL DEFAULT 0,
+    isActive INTEGER NOT NULL DEFAULT 1,
+    effectiveFrom TEXT NOT NULL,
+    effectiveUntil TEXT,
+    timeConstraints TEXT,
+    visitorConstraints TEXT,
+    beneficiaryConstraints TEXT,
+    facilityId TEXT,
+    createdBy TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+-- Auth tokens table
+CREATE TABLE AuthTokenEntity (
+    id INTEGER NOT NULL PRIMARY KEY,
+    accessToken TEXT NOT NULL,
+    refreshToken TEXT NOT NULL,
+    expiresAt TEXT NOT NULL,
+    userId TEXT NOT NULL
+);
+
+-- User queries
+insertUser:
+INSERT OR REPLACE INTO UserEntity(id, email, firstName, lastName, role, phoneNumber, profileImageUrl, isActive, isEmailVerified, createdAt, updatedAt, lastLoginAt, associatedBeneficiaryIds, notificationPreferences)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectUserById:
+SELECT * FROM UserEntity WHERE id = ?;
+
+selectUserByEmail:
+SELECT * FROM UserEntity WHERE email = ?;
+
+selectAllUsers:
+SELECT * FROM UserEntity;
+
+selectUsersByRole:
+SELECT * FROM UserEntity WHERE role = ?;
+
+selectPendingVisitors:
+SELECT * FROM UserEntity WHERE role = 'PENDING_VISITOR';
+
+deleteUser:
+DELETE FROM UserEntity WHERE id = ?;
+
+deleteAllUsers:
+DELETE FROM UserEntity;
+
+-- Visit queries
+insertVisit:
+INSERT OR REPLACE INTO VisitEntity(id, beneficiaryId, visitorId, scheduledDate, startTime, endTime, status, visitType, purpose, notes, additionalVisitors, checkInTime, checkOutTime, approvedBy, approvedAt, denialReason, cancellationReason, cancelledBy, cancelledAt, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectVisitById:
+SELECT * FROM VisitEntity WHERE id = ?;
+
+selectVisitsByVisitorId:
+SELECT * FROM VisitEntity WHERE visitorId = ? ORDER BY scheduledDate DESC, startTime ASC;
+
+selectVisitsByBeneficiaryId:
+SELECT * FROM VisitEntity WHERE beneficiaryId = ? ORDER BY scheduledDate DESC, startTime ASC;
+
+selectVisitsByStatus:
+SELECT * FROM VisitEntity WHERE status = ? ORDER BY scheduledDate DESC, startTime ASC;
+
+selectUpcomingVisits:
+SELECT * FROM VisitEntity WHERE status IN ('PENDING', 'APPROVED') AND scheduledDate >= ? ORDER BY scheduledDate ASC, startTime ASC;
+
+selectPastVisits:
+SELECT * FROM VisitEntity WHERE status IN ('COMPLETED', 'NO_SHOW', 'CANCELLED', 'DENIED') ORDER BY scheduledDate DESC, startTime DESC;
+
+selectVisitsInDateRange:
+SELECT * FROM VisitEntity WHERE scheduledDate >= ? AND scheduledDate <= ? ORDER BY scheduledDate ASC, startTime ASC;
+
+selectPendingApprovalVisits:
+SELECT * FROM VisitEntity WHERE status = 'PENDING' ORDER BY scheduledDate ASC, startTime ASC;
+
+deleteVisit:
+DELETE FROM VisitEntity WHERE id = ?;
+
+deleteAllVisits:
+DELETE FROM VisitEntity;
+
+-- Beneficiary queries
+insertBeneficiary:
+INSERT OR REPLACE INTO BeneficiaryEntity(id, firstName, lastName, dateOfBirth, facilityId, roomNumber, status, specialInstructions, maxVisitorsPerSlot, maxVisitsPerDay, maxVisitsPerWeek, photoUrl, emergencyContact, restrictions, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectBeneficiaryById:
+SELECT * FROM BeneficiaryEntity WHERE id = ?;
+
+selectAllBeneficiaries:
+SELECT * FROM BeneficiaryEntity;
+
+selectBeneficiariesByFacility:
+SELECT * FROM BeneficiaryEntity WHERE facilityId = ?;
+
+deleteBeneficiary:
+DELETE FROM BeneficiaryEntity WHERE id = ?;
+
+deleteAllBeneficiaries:
+DELETE FROM BeneficiaryEntity;
+
+-- TimeSlot queries
+insertTimeSlot:
+INSERT OR REPLACE INTO TimeSlotEntity(id, facilityId, date, startTime, endTime, maxCapacity, currentBookings, isAvailable, slotType, notes)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectTimeSlotById:
+SELECT * FROM TimeSlotEntity WHERE id = ?;
+
+selectTimeSlotsByDate:
+SELECT * FROM TimeSlotEntity WHERE date = ? AND isAvailable = 1 ORDER BY startTime ASC;
+
+selectTimeSlotsByDateRange:
+SELECT * FROM TimeSlotEntity WHERE date >= ? AND date <= ? AND isAvailable = 1 ORDER BY date ASC, startTime ASC;
+
+selectAvailableSlots:
+SELECT * FROM TimeSlotEntity WHERE date = ? AND isAvailable = 1 AND currentBookings < maxCapacity ORDER BY startTime ASC;
+
+deleteTimeSlot:
+DELETE FROM TimeSlotEntity WHERE id = ?;
+
+deleteAllTimeSlots:
+DELETE FROM TimeSlotEntity;
+
+-- Restriction queries
+insertRestriction:
+INSERT OR REPLACE INTO RestrictionEntity(id, name, description, type, scope, priority, isActive, effectiveFrom, effectiveUntil, timeConstraints, visitorConstraints, beneficiaryConstraints, facilityId, createdBy, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectRestrictionById:
+SELECT * FROM RestrictionEntity WHERE id = ?;
+
+selectActiveRestrictions:
+SELECT * FROM RestrictionEntity WHERE isActive = 1 ORDER BY priority DESC;
+
+selectRestrictionsByType:
+SELECT * FROM RestrictionEntity WHERE type = ? AND isActive = 1;
+
+selectRestrictionsByScope:
+SELECT * FROM RestrictionEntity WHERE scope = ? AND isActive = 1;
+
+selectFacilityRestrictions:
+SELECT * FROM RestrictionEntity WHERE (facilityId = ? OR facilityId IS NULL) AND isActive = 1;
+
+deleteRestriction:
+DELETE FROM RestrictionEntity WHERE id = ?;
+
+deleteAllRestrictions:
+DELETE FROM RestrictionEntity;
+
+-- CheckIn table
+CREATE TABLE CheckInEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    visit_id TEXT NOT NULL,
+    check_in_time INTEGER NOT NULL,
+    check_out_time INTEGER,
+    method TEXT NOT NULL,
+    notes TEXT,
+    rating INTEGER
+);
+
+-- Auth token queries
+insertAuthToken:
+INSERT OR REPLACE INTO AuthTokenEntity(id, accessToken, refreshToken, expiresAt, userId)
+VALUES (1, ?, ?, ?, ?);
+
+selectAuthToken:
+SELECT * FROM AuthTokenEntity WHERE id = 1;
+
+deleteAuthToken:
+DELETE FROM AuthTokenEntity WHERE id = 1;
+
+-- CheckIn queries
+insertCheckIn:
+INSERT OR REPLACE INTO CheckInEntity(id, visit_id, check_in_time, check_out_time, method, notes, rating)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+selectCheckInById:
+SELECT * FROM CheckInEntity WHERE id = ?;
+
+selectCheckInsByVisitId:
+SELECT * FROM CheckInEntity WHERE visit_id = ? ORDER BY check_in_time DESC;
+
+selectActiveCheckInByVisitId:
+SELECT * FROM CheckInEntity WHERE visit_id = ? AND check_out_time IS NULL LIMIT 1;
+
+selectAllCheckIns:
+SELECT * FROM CheckInEntity ORDER BY check_in_time DESC;
+
+selectCheckInsByDateRange:
+SELECT * FROM CheckInEntity WHERE check_in_time >= ? AND check_in_time <= ? ORDER BY check_in_time DESC;
+
+updateCheckOut:
+UPDATE CheckInEntity SET check_out_time = ?, notes = ?, rating = ? WHERE id = ?;
+
+deleteCheckIn:
+DELETE FROM CheckInEntity WHERE id = ?;
+
+deleteAllCheckIns:
+DELETE FROM CheckInEntity;
+
+-- ==================== MESSAGING TABLES ====================
+
+-- Message table
+CREATE TABLE MessageEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    conversationId TEXT NOT NULL,
+    senderId TEXT NOT NULL,
+    senderName TEXT NOT NULL,
+    content TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    isRead INTEGER NOT NULL DEFAULT 0,
+    type TEXT NOT NULL DEFAULT 'TEXT',
+    metadata TEXT,
+    attachmentUrl TEXT,
+    replyToMessageId TEXT,
+    editedAt TEXT,
+    deletedAt TEXT
+);
+
+-- Conversation table
+CREATE TABLE ConversationEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT,
+    participants TEXT NOT NULL DEFAULT '[]',
+    lastMessageId TEXT,
+    unreadCount INTEGER NOT NULL DEFAULT 0,
+    beneficiaryId TEXT NOT NULL,
+    beneficiaryName TEXT,
+    isGroupConversation INTEGER NOT NULL DEFAULT 0,
+    isPinned INTEGER NOT NULL DEFAULT 0,
+    isMuted INTEGER NOT NULL DEFAULT 0,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    archivedAt TEXT
+);
+
+-- ConversationParticipant table (for tracking participants)
+CREATE TABLE ConversationParticipantEntity (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    conversationId TEXT NOT NULL,
+    userId TEXT NOT NULL,
+    userName TEXT NOT NULL,
+    userRole TEXT NOT NULL,
+    profileImageUrl TEXT,
+    isActive INTEGER NOT NULL DEFAULT 1,
+    joinedAt TEXT NOT NULL,
+    lastReadMessageId TEXT,
+    lastReadAt TEXT,
+    UNIQUE(conversationId, userId)
+);
+
+-- Indexes for messaging tables
+CREATE INDEX idx_message_conversation ON MessageEntity(conversationId);
+CREATE INDEX idx_message_timestamp ON MessageEntity(timestamp DESC);
+CREATE INDEX idx_message_sender ON MessageEntity(senderId);
+CREATE INDEX idx_conversation_beneficiary ON ConversationEntity(beneficiaryId);
+CREATE INDEX idx_conversation_updated ON ConversationEntity(updatedAt DESC);
+CREATE INDEX idx_conversation_archived ON ConversationEntity(archivedAt);
+CREATE INDEX idx_participant_conversation ON ConversationParticipantEntity(conversationId);
+CREATE INDEX idx_participant_user ON ConversationParticipantEntity(userId);
+
+-- Message queries
+insertMessage:
+INSERT OR REPLACE INTO MessageEntity(id, conversationId, senderId, senderName, content, timestamp, isRead, type, metadata, attachmentUrl, replyToMessageId, editedAt, deletedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectMessageById:
+SELECT * FROM MessageEntity WHERE id = ?;
+
+selectMessagesByConversationId:
+SELECT * FROM MessageEntity WHERE conversationId = ? AND deletedAt IS NULL ORDER BY timestamp ASC;
+
+selectMessagesByConversationIdPaginated:
+SELECT * FROM MessageEntity WHERE conversationId = ? AND deletedAt IS NULL AND timestamp < ? ORDER BY timestamp DESC LIMIT ?;
+
+selectUnreadMessagesByConversation:
+SELECT * FROM MessageEntity WHERE conversationId = ? AND isRead = 0 AND deletedAt IS NULL;
+
+selectRecentMessages:
+SELECT * FROM MessageEntity WHERE deletedAt IS NULL ORDER BY timestamp DESC LIMIT ?;
+
+markMessageAsRead:
+UPDATE MessageEntity SET isRead = 1 WHERE id = ?;
+
+markConversationMessagesAsRead:
+UPDATE MessageEntity SET isRead = 1 WHERE conversationId = ?;
+
+deleteMessage:
+DELETE FROM MessageEntity WHERE id = ?;
+
+deleteMessagesForConversation:
+DELETE FROM MessageEntity WHERE conversationId = ?;
+
+deleteAllMessages:
+DELETE FROM MessageEntity;
+
+searchMessagesInConversation:
+SELECT * FROM MessageEntity WHERE conversationId = ? AND content LIKE ? AND deletedAt IS NULL ORDER BY timestamp DESC;
+
+-- Conversation queries
+insertConversation:
+INSERT OR REPLACE INTO ConversationEntity(id, title, participants, lastMessageId, unreadCount, beneficiaryId, beneficiaryName, isGroupConversation, isPinned, isMuted, createdAt, updatedAt, archivedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectConversationById:
+SELECT * FROM ConversationEntity WHERE id = ?;
+
+selectConversationByBeneficiaryId:
+SELECT * FROM ConversationEntity WHERE beneficiaryId = ? AND archivedAt IS NULL LIMIT 1;
+
+selectAllConversations:
+SELECT * FROM ConversationEntity WHERE archivedAt IS NULL ORDER BY updatedAt DESC;
+
+selectArchivedConversations:
+SELECT * FROM ConversationEntity WHERE archivedAt IS NOT NULL ORDER BY archivedAt DESC;
+
+selectPinnedConversations:
+SELECT * FROM ConversationEntity WHERE isPinned = 1 AND archivedAt IS NULL ORDER BY updatedAt DESC;
+
+selectConversationsWithUnread:
+SELECT * FROM ConversationEntity WHERE unreadCount > 0 AND archivedAt IS NULL ORDER BY updatedAt DESC;
+
+updateConversationLastMessage:
+UPDATE ConversationEntity SET lastMessageId = ?, updatedAt = ? WHERE id = ?;
+
+updateConversationUnreadCount:
+UPDATE ConversationEntity SET unreadCount = ? WHERE id = ?;
+
+incrementConversationUnreadCount:
+UPDATE ConversationEntity SET unreadCount = unreadCount + 1 WHERE id = ?;
+
+archiveConversation:
+UPDATE ConversationEntity SET archivedAt = ? WHERE id = ?;
+
+unarchiveConversation:
+UPDATE ConversationEntity SET archivedAt = NULL WHERE id = ?;
+
+pinConversation:
+UPDATE ConversationEntity SET isPinned = 1 WHERE id = ?;
+
+unpinConversation:
+UPDATE ConversationEntity SET isPinned = 0 WHERE id = ?;
+
+muteConversation:
+UPDATE ConversationEntity SET isMuted = 1 WHERE id = ?;
+
+unmuteConversation:
+UPDATE ConversationEntity SET isMuted = 0 WHERE id = ?;
+
+deleteConversation:
+DELETE FROM ConversationEntity WHERE id = ?;
+
+deleteAllConversations:
+DELETE FROM ConversationEntity;
+
+getTotalUnreadCount:
+SELECT SUM(unreadCount) AS total FROM ConversationEntity WHERE archivedAt IS NULL;
+
+-- ConversationParticipant queries
+insertConversationParticipant:
+INSERT OR REPLACE INTO ConversationParticipantEntity(conversationId, userId, userName, userRole, profileImageUrl, isActive, joinedAt, lastReadMessageId, lastReadAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectParticipantsByConversation:
+SELECT * FROM ConversationParticipantEntity WHERE conversationId = ?;
+
+selectConversationsByParticipant:
+SELECT c.* FROM ConversationEntity c
+INNER JOIN ConversationParticipantEntity p ON c.id = p.conversationId
+WHERE p.userId = ? AND c.archivedAt IS NULL
+ORDER BY c.updatedAt DESC;
+
+updateParticipantLastRead:
+UPDATE ConversationParticipantEntity SET lastReadMessageId = ?, lastReadAt = ? WHERE conversationId = ? AND userId = ?;
+
+removeParticipant:
+DELETE FROM ConversationParticipantEntity WHERE conversationId = ? AND userId = ?;
+
+deleteParticipantsForConversation:
+DELETE FROM ConversationParticipantEntity WHERE conversationId = ?;
