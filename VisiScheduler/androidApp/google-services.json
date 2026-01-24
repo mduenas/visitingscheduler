@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "478289496023",
+    "project_id": "visitingscheduler",
+    "storage_bucket": "visitingscheduler.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:478289496023:android:717477579030218ff4ed92",
+        "android_client_info": {
+          "package_name": "com.markduenas.visischeduler"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGTMvC6SfP0fOylsJniXLh5Hhu3qoTR1Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

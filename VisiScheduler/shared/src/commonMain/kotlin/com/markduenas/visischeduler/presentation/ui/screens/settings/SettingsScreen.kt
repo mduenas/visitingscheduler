@@ -23,7 +23,9 @@ fun SettingsScreen(
     onNavigateToAppearance: () -> Unit,
     onNavigateToBeneficiarySettings: () -> Unit,
     onNavigateToAbout: () -> Unit,
+    onRemoveAdsClick: () -> Unit,
     onLogout: () -> Unit,
+    showAds: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -92,6 +94,19 @@ fun SettingsScreen(
                     subtitle = "Dark mode, text size, language",
                     onClick = onNavigateToAppearance
                 )
+            }
+
+            // Remove Ads (only show if ads are displayed)
+            if (showAds) {
+                item {
+                    SettingsNavItem(
+                        icon = Icons.Default.RemoveCircleOutline,
+                        title = "Remove Ads",
+                        subtitle = "One-time purchase to remove banner ads",
+                        onClick = onRemoveAdsClick,
+                        tintColor = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
             // Beneficiary Settings (Coordinators only)

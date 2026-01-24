@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.googleServices)
+    alias(libs.plugins.firebaseCrashlytics)
 }
 
 kotlin {
@@ -134,6 +136,21 @@ android {
 dependencies {
     // Compose BOM for consistent versions
     implementation(platform(libs.compose.bom))
+
+    // Firebase BOM for consistent versions
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.storage)
+
+    // AdMob
+    implementation(libs.admob.android)
+
+    // In-App Purchases (Billing)
+    implementation(libs.billing.ktx)
 
     // Debug dependencies
     debugImplementation(libs.compose.ui.tooling)
