@@ -49,6 +49,8 @@ import com.markduenas.visischeduler.presentation.ui.components.dashboard.QuickAc
 import com.markduenas.visischeduler.presentation.ui.components.dashboard.QuickActionsOverlay
 import com.markduenas.visischeduler.presentation.ui.components.dashboard.StatCardsRow
 import com.markduenas.visischeduler.presentation.ui.components.dashboard.StatItem
+import com.markduenas.visischeduler.presentation.ui.components.dashboard.CoordinatorDashboardContent
+import com.markduenas.visischeduler.presentation.ui.components.dashboard.VisitorDashboardContent
 import com.markduenas.visischeduler.presentation.ui.components.navigation.BottomNavBar
 import com.markduenas.visischeduler.presentation.ui.components.navigation.BottomNavDestination
 import com.markduenas.visischeduler.presentation.ui.components.navigation.NavBadgeCounts
