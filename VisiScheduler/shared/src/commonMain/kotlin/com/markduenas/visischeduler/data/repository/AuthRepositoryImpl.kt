@@ -220,6 +220,36 @@ class AuthRepositoryImpl(
         }
     }
 
+    override suspend fun verifyMfa(challengeId: String, code: String): Result<User> {
+        return try {
+            val response = api.verifyMfa(challengeId, code)
+
+            // Store tokens securely
+            secureStorage.putString(KEY_ACCESS_TOKEN, response.accessToken)
+            secureStorage.putString(KEY_REFRESH_TOKEN, response.refreshToken)
+            secureStorage.putLong(KEY_TOKEN_EXPIRY, System.currentTimeMillis() + (response.expiresIn * 1000))
+
+            api.setAuthToken(response.accessToken)
+
+            val user = response.user.toDomain()
+            cacheUser(user)
+
+            _currentUser.value = user
+            Result.success(user)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun resendMfaCode(challengeId: String): Result<Unit> {
+        return try {
+            api.resendMfaCode(challengeId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun cacheUser(user: User) {
         database.visiSchedulerQueries.insertUser(
             id = user.id,

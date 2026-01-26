@@ -1,5 +1,20 @@
 package com.markduenas.visischeduler.di
 
+import com.markduenas.visischeduler.presentation.viewmodel.auth.ForgotPasswordViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.auth.LoginViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.auth.MfaViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.auth.RegisterViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.checkin.CheckInViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.checkin.CheckOutViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.dashboard.DashboardViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.messaging.ConversationsViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.scheduling.CalendarViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.scheduling.PendingRequestsViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.scheduling.ScheduleVisitViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.scheduling.VisitDetailsViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.settings.ProfileViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.settings.SettingsViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.visitors.VisitorListViewModel
 import org.koin.dsl.module
 
 /**
@@ -13,78 +28,43 @@ val viewModelModule = module {
     // ==========================================
     // Authentication ViewModels
     // ==========================================
-    // viewModel { LoginViewModel(get(), get()) }
-    // viewModel { RegisterViewModel(get()) }
-    // viewModel { ForgotPasswordViewModel(get()) }
-    // viewModel { MfaVerificationViewModel(get()) }
+    factory { LoginViewModel(get(), get()) }
+    factory { RegisterViewModel(get()) }
+    factory { ForgotPasswordViewModel(get()) }
+    factory { MfaViewModel(get()) }
 
     // ==========================================
     // Main/Dashboard ViewModels
     // ==========================================
-    // viewModel { DashboardViewModel(get(), get(), get()) }
-    // viewModel { HomeViewModel(get(), get()) }
+    factory { DashboardViewModel(get(), get(), get()) }
 
     // ==========================================
     // Schedule ViewModels
     // ==========================================
-    // viewModel { ScheduleViewModel(get(), get(), get()) }
-    // viewModel { CreateVisitViewModel(get(), get(), get()) }
-    // viewModel { VisitDetailsViewModel(get(), get()) }
-    // viewModel { CalendarViewModel(get(), get()) }
-
-    // ==========================================
-    // Approval ViewModels
-    // ==========================================
-    // viewModel { ApprovalListViewModel(get()) }
-    // viewModel { ApprovalDetailsViewModel(get(), get()) }
+    factory { CalendarViewModel(get()) }
+    factory { ScheduleVisitViewModel(get(), get()) }
+    factory { VisitDetailsViewModel(get(), get(), get()) }
+    factory { PendingRequestsViewModel(get(), get()) }
 
     // ==========================================
     // Visitor Management ViewModels
     // ==========================================
-    // viewModel { VisitorListViewModel(get()) }
-    // viewModel { VisitorDetailsViewModel(get(), get()) }
-    // viewModel { VisitorRequestViewModel(get()) }
-
-    // ==========================================
-    // Restriction/Rules ViewModels
-    // ==========================================
-    // viewModel { RestrictionListViewModel(get()) }
-    // viewModel { CreateRestrictionViewModel(get()) }
-    // viewModel { EditRestrictionViewModel(get(), get()) }
-
-    // ==========================================
-    // Notification ViewModels
-    // ==========================================
-    // viewModel { NotificationListViewModel(get(), get()) }
-    // viewModel { NotificationSettingsViewModel(get()) }
+    factory { VisitorListViewModel(get()) }
 
     // ==========================================
     // Profile/Settings ViewModels
     // ==========================================
-    // viewModel { ProfileViewModel(get(), get()) }
-    // viewModel { SettingsViewModel(get()) }
-    // viewModel { SecuritySettingsViewModel(get(), get()) }
-
-    // ==========================================
-    // Analytics ViewModels
-    // ==========================================
-    // viewModel { AnalyticsDashboardViewModel(get()) }
-    // viewModel { ReportsViewModel(get()) }
-
-    // ==========================================
-    // Video Call ViewModels
-    // ==========================================
-    // viewModel { VideoCallViewModel(get(), get()) }
-
-    // ==========================================
-    // Care Circle ViewModels
-    // ==========================================
-    // viewModel { CareCircleViewModel(get(), get(), get()) }
-    // viewModel { MemberManagementViewModel(get()) }
+    factory { ProfileViewModel(get(), get()) }
+    factory { SettingsViewModel(get(), get()) }
 
     // ==========================================
     // Check-in ViewModels
     // ==========================================
-    // viewModel { CheckInViewModel(get(), get()) }
-    // viewModel { QrScannerViewModel(get()) }
+    factory { CheckInViewModel(get(), get(), get(), get()) }
+    factory { CheckOutViewModel(get(), get(), get()) }
+
+    // ==========================================
+    // Messaging ViewModels
+    // ==========================================
+    factory { ConversationsViewModel(get(), get()) }
 }

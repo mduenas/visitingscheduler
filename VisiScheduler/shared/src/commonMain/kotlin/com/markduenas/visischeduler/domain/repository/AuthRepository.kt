@@ -101,4 +101,19 @@ interface AuthRepository {
      * Disable biometric authentication.
      */
     suspend fun disableBiometric(): Result<Unit>
+
+    /**
+     * Verify MFA code.
+     * @param challengeId The MFA challenge ID
+     * @param code The verification code entered by the user
+     * @return Result containing the authenticated User or an error
+     */
+    suspend fun verifyMfa(challengeId: String, code: String): Result<User>
+
+    /**
+     * Resend MFA code.
+     * @param challengeId The MFA challenge ID
+     * @return Result indicating success or failure
+     */
+    suspend fun resendMfaCode(challengeId: String): Result<Unit>
 }

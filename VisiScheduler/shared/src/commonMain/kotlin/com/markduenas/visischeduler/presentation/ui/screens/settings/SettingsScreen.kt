@@ -141,7 +141,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Help,
                     title = "Help & Support",
                     subtitle = "FAQs and contact support",
-                    onClick = { /* TODO */ }
+                    onClick = onNavigateToAbout // Navigate to About for now
                 )
             }
 

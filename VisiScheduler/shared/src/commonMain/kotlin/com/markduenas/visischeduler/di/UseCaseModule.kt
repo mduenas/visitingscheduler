@@ -1,5 +1,14 @@
 package com.markduenas.visischeduler.di
 
+import com.markduenas.visischeduler.domain.usecase.ApproveVisitUseCase
+import com.markduenas.visischeduler.domain.usecase.CheckInUseCase
+import com.markduenas.visischeduler.domain.usecase.CheckOutUseCase
+import com.markduenas.visischeduler.domain.usecase.GenerateQrCodeUseCase
+import com.markduenas.visischeduler.domain.usecase.GetAvailableSlotsUseCase
+import com.markduenas.visischeduler.domain.usecase.GetConversationsUseCase
+import com.markduenas.visischeduler.domain.usecase.LoginUseCase
+import com.markduenas.visischeduler.domain.usecase.ScheduleVisitUseCase
+import com.markduenas.visischeduler.domain.usecase.SendMessageUseCase
 import org.koin.dsl.module
 
 /**
@@ -13,84 +22,25 @@ val useCaseModule = module {
     // ==========================================
     // Authentication Use Cases
     // ==========================================
-    // factory { LoginUseCase(get()) }
-    // factory { LogoutUseCase(get()) }
-    // factory { RegisterUseCase(get()) }
-    // factory { RefreshTokenUseCase(get()) }
-    // factory { VerifyMfaUseCase(get()) }
-    // factory { BiometricAuthUseCase(get()) }
-    // factory { RequestPasswordResetUseCase(get()) }
+    factory { LoginUseCase(get()) }
 
     // ==========================================
     // Visit/Scheduling Use Cases
     // ==========================================
-    // factory { ScheduleVisitUseCase(get(), get(), get()) }
-    // factory { GetAvailableSlotsUseCase(get(), get()) }
-    // factory { UpdateVisitUseCase(get(), get()) }
-    // factory { CancelVisitUseCase(get()) }
-    // factory { GetUpcomingVisitsUseCase(get()) }
-    // factory { GetVisitHistoryUseCase(get()) }
-    // factory { CheckInUseCase(get()) }
-    // factory { CheckOutUseCase(get()) }
-    // factory { GenerateQrCodeUseCase(get()) }
+    factory { ScheduleVisitUseCase(get(), get()) }
+    factory { GetAvailableSlotsUseCase(get(), get()) }
+    factory { ApproveVisitUseCase(get(), get()) }
 
     // ==========================================
-    // Approval Use Cases
+    // Check-in/Check-out Use Cases
     // ==========================================
-    // factory { ApproveVisitUseCase(get(), get()) }
-    // factory { DenyVisitUseCase(get()) }
-    // factory { GetPendingApprovalsUseCase(get()) }
+    factory { CheckInUseCase(get(), get()) }
+    factory { CheckOutUseCase(get()) }
+    factory { GenerateQrCodeUseCase(get(), get()) }
 
     // ==========================================
-    // Visitor Management Use Cases
+    // Messaging Use Cases
     // ==========================================
-    // factory { RequestVisitorAccessUseCase(get()) }
-    // factory { ApproveVisitorUseCase(get()) }
-    // factory { RevokeVisitorAccessUseCase(get()) }
-    // factory { GetVisitorListUseCase(get()) }
-
-    // ==========================================
-    // Restriction/Rules Use Cases
-    // ==========================================
-    // factory { CreateRestrictionUseCase(get()) }
-    // factory { UpdateRestrictionUseCase(get()) }
-    // factory { DeleteRestrictionUseCase(get()) }
-    // factory { EvaluateRestrictionsUseCase(get()) }
-    // factory { GetActiveRestrictionsUseCase(get()) }
-
-    // ==========================================
-    // Notification Use Cases
-    // ==========================================
-    // factory { GetNotificationsUseCase(get()) }
-    // factory { MarkNotificationReadUseCase(get()) }
-    // factory { UpdateNotificationPreferencesUseCase(get()) }
-
-    // ==========================================
-    // Calendar Sync Use Cases
-    // ==========================================
-    // factory { SyncCalendarUseCase(get()) }
-    // factory { ConnectCalendarProviderUseCase(get()) }
-    // factory { DisconnectCalendarProviderUseCase(get()) }
-
-    // ==========================================
-    // Analytics Use Cases
-    // ==========================================
-    // factory { GetDashboardDataUseCase(get()) }
-    // factory { GetVisitMetricsUseCase(get()) }
-    // factory { ExportAnalyticsReportUseCase(get()) }
-
-    // ==========================================
-    // Video Call Use Cases
-    // ==========================================
-    // factory { InitiateVideoCallUseCase(get()) }
-    // factory { JoinVideoCallUseCase(get()) }
-    // factory { EndVideoCallUseCase(get()) }
-
-    // ==========================================
-    // Care Circle Use Cases
-    // ==========================================
-    // factory { GetCareCircleUseCase(get()) }
-    // factory { AddCareCircleMemberUseCase(get()) }
-    // factory { RemoveCareCircleMemberUseCase(get()) }
-    // factory { UpdateMemberRoleUseCase(get()) }
+    factory { GetConversationsUseCase(get()) }
+    factory { SendMessageUseCase(get()) }
 }

@@ -93,25 +93,24 @@ class MfaViewModel(
         )
 
         viewModelScope.launch {
-            // In a real implementation, this would call the auth repository
-            // val result = authRepository.verifyMfa(currentState.challengeId, currentState.code)
+            val result = authRepository.verifyMfa(
+                challengeId = currentState.challengeId,
+                code = currentState.code
+            )
 
-            // Simulate MFA verification
-            kotlinx.coroutines.delay(1000)
-
-            // Simulate success for demonstration
-            // In real implementation, handle the result appropriately
-            val isValidCode = currentState.code == "123456" // Demo code
-
-            if (isValidCode) {
-                _mfaState.value = _mfaState.value.copy(
-                    isLoading = false,
-                    verificationSuccess = true
-                )
-                showSnackbar("Verification successful!")
-            } else {
-                handleVerificationFailure()
-            }
+            result.fold(
+                onSuccess = { user ->
+                    _mfaState.value = _mfaState.value.copy(
+                        isLoading = false,
+                        verificationSuccess = true,
+                        user = user
+                    )
+                    showSnackbar("Verification successful!")
+                },
+                onFailure = { exception ->
+                    handleVerificationFailure()
+                }
+            )
         }
     }
 

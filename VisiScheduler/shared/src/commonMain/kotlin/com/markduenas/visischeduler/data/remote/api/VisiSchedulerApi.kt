@@ -93,6 +93,21 @@ class VisiSchedulerApi(
         }
     }
 
+    suspend fun verifyMfa(challengeId: String, code: String): AuthResponseDto {
+        return client.post("$baseUrl/auth/mfa/verify") {
+            setBody(mapOf(
+                "challengeId" to challengeId,
+                "code" to code
+            ))
+        }.body()
+    }
+
+    suspend fun resendMfaCode(challengeId: String) {
+        client.post("$baseUrl/auth/mfa/resend") {
+            setBody(mapOf("challengeId" to challengeId))
+        }
+    }
+
     // ==================== USERS ====================
 
     suspend fun getCurrentUser(): UserDto {
