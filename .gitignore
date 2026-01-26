@@ -27,3 +27,15 @@ iosApp/Pods/
 .claude-flow/
 .mcp.json
 .swarm/
+
+AdMob_IDs.txt
+
+admob_integration.md
+
+CLAUDE.md
+
+dev_visitor.sh
+
+docker-compose.yml
+
+toggle-claude-flow.sh

@@ -1,6 +1,7 @@
 package com.markduenas.visischeduler.android
 
 import android.app.Application
+import com.markduenas.visischeduler.BuildConfig
 import com.markduenas.visischeduler.di.commonModule
 import com.markduenas.visischeduler.di.dataModule
 import com.markduenas.visischeduler.di.domainModule
