@@ -4,6 +4,14 @@ import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import com.markduenas.visischeduler.presentation.ui.screens.auth.LoginScreen
+import com.markduenas.visischeduler.presentation.ui.screens.auth.SplashScreen
+import com.markduenas.visischeduler.presentation.ui.screens.dashboard.DashboardScreen
+import com.markduenas.visischeduler.presentation.viewmodel.auth.LoginViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.dashboard.DashboardViewModel
+import org.koin.compose.koinInject
 
 /**
  * Sealed class hierarchy defining all screens in VisiScheduler.
@@ -22,7 +30,7 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            SplashScreen()
         }
     }
 
@@ -34,7 +42,21 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+            val viewModel: LoginViewModel = koinInject()
+
+            LoginScreen(
+                viewModel = viewModel,
+                onLoginSuccess = {
+                    navigator.replaceAll(Dashboard)
+                },
+                onNavigateToRegister = {
+                    navigator.push(Register)
+                },
+                onNavigateToForgotPassword = {
+                    navigator.push(ForgotPassword)
+                }
+            )
         }
     }
 
@@ -86,7 +108,23 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+            val viewModel: DashboardViewModel = koinInject()
+
+            DashboardScreen(
+                viewModel = viewModel,
+                onNavigate = { route ->
+                    // Handle navigation based on route
+                    when (route) {
+                        "calendar" -> navigator.push(Calendar)
+                        "pending_requests" -> navigator.push(PendingRequests)
+                        "messages" -> navigator.push(Messages)
+                        "profile" -> navigator.push(Profile)
+                        "notifications" -> navigator.push(Notifications)
+                        "settings" -> navigator.push(Settings)
+                    }
+                }
+            )
         }
     }
 
