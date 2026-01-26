@@ -21,3 +21,9 @@ node_modules/
 
 # CocoaPods
 iosApp/Pods/
+
+# Claude
+.claude/
+.claude-flow/
+.mcp.json
+.swarm/
