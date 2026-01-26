@@ -8,9 +8,40 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.markduenas.visischeduler.presentation.ui.screens.auth.LoginScreen
 import com.markduenas.visischeduler.presentation.ui.screens.auth.SplashScreen
+import com.markduenas.visischeduler.presentation.ui.screens.calendar.CalendarScreen
 import com.markduenas.visischeduler.presentation.ui.screens.dashboard.DashboardScreen
+import com.markduenas.visischeduler.presentation.ui.screens.messaging.ConversationsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.notifications.NotificationsListScreen
+import com.markduenas.visischeduler.presentation.ui.screens.profile.ProfileScreen
+import com.markduenas.visischeduler.presentation.ui.screens.restrictions.AddRestrictionScreen
+import com.markduenas.visischeduler.presentation.ui.screens.restrictions.RestrictionsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.scheduling.PendingRequestsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.scheduling.ScheduleVisitScreen
+import com.markduenas.visischeduler.presentation.ui.screens.scheduling.VisitDetailsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.settings.AboutScreen
+import com.markduenas.visischeduler.presentation.ui.screens.settings.NotificationSettingsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.settings.SecuritySettingsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.settings.SettingsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.visitors.AddVisitorScreen
+import com.markduenas.visischeduler.presentation.ui.screens.visitors.VisitorDetailsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.visitors.VisitorListScreen
 import com.markduenas.visischeduler.presentation.viewmodel.auth.LoginViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.dashboard.DashboardViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.messaging.ConversationsViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.scheduling.CalendarViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.settings.ProfileViewModel
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 
 /**
@@ -68,7 +99,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            // TODO: Implement RegisterScreen
+            val navigator = LocalNavigator.currentOrThrow
+            PlaceholderScreen(
+                title = "Register",
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -80,7 +116,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            // TODO: Implement ForgotPasswordScreen
+            val navigator = LocalNavigator.currentOrThrow
+            PlaceholderScreen(
+                title = "Forgot Password",
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -94,7 +135,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            // TODO: Implement MfaScreen
+            val navigator = LocalNavigator.currentOrThrow
+            PlaceholderScreen(
+                title = "MFA Verification",
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -114,7 +160,6 @@ sealed class AppScreen : Screen {
             DashboardScreen(
                 viewModel = viewModel,
                 onNavigate = { route ->
-                    // Handle navigation based on route
                     when (route) {
                         "calendar" -> navigator.push(Calendar)
                         "pending_requests" -> navigator.push(PendingRequests)
@@ -136,7 +181,19 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+            val viewModel: CalendarViewModel = koinInject()
+
+            CalendarScreen(
+                viewModel = viewModel,
+                onNavigateToSchedule = { date ->
+                    // Navigate to schedule with a default beneficiary
+                    navigator.push(ScheduleVisit("default"))
+                },
+                onNavigateToVisitDetails = { visitId ->
+                    navigator.push(VisitDetails(visitId))
+                }
+            )
         }
     }
 
@@ -148,7 +205,14 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            PendingRequestsScreen(
+                onNavigateBack = { navigator.pop() },
+                onViewDetails = { visitId ->
+                    navigator.push(VisitDetails(visitId))
+                }
+            )
         }
     }
 
@@ -160,7 +224,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+            val viewModel: ConversationsViewModel = koinInject()
+
+            ConversationsScreen(
+                viewModel = viewModel
+            )
         }
     }
 
@@ -172,7 +241,21 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+            val viewModel: ProfileViewModel = koinInject()
+
+            ProfileScreen(
+                viewModel = viewModel,
+                onNavigateToEditProfile = {
+                    // TODO: Navigate to edit profile
+                },
+                onNavigateToSettings = {
+                    navigator.push(Settings)
+                },
+                onNavigateToNotifications = {
+                    navigator.push(Notifications)
+                }
+            )
         }
     }
 
@@ -188,7 +271,16 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            ScheduleVisitScreen(
+                beneficiaryId = beneficiaryId,
+                onNavigateBack = { navigator.pop() },
+                onVisitScheduled = { visitId ->
+                    navigator.pop()
+                    navigator.push(VisitDetails(visitId))
+                }
+            )
         }
     }
 
@@ -202,7 +294,18 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            VisitDetailsScreen(
+                visitId = visitId,
+                onNavigateBack = { navigator.pop() },
+                onEditVisit = { id ->
+                    navigator.push(EditVisit(id))
+                },
+                onCheckIn = { id ->
+                    // TODO: Navigate to check-in
+                }
+            )
         }
     }
 
@@ -216,7 +319,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            // TODO: Implement EditVisitScreen
+            val navigator = LocalNavigator.currentOrThrow
+            PlaceholderScreen(
+                title = "Edit Visit",
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -230,7 +338,15 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            VisitorListScreen(
+                onNavigateBack = { navigator.pop() },
+                onAddVisitor = { navigator.push(AddVisitor) },
+                onViewVisitor = { visitorId ->
+                    navigator.push(VisitorDetails(visitorId))
+                }
+            )
         }
     }
 
@@ -244,7 +360,15 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            VisitorDetailsScreen(
+                visitorId = visitorId,
+                onNavigateBack = { navigator.pop() },
+                onEditVisitor = { id ->
+                    navigator.push(EditVisitor(id))
+                }
+            )
         }
     }
 
@@ -256,7 +380,15 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            AddVisitorScreen(
+                onNavigateBack = { navigator.pop() },
+                onVisitorAdded = { visitorId ->
+                    navigator.pop()
+                    navigator.push(VisitorDetails(visitorId))
+                }
+            )
         }
     }
 
@@ -270,7 +402,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            // TODO: Implement EditVisitorScreen
+            val navigator = LocalNavigator.currentOrThrow
+            PlaceholderScreen(
+                title = "Edit Visitor",
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -284,7 +421,15 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            RestrictionsScreen(
+                onNavigateBack = { navigator.pop() },
+                onAddRestriction = { navigator.push(AddRestriction) },
+                onEditRestriction = { restrictionId ->
+                    navigator.push(EditRestriction(restrictionId))
+                }
+            )
         }
     }
 
@@ -296,7 +441,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            AddRestrictionScreen(
+                onNavigateBack = { navigator.pop() },
+                onRestrictionAdded = { navigator.pop() }
+            )
         }
     }
 
@@ -310,7 +460,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            // TODO: Implement EditRestrictionScreen
+            val navigator = LocalNavigator.currentOrThrow
+            PlaceholderScreen(
+                title = "Edit Restriction",
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -324,7 +479,19 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            SettingsScreen(
+                onNavigateBack = { navigator.pop() },
+                onNavigateToProfile = { navigator.push(Profile) },
+                onNavigateToNotifications = { navigator.push(NotificationSettings) },
+                onNavigateToSecurity = { navigator.push(SecuritySettings) },
+                onNavigateToAppearance = { /* TODO: Navigate to appearance */ },
+                onNavigateToBeneficiarySettings = { /* TODO: Navigate to beneficiary settings */ },
+                onNavigateToAbout = { navigator.push(About) },
+                onRemoveAdsClick = { /* TODO: Handle remove ads */ },
+                onLogout = { navigator.replaceAll(Login) }
+            )
         }
     }
 
@@ -336,7 +503,11 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            NotificationSettingsScreen(
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -348,7 +519,14 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            SecuritySettingsScreen(
+                onNavigateBack = { navigator.pop() },
+                onChangePassword = {
+                    // TODO: Navigate to change password screen
+                }
+            )
         }
     }
 
@@ -360,7 +538,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            // TODO: Implement PrivacySettingsScreen
+            val navigator = LocalNavigator.currentOrThrow
+            PlaceholderScreen(
+                title = "Privacy Settings",
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -372,7 +555,11 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            AboutScreen(
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -388,7 +575,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            // TODO: Implement ChatScreen with proper ViewModel
+            val navigator = LocalNavigator.currentOrThrow
+            PlaceholderScreen(
+                title = "Messages",
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -402,7 +594,12 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            // TODO: Implement NewMessageScreen with proper ViewModel
+            val navigator = LocalNavigator.currentOrThrow
+            PlaceholderScreen(
+                title = "New Message",
+                onNavigateBack = { navigator.pop() }
+            )
         }
     }
 
@@ -416,7 +613,15 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            val navigator = LocalNavigator.currentOrThrow
+
+            NotificationsListScreen(
+                onNavigateBack = { navigator.pop() },
+                onNotificationClick = { notification ->
+                    // Handle notification click based on type
+                    // TODO: Navigate to relevant screen based on notification type
+                }
+            )
         }
     }
 
@@ -432,7 +637,45 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // Content handled by navigator
+            // TODO: Implement AcceptInvitationScreen
+            val navigator = LocalNavigator.currentOrThrow
+            PlaceholderScreen(
+                title = "Accept Invitation",
+                onNavigateBack = { navigator.pop() }
+            )
+        }
+    }
+}
+
+/**
+ * Placeholder screen for screens that haven't been implemented yet.
+ */
+@Composable
+private fun PlaceholderScreen(
+    title: String,
+    onNavigateBack: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Coming Soon",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            TextButton(onClick = onNavigateBack) {
+                Text("Go Back")
+            }
         }
     }
 }
