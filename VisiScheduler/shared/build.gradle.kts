@@ -100,6 +100,15 @@ kotlin {
             // Firebase
             implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
             implementation("com.google.firebase:firebase-firestore-ktx")
+            implementation("com.google.firebase:firebase-auth-ktx")
+            implementation("com.google.firebase:firebase-analytics-ktx")
+            implementation("com.google.firebase:firebase-crashlytics-ktx")
+
+            // Security - EncryptedSharedPreferences
+            implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+            // Google Ads (AdMob)
+            implementation("com.google.android.gms:play-services-ads:22.6.0")
         }
 
         val androidUnitTest by getting {

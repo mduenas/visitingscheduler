@@ -293,6 +293,7 @@ private fun getStatusColor(status: VisitStatus): Color {
         VisitStatus.COMPLETED -> Color(0xFF4CAF50) // Green
         VisitStatus.CANCELLED -> MaterialTheme.colorScheme.outline
         VisitStatus.NO_SHOW -> MaterialTheme.colorScheme.error
+        VisitStatus.CHECKED_IN -> Color(0xFF2196F3) // Blue
     }
 }
 
@@ -311,6 +312,7 @@ private val VisitStatus.displayName: String
         VisitStatus.COMPLETED -> "Completed"
         VisitStatus.CANCELLED -> "Cancelled"
         VisitStatus.NO_SHOW -> "No Show"
+        VisitStatus.CHECKED_IN -> "Checked In"
     }
 
 private val VisitType.displayName: String

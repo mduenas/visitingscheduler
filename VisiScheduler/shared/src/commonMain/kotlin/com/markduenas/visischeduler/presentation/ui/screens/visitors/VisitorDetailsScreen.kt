@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.markduenas.visischeduler.presentation.ui.components.visitors.AvatarSize
 import com.markduenas.visischeduler.presentation.ui.components.visitors.VisitorAvatar
 import com.markduenas.visischeduler.presentation.ui.components.visitors.RelationshipChip
 
@@ -114,8 +115,8 @@ fun VisitorDetailsScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         VisitorAvatar(
-                            initials = visitorInitials,
-                            size = 80
+                            fullName = visitorName,
+                            size = AvatarSize.LARGE
                         )
                         Text(
                             text = visitorName,

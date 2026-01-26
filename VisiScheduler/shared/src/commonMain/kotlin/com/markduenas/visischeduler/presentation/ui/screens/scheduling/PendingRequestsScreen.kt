@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.markduenas.visischeduler.presentation.ui.components.visitors.AvatarSize
 import com.markduenas.visischeduler.presentation.ui.components.visitors.VisitorAvatar
 
 data class PendingRequest(
@@ -216,8 +217,8 @@ private fun PendingRequestCard(
                         )
                     }
                     VisitorAvatar(
-                        initials = request.visitorInitials,
-                        size = 48
+                        fullName = request.visitorName,
+                        size = AvatarSize.MEDIUM
                     )
                     Column {
                         Text(

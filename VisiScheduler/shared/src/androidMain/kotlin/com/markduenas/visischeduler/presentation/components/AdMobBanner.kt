@@ -46,7 +46,7 @@ fun AdMobBanner(
         factory = { ctx ->
             AdView(ctx).apply {
                 setAdSize(AdSize.BANNER)
-                adUnitId = adUnitId
+                this.adUnitId = adUnitId
                 loadAd(AdRequest.Builder().build())
             }
         },

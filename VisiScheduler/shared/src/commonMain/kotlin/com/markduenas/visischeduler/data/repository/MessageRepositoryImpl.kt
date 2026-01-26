@@ -590,6 +590,44 @@ class MessageRepositoryImpl(
         )
     }
 
+    private fun mapEntityToConversation(entity: com.markduenas.visischeduler.data.local.SelectArchivedConversations): Conversation {
+        val participants: List<ConversationParticipant> = try {
+            val participantMaps: List<Map<String, String?>> = json.decodeFromString(entity.participants)
+            participantMaps.map { map ->
+                ConversationParticipant(
+                    userId = map["userId"] ?: "",
+                    userName = map["userName"] ?: "",
+                    userRole = Role.valueOf(map["userRole"] ?: "APPROVED_VISITOR"),
+                    profileImageUrl = map["profileImageUrl"],
+                    isActive = map["isActive"]?.toBoolean() ?: true,
+                    joinedAt = Instant.parse(map["joinedAt"] ?: Clock.System.now().toString())
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+        val lastMessage = entity.lastMessageId?.let { messageId ->
+            getCachedMessageById(messageId)
+        }
+
+        return Conversation(
+            id = entity.id,
+            title = entity.title,
+            participants = participants,
+            lastMessage = lastMessage,
+            unreadCount = entity.unreadCount.toInt(),
+            beneficiaryId = entity.beneficiaryId,
+            beneficiaryName = entity.beneficiaryName,
+            isGroupConversation = entity.isGroupConversation == 1L,
+            isPinned = entity.isPinned == 1L,
+            isMuted = entity.isMuted == 1L,
+            createdAt = Instant.parse(entity.createdAt),
+            updatedAt = Instant.parse(entity.updatedAt),
+            archivedAt = entity.archivedAt?.let { Instant.parse(it) }
+        )
+    }
+
     private fun mapEntityToMessage(entity: com.markduenas.visischeduler.data.local.MessageEntity): Message {
         return Message(
             id = entity.id,

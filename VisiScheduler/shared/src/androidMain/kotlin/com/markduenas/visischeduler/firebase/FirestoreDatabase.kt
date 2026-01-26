@@ -46,10 +46,27 @@ class FirestoreDatabase {
     }
 
     /**
+     * Create a document from a map (filters null values).
+     */
+    suspend fun createFromMap(collection: String, data: Map<String, Any?>): String {
+        val filteredData = data.filterValues { it != null }
+        val docRef = firestore.collection(collection).add(filteredData).await()
+        return docRef.id
+    }
+
+    /**
      * Create a document with a specific ID.
      */
     suspend fun <T : Any> createWithId(collection: String, id: String, data: T) {
         firestore.collection(collection).document(id).set(data).await()
+    }
+
+    /**
+     * Create a document with a specific ID from a map (filters null values).
+     */
+    suspend fun createWithIdFromMap(collection: String, id: String, data: Map<String, Any?>) {
+        val filteredData = data.filterValues { it != null }
+        firestore.collection(collection).document(id).set(filteredData).await()
     }
 
     /**
@@ -64,6 +81,16 @@ class FirestoreDatabase {
      */
     suspend fun update(collection: String, id: String, updates: Map<String, Any>) {
         firestore.collection(collection).document(id).update(updates).await()
+    }
+
+    /**
+     * Update a document from a map (filters null values).
+     */
+    suspend fun updateFromMap(collection: String, id: String, updates: Map<String, Any?>) {
+        val filteredUpdates = updates.filterValues { it != null }.mapValues { it.value!! }
+        if (filteredUpdates.isNotEmpty()) {
+            firestore.collection(collection).document(id).update(filteredUpdates).await()
+        }
     }
 
     /**
@@ -158,16 +185,20 @@ class FirestoreDatabase {
 
     // ==================== User Operations ====================
 
-    suspend fun createUser(userId: String, userData: Map<String, Any>) {
-        firestore.collection(COLLECTION_USERS).document(userId).set(userData).await()
+    suspend fun createUser(userId: String, userData: Map<String, Any?>) {
+        val filteredData = userData.filterValues { it != null }
+        firestore.collection(COLLECTION_USERS).document(userId).set(filteredData).await()
     }
 
     suspend fun getUser(userId: String): DocumentSnapshot? {
         return getById(COLLECTION_USERS, userId)
     }
 
-    suspend fun updateUser(userId: String, updates: Map<String, Any>) {
-        update(COLLECTION_USERS, userId, updates)
+    suspend fun updateUser(userId: String, updates: Map<String, Any?>) {
+        val filteredUpdates = updates.filterValues { it != null }.mapValues { it.value!! }
+        if (filteredUpdates.isNotEmpty()) {
+            update(COLLECTION_USERS, userId, filteredUpdates)
+        }
     }
 
     fun listenToUser(userId: String): Flow<DocumentSnapshot?> {
@@ -176,16 +207,20 @@ class FirestoreDatabase {
 
     // ==================== Visit Operations ====================
 
-    suspend fun createVisit(visitData: Map<String, Any>): String {
-        return create(COLLECTION_VISITS, visitData)
+    suspend fun createVisit(visitData: Map<String, Any?>): String {
+        val filteredData = visitData.filterValues { it != null }
+        return createFromMap(COLLECTION_VISITS, filteredData)
     }
 
     suspend fun getVisit(visitId: String): DocumentSnapshot? {
         return getById(COLLECTION_VISITS, visitId)
     }
 
-    suspend fun updateVisit(visitId: String, updates: Map<String, Any>) {
-        update(COLLECTION_VISITS, visitId, updates)
+    suspend fun updateVisit(visitId: String, updates: Map<String, Any?>) {
+        val filteredUpdates = updates.filterValues { it != null }.mapValues { it.value!! }
+        if (filteredUpdates.isNotEmpty()) {
+            update(COLLECTION_VISITS, visitId, filteredUpdates)
+        }
     }
 
     suspend fun getVisitsForBeneficiary(beneficiaryId: String): List<DocumentSnapshot> {
@@ -206,8 +241,8 @@ class FirestoreDatabase {
 
     // ==================== Beneficiary Operations ====================
 
-    suspend fun createBeneficiary(data: Map<String, Any>): String {
-        return create(COLLECTION_BENEFICIARIES, data)
+    suspend fun createBeneficiary(data: Map<String, Any?>): String {
+        return createFromMap(COLLECTION_BENEFICIARIES, data)
     }
 
     suspend fun getBeneficiary(beneficiaryId: String): DocumentSnapshot? {
@@ -224,16 +259,16 @@ class FirestoreDatabase {
 
     // ==================== Restriction Operations ====================
 
-    suspend fun createRestriction(data: Map<String, Any>): String {
-        return create(COLLECTION_RESTRICTIONS, data)
+    suspend fun createRestriction(data: Map<String, Any?>): String {
+        return createFromMap(COLLECTION_RESTRICTIONS, data)
     }
 
     suspend fun getRestrictionsForBeneficiary(beneficiaryId: String): List<DocumentSnapshot> {
         return query(COLLECTION_RESTRICTIONS, "beneficiaryId", beneficiaryId)
     }
 
-    suspend fun updateRestriction(restrictionId: String, updates: Map<String, Any>) {
-        update(COLLECTION_RESTRICTIONS, restrictionId, updates)
+    suspend fun updateRestriction(restrictionId: String, updates: Map<String, Any?>) {
+        updateFromMap(COLLECTION_RESTRICTIONS, restrictionId, updates)
     }
 
     suspend fun deleteRestriction(restrictionId: String) {
@@ -242,24 +277,27 @@ class FirestoreDatabase {
 
     // ==================== Message Operations ====================
 
-    suspend fun createConversation(data: Map<String, Any>): String {
-        return create(COLLECTION_CONVERSATIONS, data)
+    suspend fun createConversation(data: Map<String, Any?>): String {
+        return createFromMap(COLLECTION_CONVERSATIONS, data)
     }
 
-    suspend fun sendMessage(conversationId: String, messageData: Map<String, Any>): String {
+    suspend fun sendMessage(conversationId: String, messageData: Map<String, Any?>): String {
+        val filteredData = messageData.filterValues { it != null }
         val docRef = firestore.collection(COLLECTION_CONVERSATIONS)
             .document(conversationId)
             .collection(COLLECTION_MESSAGES)
-            .add(messageData)
+            .add(filteredData)
             .await()
 
         // Update conversation's last message
-        firestore.collection(COLLECTION_CONVERSATIONS)
-            .document(conversationId)
-            .update(mapOf(
-                "lastMessageAt" to messageData["timestamp"],
-                "lastMessagePreview" to messageData["content"]
-            )).await()
+        val updates = mutableMapOf<String, Any>()
+        messageData["timestamp"]?.let { updates["lastMessageAt"] = it }
+        messageData["content"]?.let { updates["lastMessagePreview"] = it }
+        if (updates.isNotEmpty()) {
+            firestore.collection(COLLECTION_CONVERSATIONS)
+                .document(conversationId)
+                .update(updates).await()
+        }
 
         return docRef.id
     }
@@ -285,12 +323,12 @@ class FirestoreDatabase {
 
     // ==================== Check-in Operations ====================
 
-    suspend fun createCheckIn(data: Map<String, Any>): String {
-        return create(COLLECTION_CHECK_INS, data)
+    suspend fun createCheckIn(data: Map<String, Any?>): String {
+        return createFromMap(COLLECTION_CHECK_INS, data)
     }
 
-    suspend fun updateCheckIn(checkInId: String, updates: Map<String, Any>) {
-        update(COLLECTION_CHECK_INS, checkInId, updates)
+    suspend fun updateCheckIn(checkInId: String, updates: Map<String, Any?>) {
+        updateFromMap(COLLECTION_CHECK_INS, checkInId, updates)
     }
 
     suspend fun getActiveCheckIn(visitId: String): DocumentSnapshot? {
@@ -305,8 +343,8 @@ class FirestoreDatabase {
 
     // ==================== Notification Operations ====================
 
-    suspend fun createNotification(data: Map<String, Any>): String {
-        return create(COLLECTION_NOTIFICATIONS, data)
+    suspend fun createNotification(data: Map<String, Any?>): String {
+        return createFromMap(COLLECTION_NOTIFICATIONS, data)
     }
 
     suspend fun markNotificationRead(notificationId: String) {

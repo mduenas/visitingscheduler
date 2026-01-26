@@ -1,7 +1,9 @@
 package com.markduenas.visischeduler.platform
 
 import android.content.Context
+import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import com.markduenas.visischeduler.data.local.VisiSchedulerDatabase
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -11,9 +13,9 @@ import org.koin.dsl.module
 val androidPlatformModule = module {
 
     // SQLDelight Android Driver
-    single {
+    single<SqlDriver> {
         AndroidSqliteDriver(
-            // schema = VisiSchedulerDatabase.Schema,
+            schema = VisiSchedulerDatabase.Schema,
             context = androidContext(),
             name = "visischeduler.db"
         )

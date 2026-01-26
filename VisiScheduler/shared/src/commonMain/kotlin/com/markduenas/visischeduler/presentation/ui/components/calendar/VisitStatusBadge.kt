@@ -144,6 +144,10 @@ private fun getStatusColors(status: VisitStatus): Pair<Color, Color> {
             MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f),
             MaterialTheme.colorScheme.onErrorContainer
         )
+        VisitStatus.CHECKED_IN -> Pair(
+            Color(0xFF2196F3).copy(alpha = 0.2f),
+            Color(0xFF2196F3)
+        )
     }
 }
 
@@ -158,6 +162,7 @@ private fun getStatusIcon(status: VisitStatus): ImageVector {
         VisitStatus.COMPLETED -> Icons.Default.CheckCircle
         VisitStatus.CANCELLED -> Icons.Default.Cancel
         VisitStatus.NO_SHOW -> Icons.Default.PersonOff
+        VisitStatus.CHECKED_IN -> Icons.Default.CheckCircle
     }
 }
 
@@ -172,6 +177,7 @@ private fun getStatusText(status: VisitStatus): String {
         VisitStatus.COMPLETED -> "Completed"
         VisitStatus.CANCELLED -> "Cancelled"
         VisitStatus.NO_SHOW -> "No Show"
+        VisitStatus.CHECKED_IN -> "Checked In"
     }
 }
 
@@ -225,5 +231,6 @@ private fun getStatusDescription(status: VisitStatus): String {
         VisitStatus.COMPLETED -> "Visit was completed successfully"
         VisitStatus.CANCELLED -> "Visit has been cancelled"
         VisitStatus.NO_SHOW -> "Visitor did not show up"
+        VisitStatus.CHECKED_IN -> "Visitor has checked in"
     }
 }

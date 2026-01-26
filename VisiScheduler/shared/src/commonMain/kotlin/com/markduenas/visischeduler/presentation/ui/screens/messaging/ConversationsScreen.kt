@@ -58,6 +58,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.domain.entities.Conversation
 import com.markduenas.visischeduler.domain.usecase.ConversationSortBy
+import kotlinx.datetime.toLocalDateTime
 import com.markduenas.visischeduler.presentation.ui.components.messaging.ConversationItem
 import com.markduenas.visischeduler.presentation.viewmodel.messaging.ConversationsViewModel
 
@@ -266,9 +267,24 @@ private fun ConversationsList(
 
             Box {
                 ConversationItem(
-                    conversation = conversation,
+                    name = conversation.displayName,
+                    lastMessage = conversation.lastMessage?.content ?: "",
+                    timestamp = conversation.lastMessage?.let {
+                        val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
+                        val dateTime = it.timestamp.toLocalDateTime(zone)
+                        val hour = dateTime.hour
+                        val minute = dateTime.minute
+                        val period = if (hour < 12) "AM" else "PM"
+                        val displayHour = when {
+                            hour == 0 -> 12
+                            hour > 12 -> hour - 12
+                            else -> hour
+                        }
+                        "$displayHour:${minute.toString().padStart(2, '0')} $period"
+                    } ?: "",
+                    unreadCount = conversation.unreadCount,
+                    avatarInitials = conversation.displayName.split(" ").take(2).mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString(""),
                     onClick = { onConversationClick(conversation) },
-                    onLongClick = { showMenu = true },
                     modifier = Modifier.fillMaxWidth()
                 )
 

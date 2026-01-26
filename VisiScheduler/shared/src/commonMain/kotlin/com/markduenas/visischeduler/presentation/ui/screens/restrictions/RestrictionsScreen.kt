@@ -12,19 +12,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.markduenas.visischeduler.domain.entities.Restriction
+import com.markduenas.visischeduler.domain.entities.RestrictionScope
+import com.markduenas.visischeduler.domain.entities.RestrictionType
 import com.markduenas.visischeduler.presentation.ui.components.visitors.RestrictionCard
-
-data class RestrictionItem(
-    val id: String,
-    val title: String,
-    val description: String,
-    val type: RestrictionType,
-    val isEnabled: Boolean
-)
-
-enum class RestrictionType {
-    TIME, VISITOR, CAPACITY
-}
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,46 +29,91 @@ fun RestrictionsScreen(
     onEditRestriction: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Mock data
+    val now = Clock.System.now()
+    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+
+    // Mock data using domain Restriction entity
     val restrictions = remember {
         mutableStateListOf(
-            RestrictionItem(
-                "1", "Visiting Hours",
-                "Visits allowed 9:00 AM - 8:00 PM daily",
-                RestrictionType.TIME, true
+            Restriction(
+                id = "1",
+                name = "Visiting Hours",
+                description = "Visits allowed 9:00 AM - 8:00 PM daily",
+                type = RestrictionType.TIME_BASED,
+                scope = RestrictionScope.FACILITY_WIDE,
+                isActive = true,
+                effectiveFrom = today,
+                createdBy = "system",
+                createdAt = now,
+                updatedAt = now
             ),
-            RestrictionItem(
-                "2", "Meal Times",
-                "No visits during 12:00 PM - 1:00 PM and 6:00 PM - 7:00 PM",
-                RestrictionType.TIME, true
+            Restriction(
+                id = "2",
+                name = "Meal Times",
+                description = "No visits during 12:00 PM - 1:00 PM and 6:00 PM - 7:00 PM",
+                type = RestrictionType.TIME_BASED,
+                scope = RestrictionScope.FACILITY_WIDE,
+                isActive = true,
+                effectiveFrom = today,
+                createdBy = "system",
+                createdAt = now,
+                updatedAt = now
             ),
-            RestrictionItem(
-                "3", "Rest Period",
-                "No visits 2:00 PM - 3:00 PM (afternoon rest)",
-                RestrictionType.TIME, true
+            Restriction(
+                id = "3",
+                name = "Rest Period",
+                description = "No visits 2:00 PM - 3:00 PM (afternoon rest)",
+                type = RestrictionType.TIME_BASED,
+                scope = RestrictionScope.FACILITY_WIDE,
+                isActive = true,
+                effectiveFrom = today,
+                createdBy = "system",
+                createdAt = now,
+                updatedAt = now
             ),
-            RestrictionItem(
-                "4", "Maximum Visitors",
-                "Maximum 3 visitors at the same time",
-                RestrictionType.CAPACITY, true
+            Restriction(
+                id = "4",
+                name = "Maximum Visitors",
+                description = "Maximum 3 visitors at the same time",
+                type = RestrictionType.CAPACITY_BASED,
+                scope = RestrictionScope.FACILITY_WIDE,
+                isActive = true,
+                effectiveFrom = today,
+                createdBy = "system",
+                createdAt = now,
+                updatedAt = now
             ),
-            RestrictionItem(
-                "5", "Daily Limit",
-                "Maximum 6 visits per day",
-                RestrictionType.CAPACITY, true
+            Restriction(
+                id = "5",
+                name = "Daily Limit",
+                description = "Maximum 6 visits per day",
+                type = RestrictionType.CAPACITY_BASED,
+                scope = RestrictionScope.FACILITY_WIDE,
+                isActive = true,
+                effectiveFrom = today,
+                createdBy = "system",
+                createdAt = now,
+                updatedAt = now
             ),
-            RestrictionItem(
-                "6", "No Children",
-                "Visitors must be 12 years or older",
-                RestrictionType.VISITOR, false
+            Restriction(
+                id = "6",
+                name = "No Children",
+                description = "Visitors must be 12 years or older",
+                type = RestrictionType.VISITOR_BASED,
+                scope = RestrictionScope.FACILITY_WIDE,
+                isActive = false,
+                effectiveFrom = today,
+                createdBy = "system",
+                createdAt = now,
+                updatedAt = now
             )
         )
     }
 
-    fun toggleRestriction(id: String) {
+    fun toggleRestriction(id: String, enabled: Boolean) {
         val index = restrictions.indexOfFirst { it.id == id }
         if (index >= 0) {
-            restrictions[index] = restrictions[index].copy(isEnabled = !restrictions[index].isEnabled)
+            restrictions[index] = restrictions[index].copy(isActive = enabled)
         }
     }
 
@@ -110,13 +150,10 @@ fun RestrictionsScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
-            items(restrictions.filter { it.type == RestrictionType.TIME }) { restriction ->
+            items(restrictions.filter { it.type == RestrictionType.TIME_BASED }) { restriction ->
                 RestrictionCard(
-                    title = restriction.title,
-                    description = restriction.description,
-                    isEnabled = restriction.isEnabled,
-                    icon = Icons.Default.Schedule,
-                    onToggle = { toggleRestriction(restriction.id) },
+                    restriction = restriction,
+                    onToggle = { enabled -> toggleRestriction(restriction.id, enabled) },
                     onClick = { onEditRestriction(restriction.id) }
                 )
             }
@@ -131,13 +168,10 @@ fun RestrictionsScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
-            items(restrictions.filter { it.type == RestrictionType.CAPACITY }) { restriction ->
+            items(restrictions.filter { it.type == RestrictionType.CAPACITY_BASED }) { restriction ->
                 RestrictionCard(
-                    title = restriction.title,
-                    description = restriction.description,
-                    isEnabled = restriction.isEnabled,
-                    icon = Icons.Default.Groups,
-                    onToggle = { toggleRestriction(restriction.id) },
+                    restriction = restriction,
+                    onToggle = { enabled -> toggleRestriction(restriction.id, enabled) },
                     onClick = { onEditRestriction(restriction.id) }
                 )
             }
@@ -152,13 +186,10 @@ fun RestrictionsScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
-            items(restrictions.filter { it.type == RestrictionType.VISITOR }) { restriction ->
+            items(restrictions.filter { it.type == RestrictionType.VISITOR_BASED }) { restriction ->
                 RestrictionCard(
-                    title = restriction.title,
-                    description = restriction.description,
-                    isEnabled = restriction.isEnabled,
-                    icon = Icons.Default.Person,
-                    onToggle = { toggleRestriction(restriction.id) },
+                    restriction = restriction,
+                    onToggle = { enabled -> toggleRestriction(restriction.id, enabled) },
                     onClick = { onEditRestriction(restriction.id) }
                 )
             }

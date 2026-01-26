@@ -1,5 +1,6 @@
 package com.markduenas.visischeduler.firebase
 
+import com.google.firebase.auth.FirebaseAuth
 import com.markduenas.visischeduler.data.repository.FirestoreBeneficiaryRepository
 import com.markduenas.visischeduler.data.repository.FirestoreCheckInRepository
 import com.markduenas.visischeduler.data.repository.FirestoreMessageRepository
@@ -21,6 +22,7 @@ val firebaseModule = module {
     // Firebase services
     single { FirebaseService() }
     single { FirestoreDatabase() }
+    single { FirebaseAuth.getInstance() }
 
     // Auth state provider
     single<() -> String?> { { get<FirebaseAuthManager>().currentUserId } }
@@ -32,8 +34,8 @@ val firebaseModule = module {
     single { FirebaseAuthManager() }
 
     // Firestore Repositories
-    single<UserRepository> { FirestoreUserRepository(get()) }
-    single<VisitRepository> { FirestoreVisitRepository(get()) }
+    single<UserRepository> { FirestoreUserRepository(get(), get()) }
+    single<VisitRepository> { FirestoreVisitRepository(get(), get()) }
     single<BeneficiaryRepository> { FirestoreBeneficiaryRepository(get(), get()) }
     single<RestrictionRepository> { FirestoreRestrictionRepository(get(), get()) }
     single<MessageRepository> {

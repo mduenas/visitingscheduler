@@ -2,6 +2,7 @@ package com.markduenas.visischeduler.data.repository
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
+import com.markduenas.visischeduler.domain.entities.AdditionalVisitor
 import com.markduenas.visischeduler.domain.entities.CheckIn
 import com.markduenas.visischeduler.domain.entities.CheckInMethod
 import com.markduenas.visischeduler.domain.entities.ExpectedVisitor
@@ -326,6 +327,26 @@ class FirestoreCheckInRepository(
 
     // ==================== Mapping Functions ====================
 
+    @Suppress("UNCHECKED_CAST")
+    private fun parseAdditionalVisitors(data: Any?): List<AdditionalVisitor> {
+        val list = data as? List<*> ?: return emptyList()
+        return list.mapNotNull { item ->
+            val map = item as? Map<*, *> ?: return@mapNotNull null
+            try {
+                AdditionalVisitor(
+                    id = map["id"] as? String ?: java.util.UUID.randomUUID().toString(),
+                    firstName = map["firstName"] as? String ?: "",
+                    lastName = map["lastName"] as? String ?: "",
+                    relationship = map["relationship"] as? String ?: "",
+                    isMinor = map["isMinor"] as? Boolean ?: false,
+                    age = (map["age"] as? Number)?.toInt()
+                )
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
     private fun DocumentSnapshot.toCheckIn(): CheckIn? {
         return try {
             CheckIn(
@@ -359,8 +380,7 @@ class FirestoreCheckInRepository(
                 visitType = VisitType.valueOf(getString("visitType") ?: "IN_PERSON"),
                 purpose = getString("purpose"),
                 notes = getString("notes"),
-                additionalVisitors = (get("additionalVisitors") as? List<*>)
-                    ?.filterIsInstance<String>() ?: emptyList(),
+                additionalVisitors = parseAdditionalVisitors(get("additionalVisitors")),
                 checkInTime = getString("checkInTime")?.let { Instant.parse(it) },
                 checkOutTime = getString("checkOutTime")?.let { Instant.parse(it) },
                 approvedBy = getString("approvedBy"),

@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.presentation.ui.components.visitors.AccessLevelSelector
+import com.markduenas.visischeduler.presentation.viewmodel.visitors.AccessLevel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,7 +24,7 @@ fun AddVisitorScreen(
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var selectedRelationship by remember { mutableStateOf("") }
-    var selectedAccessLevel by remember { mutableStateOf("requires_approval") }
+    var selectedAccessLevel by remember { mutableStateOf(AccessLevel.REQUIRES_APPROVAL) }
     var notes by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var showRelationshipMenu by remember { mutableStateOf(false) }

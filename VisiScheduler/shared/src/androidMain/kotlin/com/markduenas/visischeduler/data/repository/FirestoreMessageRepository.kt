@@ -117,7 +117,7 @@ class FirestoreMessageRepository(
     }
 
     override suspend fun unarchiveConversation(conversationId: String): Result<Unit> = runCatching {
-        firestore.update(FirestoreDatabase.COLLECTION_CONVERSATIONS, conversationId, mapOf(
+        firestore.updateFromMap(FirestoreDatabase.COLLECTION_CONVERSATIONS, conversationId, mapOf(
             "archivedAt" to null,
             "updatedAt" to Timestamp.now()
         ))
@@ -343,7 +343,7 @@ class FirestoreMessageRepository(
 
     override suspend fun unregisterFromPushNotifications(): Result<Unit> = runCatching {
         val userId = currentUserId() ?: throw Exception("User not authenticated")
-        firestore.update(FirestoreDatabase.COLLECTION_USERS, userId, mapOf(
+        firestore.updateUser(userId, mapOf(
             "fcmToken" to null
         ))
     }

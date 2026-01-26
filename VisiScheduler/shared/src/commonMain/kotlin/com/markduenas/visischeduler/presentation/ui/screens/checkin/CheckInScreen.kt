@@ -335,8 +335,8 @@ private fun NotCheckedInContent(
 
                 if (qrCodeData != null) {
                     QrCodeDisplay(
-                        data = qrCodeData,
-                        size = 200.dp,
+                        qrCodeData = qrCodeData,
+                        size = 200,
                         modifier = Modifier.padding(8.dp)
                     )
                 } else {

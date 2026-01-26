@@ -16,6 +16,8 @@ enum class VisitStatus {
     APPROVED,
     /** Visit request was denied */
     DENIED,
+    /** Visitor has checked in */
+    CHECKED_IN,
     /** Visit was completed successfully */
     COMPLETED,
     /** Visit was cancelled by visitor or coordinator */

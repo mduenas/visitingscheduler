@@ -248,6 +248,7 @@ private fun getVisitStatusColor(status: VisitStatus): Color {
         VisitStatus.COMPLETED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
         VisitStatus.CANCELLED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         VisitStatus.NO_SHOW -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+        VisitStatus.CHECKED_IN -> Color(0xFF2196F3).copy(alpha = 0.5f)
     }
 }
 
@@ -263,6 +264,7 @@ private fun getVisitStatusBorderColor(status: VisitStatus): Color {
         VisitStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
         VisitStatus.CANCELLED -> MaterialTheme.colorScheme.outline
         VisitStatus.NO_SHOW -> MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+        VisitStatus.CHECKED_IN -> Color(0xFF2196F3)
     }
 }
 

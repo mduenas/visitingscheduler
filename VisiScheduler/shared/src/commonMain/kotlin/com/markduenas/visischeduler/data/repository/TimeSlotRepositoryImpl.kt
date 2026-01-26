@@ -7,9 +7,11 @@ import com.markduenas.visischeduler.domain.entities.TimeSlot
 import com.markduenas.visischeduler.domain.repository.TimeSlotRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 
 /**
@@ -94,7 +96,7 @@ class TimeSlotRepositoryImpl(
                 .let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
                 .let { it.toLocalDateTime(TimeZone.currentSystemDefault()).date }
 
-            val endDate = today.plus(kotlinx.datetime.DatePeriod(days = 30))
+            val endDate = today.plus(30, DateTimeUnit.DAY)
 
             val slots = api.getAvailableSlots(
                 beneficiaryId = beneficiaryId,
@@ -149,7 +151,7 @@ class TimeSlotRepositoryImpl(
                 .let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
                 .let { it.toLocalDateTime(TimeZone.currentSystemDefault()).date }
 
-            val endDate = today.plus(kotlinx.datetime.DatePeriod(days = 30))
+            val endDate = today.plus(30, DateTimeUnit.DAY)
 
             // This would need beneficiary ID in real implementation
             // For now, just clear old slots

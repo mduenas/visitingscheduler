@@ -12,8 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.markduenas.visischeduler.domain.entities.RestrictionType
 import com.markduenas.visischeduler.presentation.ui.components.visitors.TimeRangePicker
 import com.markduenas.visischeduler.presentation.ui.components.visitors.DayOfWeekSelector
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,9 +27,9 @@ fun AddRestrictionScreen(
 ) {
     var selectedType by remember { mutableStateOf<RestrictionType?>(null) }
     var title by remember { mutableStateOf("") }
-    var startTime by remember { mutableStateOf("09:00") }
-    var endTime by remember { mutableStateOf("17:00") }
-    var selectedDays by remember { mutableStateOf(setOf(1, 2, 3, 4, 5, 6, 7)) } // All days
+    var startTime by remember { mutableStateOf<LocalTime?>(LocalTime(9, 0)) }
+    var endTime by remember { mutableStateOf<LocalTime?>(LocalTime(17, 0)) }
+    var selectedDays by remember { mutableStateOf(DayOfWeek.entries.toSet()) } // All days
     var maxVisitors by remember { mutableStateOf("3") }
     var dailyLimit by remember { mutableStateOf("6") }
     var minAge by remember { mutableStateOf("") }
@@ -65,8 +68,8 @@ fun AddRestrictionScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilterChip(
-                    selected = selectedType == RestrictionType.TIME,
-                    onClick = { selectedType = RestrictionType.TIME },
+                    selected = selectedType == RestrictionType.TIME_BASED,
+                    onClick = { selectedType = RestrictionType.TIME_BASED },
                     label = { Text("Time") },
                     leadingIcon = {
                         Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -74,8 +77,8 @@ fun AddRestrictionScreen(
                     modifier = Modifier.weight(1f)
                 )
                 FilterChip(
-                    selected = selectedType == RestrictionType.CAPACITY,
-                    onClick = { selectedType = RestrictionType.CAPACITY },
+                    selected = selectedType == RestrictionType.CAPACITY_BASED,
+                    onClick = { selectedType = RestrictionType.CAPACITY_BASED },
                     label = { Text("Capacity") },
                     leadingIcon = {
                         Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -83,8 +86,8 @@ fun AddRestrictionScreen(
                     modifier = Modifier.weight(1f)
                 )
                 FilterChip(
-                    selected = selectedType == RestrictionType.VISITOR,
-                    onClick = { selectedType = RestrictionType.VISITOR },
+                    selected = selectedType == RestrictionType.VISITOR_BASED,
+                    onClick = { selectedType = RestrictionType.VISITOR_BASED },
                     label = { Text("Visitor") },
                     leadingIcon = {
                         Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -97,7 +100,7 @@ fun AddRestrictionScreen(
 
             // Type-specific fields
             when (selectedType) {
-                RestrictionType.TIME -> {
+                RestrictionType.TIME_BASED -> {
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
@@ -125,7 +128,13 @@ fun AddRestrictionScreen(
                     )
                     DayOfWeekSelector(
                         selectedDays = selectedDays,
-                        onDaysChange = { selectedDays = it },
+                        onDayToggle = { day ->
+                            selectedDays = if (day in selectedDays) {
+                                selectedDays - day
+                            } else {
+                                selectedDays + day
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -142,7 +151,7 @@ fun AddRestrictionScreen(
                     }
                 }
 
-                RestrictionType.CAPACITY -> {
+                RestrictionType.CAPACITY_BASED -> {
                     OutlinedTextField(
                         value = maxVisitors,
                         onValueChange = { if (it.all { c -> c.isDigit() }) maxVisitors = it },
@@ -184,7 +193,7 @@ fun AddRestrictionScreen(
                     }
                 }
 
-                RestrictionType.VISITOR -> {
+                RestrictionType.VISITOR_BASED -> {
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
@@ -223,7 +232,7 @@ fun AddRestrictionScreen(
                     }
                 }
 
-                null -> {
+                null, RestrictionType.BENEFICIARY_BASED, RestrictionType.RELATIONSHIP_BASED -> {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(

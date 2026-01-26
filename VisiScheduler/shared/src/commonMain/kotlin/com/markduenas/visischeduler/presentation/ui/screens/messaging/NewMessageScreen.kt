@@ -103,7 +103,7 @@ fun NewMessageScreen(
                 ) {
                     uiState.selectedRecipients.forEach { user ->
                         RecipientChip(
-                            user = user,
+                            name = user.fullName,
                             onRemove = { viewModel.removeRecipient(user) }
                         )
                     }
@@ -202,7 +202,9 @@ private fun ContactsList(
             key = { it.user.id }
         ) { contact ->
             ContactListItem(
-                contact = contact,
+                name = contact.user.fullName,
+                subtitle = contact.relationship,
+                initials = contact.user.fullName.split(" ").take(2).mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString(""),
                 onClick = { onContactClick(contact) },
                 modifier = Modifier.fillMaxWidth()
             )
