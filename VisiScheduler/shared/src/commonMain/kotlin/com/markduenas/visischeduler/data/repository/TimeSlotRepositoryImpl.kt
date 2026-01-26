@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Implementation of TimeSlotRepository.
@@ -90,7 +92,7 @@ class TimeSlotRepositoryImpl(
             val today = kotlinx.datetime.Clock.System.now()
                 .toEpochMilliseconds()
                 .let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
-                .let { it.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date }
+                .let { it.toLocalDateTime(TimeZone.currentSystemDefault()).date }
 
             val endDate = today.plus(kotlinx.datetime.DatePeriod(days = 30))
 
@@ -145,7 +147,7 @@ class TimeSlotRepositoryImpl(
             val today = kotlinx.datetime.Clock.System.now()
                 .toEpochMilliseconds()
                 .let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
-                .let { it.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date }
+                .let { it.toLocalDateTime(TimeZone.currentSystemDefault()).date }
 
             val endDate = today.plus(kotlinx.datetime.DatePeriod(days = 30))
 

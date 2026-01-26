@@ -17,23 +17,13 @@ val iosPlatformModule = module {
     }
 
     // Platform-specific secure storage (Keychain)
-    single<SecureStorage> { IosSecureStorage() }
+    single<SecureStorage> { SecureStorageImpl() }
 
     // Platform-specific biometric handler (Face ID / Touch ID)
     single<BiometricHandler> { IosBiometricHandler() }
 
     // Platform-specific notification handler (APNs)
     single<NotificationHandler> { IosNotificationHandler() }
-}
-
-/**
- * Interface for secure storage operations.
- */
-interface SecureStorage {
-    suspend fun saveString(key: String, value: String)
-    suspend fun getString(key: String): String?
-    suspend fun removeString(key: String)
-    suspend fun clear()
 }
 
 /**
@@ -71,31 +61,6 @@ interface NotificationHandler {
     )
     suspend fun cancelNotification(id: Int)
     suspend fun cancelAllNotifications()
-}
-
-/**
- * iOS implementation of SecureStorage using Keychain.
- */
-class IosSecureStorage : SecureStorage {
-    // Note: Actual implementation would use iOS Keychain Services
-    // This is a placeholder that should be properly implemented
-
-    override suspend fun saveString(key: String, value: String) {
-        // Implementation using Keychain
-    }
-
-    override suspend fun getString(key: String): String? {
-        // Implementation using Keychain
-        return null
-    }
-
-    override suspend fun removeString(key: String) {
-        // Implementation using Keychain
-    }
-
-    override suspend fun clear() {
-        // Implementation using Keychain
-    }
 }
 
 /**

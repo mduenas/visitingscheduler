@@ -18,6 +18,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -144,7 +145,7 @@ private fun MainTopAppBar(
     currentTab: MainTab,
     notificationCount: Int,
     onNotificationsClick: () -> Unit,
-    scrollBehavior: TopAppBarDefaults
+    scrollBehavior: TopAppBarScrollBehavior
 ) {
     CenterAlignedTopAppBar(
         title = { Text(getTopBarTitle(currentTab)) },

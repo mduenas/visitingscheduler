@@ -1,23 +1,29 @@
 package com.markduenas.visischeduler.presentation.ui.components.messaging
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.markduenas.visischeduler.domain.entities.Message
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Message input component with text field and send button.
@@ -27,6 +33,7 @@ fun MessageInput(
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
+    isSending: Boolean = false,
     placeholder: String = "Type a message...",
     enabled: Boolean = true,
     modifier: Modifier = Modifier
@@ -47,23 +54,30 @@ fun MessageInput(
                 onValueChange = onValueChange,
                 placeholder = { Text(placeholder) },
                 modifier = Modifier.weight(1f),
-                enabled = enabled,
+                enabled = enabled && !isSending,
                 maxLines = 4,
                 shape = RoundedCornerShape(24.dp)
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            IconButton(
-                onClick = onSend,
-                enabled = enabled && value.isNotBlank()
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
-                    contentDescription = "Send",
-                    tint = if (value.isNotBlank()) MaterialTheme.colorScheme.primary
-                           else MaterialTheme.colorScheme.onSurfaceVariant
+            if (isSending) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp
                 )
+            } else {
+                IconButton(
+                    onClick = onSend,
+                    enabled = enabled && value.isNotBlank()
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "Send",
+                        tint = if (value.isNotBlank()) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -71,6 +85,33 @@ fun MessageInput(
 
 /**
  * Date separator shown between messages from different days.
+ */
+@Composable
+fun DateSeparator(
+    date: LocalDate,
+    modifier: Modifier = Modifier
+) {
+    val dateText = formatDate(date)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        HorizontalDivider(modifier = Modifier.weight(1f))
+        Text(
+            text = dateText,
+            modifier = Modifier.padding(horizontal = 16.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        HorizontalDivider(modifier = Modifier.weight(1f))
+    }
+}
+
+/**
+ * Date separator with string date.
  */
 @Composable
 fun DateSeparator(
@@ -100,6 +141,34 @@ fun DateSeparator(
  */
 @Composable
 fun SystemMessage(
+    message: Message,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ) {
+            Text(
+                text = message.content,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * System message with text string.
+ */
+@Composable
+fun SystemMessage(
     text: String,
     modifier: Modifier = Modifier
 ) {
@@ -124,11 +193,101 @@ fun SystemMessage(
 }
 
 /**
- * Chat message bubble.
+ * Chat message bubble with Message entity.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun MessageBubble(
+    message: Message,
+    isOwn: Boolean,
+    onLongClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val alignment = if (isOwn) Alignment.CenterEnd else Alignment.CenterStart
+    val backgroundColor = if (isOwn) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    val textColor = if (isOwn) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        contentAlignment = alignment
+    ) {
+        Column(
+            horizontalAlignment = if (isOwn) Alignment.End else Alignment.Start
+        ) {
+            if (!isOwn && message.senderName != null) {
+                Text(
+                    text = message.senderName!!,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(
+                    topStart = 16.dp,
+                    topEnd = 16.dp,
+                    bottomStart = if (isOwn) 16.dp else 4.dp,
+                    bottomEnd = if (isOwn) 4.dp else 16.dp
+                ),
+                color = backgroundColor,
+                modifier = Modifier.combinedClickable(
+                    onClick = {},
+                    onLongClick = onLongClick
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = message.content,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = textColor
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Text(
+                            text = formatTime(message.timestamp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = textColor.copy(alpha = 0.7f)
+                        )
+
+                        if (isOwn) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = if (message.isRead) Icons.Default.DoneAll else Icons.Default.Check,
+                                contentDescription = if (message.isRead) "Read" else "Sent",
+                                modifier = Modifier.size(14.dp),
+                                tint = textColor.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Chat message bubble with string content.
  */
 @Composable
 fun MessageBubble(
-    message: String,
+    text: String,
     isFromCurrentUser: Boolean,
     timestamp: String,
     senderName: String? = null,
@@ -176,7 +335,7 @@ fun MessageBubble(
                 color = backgroundColor
             ) {
                 Text(
-                    text = message,
+                    text = text,
                     modifier = Modifier.padding(12.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     color = textColor
@@ -195,6 +354,31 @@ fun MessageBubble(
 
 /**
  * Typing indicator showing animated dots.
+ */
+@Composable
+fun TypingIndicator(
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Someone is typing",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        // Simple dots indicator
+        Text(
+            text = "...",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Typing indicator with user name.
  */
 @Composable
 fun TypingIndicator(
@@ -404,7 +588,7 @@ fun ContactListItem(
 
             if (isSelected) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    imageVector = Icons.Default.Check,
                     contentDescription = "Selected",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
@@ -412,4 +596,27 @@ fun ContactListItem(
             }
         }
     }
+}
+
+// Helper functions
+private fun formatDate(date: LocalDate): String {
+    val monthNames = listOf(
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    )
+    return "${monthNames[date.monthNumber - 1]} ${date.dayOfMonth}"
+}
+
+private fun formatTime(instant: kotlinx.datetime.Instant): String {
+    val zone = TimeZone.currentSystemDefault()
+    val dateTime = instant.toLocalDateTime(zone)
+    val hour = dateTime.hour
+    val minute = dateTime.minute
+    val period = if (hour < 12) "AM" else "PM"
+    val displayHour = when {
+        hour == 0 -> 12
+        hour > 12 -> hour - 12
+        else -> hour
+    }
+    return "$displayHour:${minute.toString().padStart(2, '0')} $period"
 }

@@ -20,23 +20,13 @@ val androidPlatformModule = module {
     }
 
     // Platform-specific secure storage
-    single<SecureStorage> { AndroidSecureStorage(androidContext()) }
+    single<SecureStorage> { SecureStorageImpl(androidContext()) }
 
     // Platform-specific biometric handler
     single<BiometricHandler> { AndroidBiometricHandler() }
 
     // Platform-specific notification handler
     single<NotificationHandler> { AndroidNotificationHandler(androidContext()) }
-}
-
-/**
- * Interface for secure storage operations.
- */
-interface SecureStorage {
-    suspend fun saveString(key: String, value: String)
-    suspend fun getString(key: String): String?
-    suspend fun removeString(key: String)
-    suspend fun clear()
 }
 
 /**
@@ -74,31 +64,6 @@ interface NotificationHandler {
     )
     suspend fun cancelNotification(id: Int)
     suspend fun cancelAllNotifications()
-}
-
-/**
- * Android implementation of SecureStorage using EncryptedSharedPreferences.
- */
-class AndroidSecureStorage(private val context: Context) : SecureStorage {
-    // Note: Actual implementation would use androidx.security.crypto.EncryptedSharedPreferences
-    // This is a placeholder that should be properly implemented
-
-    override suspend fun saveString(key: String, value: String) {
-        // Implementation using EncryptedSharedPreferences
-    }
-
-    override suspend fun getString(key: String): String? {
-        // Implementation using EncryptedSharedPreferences
-        return null
-    }
-
-    override suspend fun removeString(key: String) {
-        // Implementation using EncryptedSharedPreferences
-    }
-
-    override suspend fun clear() {
-        // Implementation using EncryptedSharedPreferences
-    }
 }
 
 /**

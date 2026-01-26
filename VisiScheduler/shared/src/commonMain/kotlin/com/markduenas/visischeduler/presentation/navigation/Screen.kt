@@ -1,5 +1,6 @@
 package com.markduenas.visischeduler.presentation.navigation
 
+import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
@@ -18,6 +19,11 @@ sealed class AppScreen : Screen {
      */
     data object Splash : AppScreen() {
         override val key: ScreenKey = "splash"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -25,6 +31,11 @@ sealed class AppScreen : Screen {
      */
     data object Login : AppScreen() {
         override val key: ScreenKey = "login"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -32,6 +43,11 @@ sealed class AppScreen : Screen {
      */
     data object Register : AppScreen() {
         override val key: ScreenKey = "register"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -39,6 +55,11 @@ sealed class AppScreen : Screen {
      */
     data object ForgotPassword : AppScreen() {
         override val key: ScreenKey = "forgot_password"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -48,6 +69,11 @@ sealed class AppScreen : Screen {
      */
     data class Mfa(val challengeId: String) : AppScreen() {
         override val key: ScreenKey = "mfa_$challengeId"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     // ==================== Main Screens ====================
@@ -57,6 +83,11 @@ sealed class AppScreen : Screen {
      */
     data object Dashboard : AppScreen() {
         override val key: ScreenKey = "dashboard"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -64,6 +95,11 @@ sealed class AppScreen : Screen {
      */
     data object Calendar : AppScreen() {
         override val key: ScreenKey = "calendar"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -71,6 +107,11 @@ sealed class AppScreen : Screen {
      */
     data object PendingRequests : AppScreen() {
         override val key: ScreenKey = "pending_requests"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -78,6 +119,11 @@ sealed class AppScreen : Screen {
      */
     data object Messages : AppScreen() {
         override val key: ScreenKey = "messages"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -85,6 +131,11 @@ sealed class AppScreen : Screen {
      */
     data object Profile : AppScreen() {
         override val key: ScreenKey = "profile"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     // ==================== Scheduling Screens ====================
@@ -96,6 +147,11 @@ sealed class AppScreen : Screen {
      */
     data class ScheduleVisit(val beneficiaryId: String) : AppScreen() {
         override val key: ScreenKey = "schedule_visit_$beneficiaryId"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -105,6 +161,11 @@ sealed class AppScreen : Screen {
      */
     data class VisitDetails(val visitId: String) : AppScreen() {
         override val key: ScreenKey = "visit_details_$visitId"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -114,6 +175,11 @@ sealed class AppScreen : Screen {
      */
     data class EditVisit(val visitId: String) : AppScreen() {
         override val key: ScreenKey = "edit_visit_$visitId"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     // ==================== Visitor Screens ====================
@@ -123,6 +189,11 @@ sealed class AppScreen : Screen {
      */
     data object VisitorList : AppScreen() {
         override val key: ScreenKey = "visitor_list"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -132,6 +203,11 @@ sealed class AppScreen : Screen {
      */
     data class VisitorDetails(val visitorId: String) : AppScreen() {
         override val key: ScreenKey = "visitor_details_$visitorId"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -139,6 +215,11 @@ sealed class AppScreen : Screen {
      */
     data object AddVisitor : AppScreen() {
         override val key: ScreenKey = "add_visitor"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -148,6 +229,11 @@ sealed class AppScreen : Screen {
      */
     data class EditVisitor(val visitorId: String) : AppScreen() {
         override val key: ScreenKey = "edit_visitor_$visitorId"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     // ==================== Restriction Screens ====================
@@ -157,6 +243,11 @@ sealed class AppScreen : Screen {
      */
     data object Restrictions : AppScreen() {
         override val key: ScreenKey = "restrictions"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -164,6 +255,11 @@ sealed class AppScreen : Screen {
      */
     data object AddRestriction : AppScreen() {
         override val key: ScreenKey = "add_restriction"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -173,6 +269,11 @@ sealed class AppScreen : Screen {
      */
     data class EditRestriction(val restrictionId: String) : AppScreen() {
         override val key: ScreenKey = "edit_restriction_$restrictionId"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     // ==================== Settings Screens ====================
@@ -182,6 +283,11 @@ sealed class AppScreen : Screen {
      */
     data object Settings : AppScreen() {
         override val key: ScreenKey = "settings"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -189,6 +295,11 @@ sealed class AppScreen : Screen {
      */
     data object NotificationSettings : AppScreen() {
         override val key: ScreenKey = "notification_settings"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -196,6 +307,11 @@ sealed class AppScreen : Screen {
      */
     data object SecuritySettings : AppScreen() {
         override val key: ScreenKey = "security_settings"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -203,6 +319,11 @@ sealed class AppScreen : Screen {
      */
     data object PrivacySettings : AppScreen() {
         override val key: ScreenKey = "privacy_settings"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -210,6 +331,11 @@ sealed class AppScreen : Screen {
      */
     data object About : AppScreen() {
         override val key: ScreenKey = "about"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     // ==================== Message Detail Screens ====================
@@ -221,6 +347,11 @@ sealed class AppScreen : Screen {
      */
     data class MessageThread(val conversationId: String) : AppScreen() {
         override val key: ScreenKey = "message_thread_$conversationId"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     /**
@@ -230,6 +361,11 @@ sealed class AppScreen : Screen {
      */
     data class ComposeMessage(val recipientId: String? = null) : AppScreen() {
         override val key: ScreenKey = "compose_message_${recipientId ?: "new"}"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     // ==================== Notifications ====================
@@ -239,6 +375,11 @@ sealed class AppScreen : Screen {
      */
     data object Notifications : AppScreen() {
         override val key: ScreenKey = "notifications"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 
     // ==================== Invitation Screens ====================
@@ -250,6 +391,11 @@ sealed class AppScreen : Screen {
      */
     data class AcceptInvitation(val inviteCode: String) : AppScreen() {
         override val key: ScreenKey = "accept_invitation_$inviteCode"
+
+        @Composable
+        override fun Content() {
+            // Content handled by navigator
+        }
     }
 }
 

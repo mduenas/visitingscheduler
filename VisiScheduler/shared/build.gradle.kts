@@ -93,6 +93,13 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.sqldelight.android.driver)
             implementation(libs.koin.android)
+
+            // Billing
+            implementation("com.android.billingclient:billing-ktx:6.1.0")
+
+            // Firebase
+            implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+            implementation("com.google.firebase:firebase-firestore-ktx")
         }
 
         val androidUnitTest by getting {
