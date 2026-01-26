@@ -16,6 +16,7 @@ import com.markduenas.visischeduler.presentation.ui.components.calendar.Calendar
 import com.markduenas.visischeduler.presentation.ui.components.calendar.TimeSlotPicker
 import com.markduenas.visischeduler.presentation.ui.components.calendar.DurationSelector
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.VisitDuration
+import kotlin.time.Clock
 import kotlinx.datetime.*
 
 @OptIn(ExperimentalMaterial3Api::class)

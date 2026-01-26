@@ -6,7 +6,7 @@ import com.markduenas.visischeduler.domain.entities.Visit
 import com.markduenas.visischeduler.domain.entities.VisitType
 import com.markduenas.visischeduler.domain.repository.RestrictionRepository
 import com.markduenas.visischeduler.domain.repository.VisitRepository
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone

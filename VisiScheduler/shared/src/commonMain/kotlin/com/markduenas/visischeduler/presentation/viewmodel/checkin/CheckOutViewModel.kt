@@ -7,7 +7,7 @@ import com.markduenas.visischeduler.domain.usecase.CheckOutUseCase
 import com.markduenas.visischeduler.domain.repository.CheckInRepository
 import com.markduenas.visischeduler.domain.repository.VisitRepository
 import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 
 /**

@@ -3,7 +3,7 @@ package com.markduenas.visischeduler.data.remote.dto
 import com.markduenas.visischeduler.domain.entities.Beneficiary
 import com.markduenas.visischeduler.domain.entities.BeneficiaryStatus
 import com.markduenas.visischeduler.domain.entities.EmergencyContact
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 

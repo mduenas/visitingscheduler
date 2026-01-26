@@ -1,7 +1,8 @@
 package com.markduenas.visischeduler.domain.entities
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 /**
@@ -23,8 +24,8 @@ data class Beneficiary(
     val photoUrl: String? = null,
     val emergencyContact: EmergencyContact? = null,
     val restrictions: List<String> = emptyList(),
-    val createdAt: Instant,
-    val updatedAt: Instant
+    @Contextual val createdAt: Instant,
+    @Contextual val updatedAt: Instant
 ) {
     val fullName: String
         get() = "$firstName $lastName"

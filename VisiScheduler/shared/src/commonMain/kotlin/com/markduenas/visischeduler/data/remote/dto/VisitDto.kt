@@ -4,7 +4,7 @@ import com.markduenas.visischeduler.domain.entities.AdditionalVisitor
 import com.markduenas.visischeduler.domain.entities.Visit
 import com.markduenas.visischeduler.domain.entities.VisitStatus
 import com.markduenas.visischeduler.domain.entities.VisitType
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Serializable

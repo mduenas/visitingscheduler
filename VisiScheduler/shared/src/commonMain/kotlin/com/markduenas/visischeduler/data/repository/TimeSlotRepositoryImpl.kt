@@ -91,7 +91,7 @@ class TimeSlotRepositoryImpl(
     override suspend fun getNextAvailableSlot(beneficiaryId: String): Result<TimeSlot?> {
         return try {
             // Get slots for next 30 days
-            val today = kotlinx.datetime.Clock.System.now()
+            val today = kotlin.time.Clock.System.now()
                 .toEpochMilliseconds()
                 .let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
                 .let { it.toLocalDateTime(TimeZone.currentSystemDefault()).date }
@@ -146,7 +146,7 @@ class TimeSlotRepositoryImpl(
     override suspend fun syncSlots(): Result<Unit> {
         return try {
             // Get current date range for syncing
-            val today = kotlinx.datetime.Clock.System.now()
+            val today = kotlin.time.Clock.System.now()
                 .toEpochMilliseconds()
                 .let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
                 .let { it.toLocalDateTime(TimeZone.currentSystemDefault()).date }

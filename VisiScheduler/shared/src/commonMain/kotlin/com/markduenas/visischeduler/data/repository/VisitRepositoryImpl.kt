@@ -12,7 +12,7 @@ import com.markduenas.visischeduler.domain.repository.VisitRepository
 import com.markduenas.visischeduler.domain.repository.VisitStatistics
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone

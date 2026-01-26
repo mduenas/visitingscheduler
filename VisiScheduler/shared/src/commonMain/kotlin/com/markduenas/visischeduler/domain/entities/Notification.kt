@@ -1,6 +1,8 @@
 package com.markduenas.visischeduler.domain.entities
 
+import kotlinx.serialization.Contextual
 import kotlinx.datetime.Instant
+import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 
 /**
@@ -15,16 +17,16 @@ data class Notification(
     val type: NotificationType,
     val priority: NotificationPriority = NotificationPriority.NORMAL,
     val isRead: Boolean = false,
-    val readAt: Instant? = null,
+    @Contextual val readAt: Instant? = null,
     val relatedEntityId: String? = null,
     val relatedEntityType: RelatedEntityType? = null,
     val actionUrl: String? = null,
     val metadata: Map<String, String> = emptyMap(),
-    val expiresAt: Instant? = null,
+    @Contextual val expiresAt: Instant? = null,
     val createdAt: Instant
 ) {
     val isExpired: Boolean
-        get() = expiresAt?.let { it < kotlinx.datetime.Clock.System.now() } ?: false
+        get() = expiresAt?.let { it < Clock.System.now() } ?: false
 }
 
 /**

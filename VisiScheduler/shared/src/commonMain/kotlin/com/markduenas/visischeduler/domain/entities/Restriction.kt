@@ -1,9 +1,10 @@
 package com.markduenas.visischeduler.domain.entities
 
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 /**
@@ -26,8 +27,8 @@ data class Restriction(
     val beneficiaryConstraints: BeneficiaryConstraints? = null,
     val facilityId: String? = null,
     val createdBy: String,
-    val createdAt: Instant,
-    val updatedAt: Instant
+    @Contextual val createdAt: Instant,
+    @Contextual val updatedAt: Instant
 )
 
 /**

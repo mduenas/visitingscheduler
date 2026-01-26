@@ -87,7 +87,9 @@ fun NotificationsListScreen(
                         TextButton(
                             onClick = {
                                 // Mark all as read
-                                notifications.replaceAll { it.copy(isRead = true) }
+                                val updated = notifications.map { it.copy(isRead = true) }
+                                notifications.clear()
+                                notifications.addAll(updated)
                             }
                         ) {
                             Text("Mark all read")

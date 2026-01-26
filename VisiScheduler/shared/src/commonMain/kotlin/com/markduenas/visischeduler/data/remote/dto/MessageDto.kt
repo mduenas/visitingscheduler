@@ -8,7 +8,7 @@ import com.markduenas.visischeduler.domain.entities.MessageMetadata
 import com.markduenas.visischeduler.domain.entities.MessageType
 import com.markduenas.visischeduler.domain.entities.Role
 import com.markduenas.visischeduler.domain.entities.TypingStatus
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 /**

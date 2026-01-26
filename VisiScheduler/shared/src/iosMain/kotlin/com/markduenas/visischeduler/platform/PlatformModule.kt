@@ -1,6 +1,8 @@
 package com.markduenas.visischeduler.platform
 
+import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.native.NativeSqliteDriver
+import com.markduenas.visischeduler.data.local.VisiSchedulerDatabase
 import org.koin.dsl.module
 
 /**
@@ -9,9 +11,9 @@ import org.koin.dsl.module
 val iosPlatformModule = module {
 
     // SQLDelight Native Driver for iOS
-    single {
+    single<SqlDriver> {
         NativeSqliteDriver(
-            // schema = VisiSchedulerDatabase.Schema,
+            schema = VisiSchedulerDatabase.Schema,
             name = "visischeduler.db"
         )
     }

@@ -1,6 +1,7 @@
 package com.markduenas.visischeduler.domain.entities
 
-import kotlinx.datetime.Instant
+import kotlinx.serialization.Contextual
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 /**
@@ -34,9 +35,9 @@ data class User(
     val profileImageUrl: String? = null,
     val isActive: Boolean = true,
     val isEmailVerified: Boolean = false,
-    val createdAt: Instant,
-    val updatedAt: Instant,
-    val lastLoginAt: Instant? = null,
+    @Contextual val createdAt: Instant,
+    @Contextual val updatedAt: Instant,
+    @Contextual val lastLoginAt: Instant? = null,
     /** Associated beneficiary IDs for visitors */
     val associatedBeneficiaryIds: List<String> = emptyList(),
     /** Notification preferences */

@@ -16,7 +16,7 @@ import com.markduenas.visischeduler.domain.entities.Restriction
 import com.markduenas.visischeduler.domain.entities.RestrictionScope
 import com.markduenas.visischeduler.domain.entities.RestrictionType
 import com.markduenas.visischeduler.presentation.ui.components.visitors.RestrictionCard
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn

@@ -1,8 +1,8 @@
 [versions]
 # Kotlin & KMP
-agp = "8.5.2"
-kotlin = "2.0.21"
-compose-multiplatform = "1.7.0"
+agp = "8.7.3"
+kotlin = "2.2.20"
+compose-multiplatform = "1.10.0"
 
 # Firebase
 firebase-bom = "33.7.0"
@@ -16,19 +16,19 @@ admob = "23.6.0"
 billing = "7.1.1"
 
 # KotlinX
-kotlinx-coroutines = "1.8.1"
-kotlinx-serialization = "1.7.3"
-kotlinx-datetime = "0.6.1"
+kotlinx-coroutines = "1.10.2"
+kotlinx-serialization = "1.9.0"
+kotlinx-datetime = "0.7.1"
 
 # Ktor
-ktor = "2.3.12"
+ktor = "3.1.1"
 
 # SQLDelight
 sqldelight = "2.0.2"
 
 # Koin
-koin = "3.5.6"
-koin-compose = "1.1.5"
+koin = "4.0.4"
+koin-compose = "4.0.4"
 
 # AndroidX
 androidx-lifecycle = "2.8.6"
@@ -40,7 +40,7 @@ androidx-work = "2.9.1"
 compose-bom = "2024.09.00"
 
 # Navigation
-voyager = "1.1.0-beta02"
+voyager = "1.1.0-beta03"
 
 # Image Loading
 coil = "2.7.0"

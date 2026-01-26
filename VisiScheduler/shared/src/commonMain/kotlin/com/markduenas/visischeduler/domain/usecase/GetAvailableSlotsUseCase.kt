@@ -5,7 +5,7 @@ import com.markduenas.visischeduler.domain.repository.RestrictionRepository
 import com.markduenas.visischeduler.domain.repository.TimeSlotRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone

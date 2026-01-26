@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.domain.entities.Visit
 import com.markduenas.visischeduler.presentation.ui.components.calendar.CompactDateHeader
 import com.markduenas.visischeduler.presentation.ui.components.calendar.VisitBlock
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone

@@ -8,6 +8,7 @@ import com.markduenas.visischeduler.domain.entities.User
 import com.markduenas.visischeduler.domain.repository.AuthRepository
 import com.markduenas.visischeduler.platform.SecureStorage
 import kotlinx.coroutines.flow.Flow
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.encodeToString
@@ -38,7 +39,7 @@ class AuthRepositoryImpl(
             // Store tokens securely
             secureStorage.putString(KEY_ACCESS_TOKEN, response.accessToken)
             secureStorage.putString(KEY_REFRESH_TOKEN, response.refreshToken)
-            secureStorage.putLong(KEY_TOKEN_EXPIRY, System.currentTimeMillis() + (response.expiresIn * 1000))
+            secureStorage.putLong(KEY_TOKEN_EXPIRY, Clock.System.now().toEpochMilliseconds() + (response.expiresIn * 1000))
 
             // Set token for API
             api.setAuthToken(response.accessToken)
@@ -66,7 +67,7 @@ class AuthRepositoryImpl(
             // Update tokens
             secureStorage.putString(KEY_ACCESS_TOKEN, response.accessToken)
             secureStorage.putString(KEY_REFRESH_TOKEN, response.refreshToken)
-            secureStorage.putLong(KEY_TOKEN_EXPIRY, System.currentTimeMillis() + (response.expiresIn * 1000))
+            secureStorage.putLong(KEY_TOKEN_EXPIRY, Clock.System.now().toEpochMilliseconds() + (response.expiresIn * 1000))
 
             api.setAuthToken(response.accessToken)
 
@@ -100,7 +101,7 @@ class AuthRepositoryImpl(
 
             secureStorage.putString(KEY_ACCESS_TOKEN, response.accessToken)
             secureStorage.putString(KEY_REFRESH_TOKEN, response.refreshToken)
-            secureStorage.putLong(KEY_TOKEN_EXPIRY, System.currentTimeMillis() + (response.expiresIn * 1000))
+            secureStorage.putLong(KEY_TOKEN_EXPIRY, Clock.System.now().toEpochMilliseconds() + (response.expiresIn * 1000))
 
             api.setAuthToken(response.accessToken)
 
@@ -178,7 +179,7 @@ class AuthRepositoryImpl(
 
             secureStorage.putString(KEY_ACCESS_TOKEN, response.accessToken)
             secureStorage.putString(KEY_REFRESH_TOKEN, response.refreshToken)
-            secureStorage.putLong(KEY_TOKEN_EXPIRY, System.currentTimeMillis() + (response.expiresIn * 1000))
+            secureStorage.putLong(KEY_TOKEN_EXPIRY, Clock.System.now().toEpochMilliseconds() + (response.expiresIn * 1000))
 
             api.setAuthToken(response.accessToken)
 
@@ -227,7 +228,7 @@ class AuthRepositoryImpl(
             // Store tokens securely
             secureStorage.putString(KEY_ACCESS_TOKEN, response.accessToken)
             secureStorage.putString(KEY_REFRESH_TOKEN, response.refreshToken)
-            secureStorage.putLong(KEY_TOKEN_EXPIRY, System.currentTimeMillis() + (response.expiresIn * 1000))
+            secureStorage.putLong(KEY_TOKEN_EXPIRY, Clock.System.now().toEpochMilliseconds() + (response.expiresIn * 1000))
 
             api.setAuthToken(response.accessToken)
 

@@ -5,7 +5,7 @@ import com.markduenas.visischeduler.domain.entities.Notification
 import com.markduenas.visischeduler.domain.entities.NotificationPriority
 import com.markduenas.visischeduler.domain.entities.NotificationType
 import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 /**
  * Filter options for notifications.

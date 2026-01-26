@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -147,8 +147,8 @@ class FirestoreVisitRepository(
             purpose = purpose,
             notes = notes,
             additionalVisitors = additionalVisitors,
-            createdAt = Instant.fromEpochMilliseconds(System.currentTimeMillis()),
-            updatedAt = Instant.fromEpochMilliseconds(System.currentTimeMillis())
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now()
         )
     }
 
@@ -165,7 +165,7 @@ class FirestoreVisitRepository(
         )
 
         firestore.updateVisit(visit.id, updates)
-        visit.copy(updatedAt = Instant.fromEpochMilliseconds(System.currentTimeMillis()))
+        visit.copy(updatedAt = Clock.System.now())
     }
 
     override suspend fun cancelVisit(visitId: String, reason: String): Result<Visit> = runCatching {

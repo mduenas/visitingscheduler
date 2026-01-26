@@ -9,7 +9,7 @@ import com.markduenas.visischeduler.domain.entities.TimeConstraints
 import com.markduenas.visischeduler.domain.entities.VisitorConstraints
 import com.markduenas.visischeduler.domain.repository.RestrictionRepository
 import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime

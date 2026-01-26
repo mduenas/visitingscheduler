@@ -19,7 +19,7 @@ import com.markduenas.visischeduler.firebase.FirestoreDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -66,7 +66,7 @@ class FirestoreCheckInRepository(
         CheckIn(
             id = id,
             visitId = visitId,
-            checkInTime = Instant.fromEpochMilliseconds(System.currentTimeMillis()),
+            checkInTime = Clock.System.now(),
             checkOutTime = null,
             method = method,
             notes = null,

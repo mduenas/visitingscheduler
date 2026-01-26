@@ -1,6 +1,7 @@
 package com.markduenas.visischeduler.domain.entities
 
-import kotlinx.datetime.Instant
+import kotlinx.serialization.Contextual
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 /**
@@ -32,14 +33,14 @@ data class Message(
     val senderId: String,
     val senderName: String,
     val content: String,
-    val timestamp: Instant,
+    @Contextual val timestamp: Instant,
     val isRead: Boolean = false,
     val type: MessageType = MessageType.TEXT,
     val metadata: MessageMetadata? = null,
     val attachmentUrl: String? = null,
     val replyToMessageId: String? = null,
-    val editedAt: Instant? = null,
-    val deletedAt: Instant? = null
+    @Contextual val editedAt: Instant? = null,
+    @Contextual val deletedAt: Instant? = null
 ) {
     /**
      * Whether this message has been edited.
@@ -101,9 +102,9 @@ data class ConversationParticipant(
     val userRole: Role,
     val profileImageUrl: String? = null,
     val isActive: Boolean = true,
-    val joinedAt: Instant,
+    @Contextual val joinedAt: Instant,
     val lastReadMessageId: String? = null,
-    val lastReadAt: Instant? = null
+    @Contextual val lastReadAt: Instant? = null
 )
 
 /**
@@ -121,9 +122,9 @@ data class Conversation(
     val isGroupConversation: Boolean = false,
     val isPinned: Boolean = false,
     val isMuted: Boolean = false,
-    val createdAt: Instant,
-    val updatedAt: Instant,
-    val archivedAt: Instant? = null
+    @Contextual val createdAt: Instant,
+    @Contextual val updatedAt: Instant,
+    @Contextual val archivedAt: Instant? = null
 ) {
     /**
      * Display name for the conversation.
@@ -167,7 +168,7 @@ data class TypingStatus(
     val userId: String,
     val userName: String,
     val isTyping: Boolean,
-    val timestamp: Instant
+    @Contextual val timestamp: Instant
 )
 
 /**
@@ -176,7 +177,7 @@ data class TypingStatus(
 @Serializable
 data class Contact(
     val user: User,
-    val lastMessageAt: Instant? = null,
+    @Contextual val lastMessageAt: Instant? = null,
     val conversationId: String? = null,
     val relationship: String? = null
 ) {

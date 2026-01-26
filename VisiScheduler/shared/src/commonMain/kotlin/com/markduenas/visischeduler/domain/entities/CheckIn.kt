@@ -1,6 +1,7 @@
 package com.markduenas.visischeduler.domain.entities
 
-import kotlinx.datetime.Instant
+import kotlinx.serialization.Contextual
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 /**
@@ -10,8 +11,8 @@ import kotlinx.serialization.Serializable
 data class CheckIn(
     val id: String,
     val visitId: String,
-    val checkInTime: Instant,
-    val checkOutTime: Instant?,
+    @Contextual val checkInTime: Instant,
+    @Contextual val checkOutTime: Instant?,
     val method: CheckInMethod,
     val notes: String?,
     val rating: Int? // 1-5 post-visit rating
@@ -60,8 +61,8 @@ enum class CheckInMethod {
 data class QrCodeData(
     val visitId: String,
     val visitorId: String,
-    val validFrom: Instant,
-    val validUntil: Instant,
+    @Contextual val validFrom: Instant,
+    @Contextual val validUntil: Instant,
     val signature: String // For verification
 ) {
     /**
@@ -92,8 +93,8 @@ data class QrCodeData(
 @Serializable
 sealed class QrValidationResult {
     data class Valid(val visit: Visit) : QrValidationResult()
-    data class Expired(val expiredAt: Instant) : QrValidationResult()
-    data class NotYetValid(val validFrom: Instant) : QrValidationResult()
+    data class Expired(@Contextual val expiredAt: Instant) : QrValidationResult()
+    data class NotYetValid(@Contextual val validFrom: Instant) : QrValidationResult()
     data class InvalidSignature(val message: String) : QrValidationResult()
     data class VisitNotFound(val visitId: String) : QrValidationResult()
     data class AlreadyCheckedIn(val checkIn: CheckIn) : QrValidationResult()
@@ -140,8 +141,8 @@ data class VisitorBadge(
     val visitorPhotoUrl: String?,
     val beneficiaryName: String,
     val beneficiaryRoom: String?,
-    val checkInTime: Instant,
-    val validUntil: Instant,
+    @Contextual val checkInTime: Instant,
+    @Contextual val validUntil: Instant,
     val qrCodeData: QrCodeData,
     val badgeNumber: String
 ) {

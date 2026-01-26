@@ -1,6 +1,7 @@
 package com.markduenas.visischeduler.domain.entities
 
-import kotlinx.datetime.Instant
+import kotlinx.serialization.Contextual
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Serializable
@@ -42,14 +43,14 @@ data class Visit(
     val purpose: String? = null,
     val notes: String? = null,
     val additionalVisitors: List<AdditionalVisitor> = emptyList(),
-    val checkInTime: Instant? = null,
-    val checkOutTime: Instant? = null,
+    @Contextual val checkInTime: Instant? = null,
+    @Contextual val checkOutTime: Instant? = null,
     val approvedBy: String? = null,
-    val approvedAt: Instant? = null,
+    @Contextual val approvedAt: Instant? = null,
     val denialReason: String? = null,
     val cancellationReason: String? = null,
     val cancelledBy: String? = null,
-    val cancelledAt: Instant? = null,
+    @Contextual val cancelledAt: Instant? = null,
     val createdAt: Instant,
     val updatedAt: Instant
 ) {

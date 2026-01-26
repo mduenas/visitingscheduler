@@ -56,7 +56,7 @@ import com.markduenas.visischeduler.presentation.ui.components.navigation.Bottom
 import com.markduenas.visischeduler.presentation.ui.components.navigation.NavBadgeCounts
 import com.markduenas.visischeduler.presentation.viewmodel.dashboard.DashboardUiState
 import com.markduenas.visischeduler.presentation.viewmodel.dashboard.DashboardViewModel
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

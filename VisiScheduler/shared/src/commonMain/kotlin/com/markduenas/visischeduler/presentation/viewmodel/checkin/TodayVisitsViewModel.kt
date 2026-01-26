@@ -8,7 +8,7 @@ import com.markduenas.visischeduler.domain.usecase.CheckInUseCase
 import com.markduenas.visischeduler.domain.repository.CheckInRepository
 import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

@@ -4,7 +4,7 @@ import com.markduenas.visischeduler.domain.entities.QrCodeData
 import com.markduenas.visischeduler.domain.entities.VisitStatus
 import com.markduenas.visischeduler.domain.repository.CheckInRepository
 import com.markduenas.visischeduler.domain.repository.VisitRepository
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 

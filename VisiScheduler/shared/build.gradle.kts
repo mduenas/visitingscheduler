@@ -10,10 +10,8 @@ plugins {
 
 kotlin {
     androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "17"
-            }
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
 
@@ -24,15 +22,56 @@ kotlin {
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "shared"
-            isStatic = true
+            isStatic = false
         }
     }
 
+    // Task to copy frameworks to xcode-frameworks directory
+    val xcodeFrameworksDir = project.layout.buildDirectory.dir("xcode-frameworks")
+
+    tasks.register<Copy>("copyDebugFrameworkToXcode") {
+        dependsOn("linkDebugFrameworkIosSimulatorArm64", "linkDebugFrameworkIosArm64")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        from(layout.buildDirectory.dir("bin/iosSimulatorArm64/debugFramework")) {
+            into("Debug/iphonesimulator")
+        }
+        from(layout.buildDirectory.dir("bin/iosArm64/debugFramework")) {
+            into("Debug/iphoneos")
+        }
+        into(xcodeFrameworksDir)
+    }
+
+    tasks.register<Copy>("copyReleaseFrameworkToXcode") {
+        dependsOn("linkReleaseFrameworkIosSimulatorArm64", "linkReleaseFrameworkIosArm64")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        from(layout.buildDirectory.dir("bin/iosSimulatorArm64/releaseFramework")) {
+            into("Release/iphonesimulator")
+        }
+        from(layout.buildDirectory.dir("bin/iosArm64/releaseFramework")) {
+            into("Release/iphoneos")
+        }
+        into(xcodeFrameworksDir)
+    }
+
+    // Add opt-in for experimental APIs
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
+        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalDuration")
+        freeCompilerArgs.add("-opt-in=kotlin.ExperimentalStdlibApi")
+        freeCompilerArgs.add("-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
+        freeCompilerArgs.add("-opt-in=kotlinx.coroutines.FlowPreview")
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
+    @Suppress("DEPRECATION")
     sourceSets {
         commonMain.dependencies {
             // Compose Multiplatform
             implementation(compose.runtime)
             implementation(compose.foundation)
+            implementation(compose.material)
             implementation(compose.material3)
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
@@ -76,20 +115,21 @@ kotlin {
             implementation(kotlin("test-annotations-common"))
 
             // Coroutines testing
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 
             // Flow testing - Turbine
-            implementation("app.cash.turbine:turbine:1.0.0")
+            implementation("app.cash.turbine:turbine:1.1.0")
 
             // Koin testing
-            implementation("io.insert-koin:koin-test:3.5.3")
+            implementation("io.insert-koin:koin-test:4.0.4")
 
             // SQLDelight test driver
-            implementation("app.cash.sqldelight:sqlite-driver:2.0.1")
+            implementation("app.cash.sqldelight:sqlite-driver:2.0.2")
         }
 
         androidMain.dependencies {
             implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.sqldelight.android.driver)
             implementation(libs.koin.android)
@@ -97,46 +137,56 @@ kotlin {
             // Billing
             implementation("com.android.billingclient:billing-ktx:6.1.0")
 
-            // Firebase
-            implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
-            implementation("com.google.firebase:firebase-firestore-ktx")
-            implementation("com.google.firebase:firebase-auth-ktx")
-            implementation("com.google.firebase:firebase-analytics-ktx")
-            implementation("com.google.firebase:firebase-crashlytics-ktx")
+            // Firebase (explicit versions without BOM)
+            implementation("com.google.firebase:firebase-firestore-ktx:25.1.4")
+            implementation("com.google.firebase:firebase-auth-ktx:23.2.0")
+            implementation("com.google.firebase:firebase-analytics-ktx:22.4.0")
+            implementation("com.google.firebase:firebase-crashlytics-ktx:19.4.2")
 
             // Security - EncryptedSharedPreferences
             implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
             // Google Ads (AdMob)
-            implementation("com.google.android.gms:play-services-ads:22.6.0")
+            implementation("com.google.android.gms:play-services-ads:23.6.0")
         }
 
         val androidUnitTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
                 implementation("junit:junit:4.13.2")
-                implementation("io.mockk:mockk:1.13.9")
-                implementation("io.mockk:mockk-agent-jvm:1.13.9")
-                implementation("org.robolectric:robolectric:4.11.1")
-                implementation("androidx.test:core:1.5.0")
-                implementation("androidx.test.ext:junit:1.1.5")
+                implementation("io.mockk:mockk:1.13.16")
+                implementation("io.mockk:mockk-agent-jvm:1.13.16")
+                implementation("org.robolectric:robolectric:4.14.1")
+                implementation("androidx.test:core:1.6.1")
+                implementation("androidx.test.ext:junit:1.2.1")
             }
         }
 
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
-            implementation(libs.sqldelight.native.driver)
+        val iosMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+                implementation(libs.sqldelight.native.driver)
+            }
         }
+
+        val iosX64Main by getting { dependsOn(iosMain) }
+        val iosArm64Main by getting { dependsOn(iosMain) }
+        val iosSimulatorArm64Main by getting { dependsOn(iosMain) }
 
         val iosTest by creating {
             dependsOn(commonTest.get())
         }
+
+        val iosX64Test by getting { dependsOn(iosTest) }
+        val iosArm64Test by getting { dependsOn(iosTest) }
+        val iosSimulatorArm64Test by getting { dependsOn(iosTest) }
     }
 }
 
 android {
     namespace = "com.markduenas.visischeduler.shared"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 26

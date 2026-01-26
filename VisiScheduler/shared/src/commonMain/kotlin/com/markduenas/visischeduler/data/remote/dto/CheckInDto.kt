@@ -6,7 +6,7 @@ import com.markduenas.visischeduler.domain.entities.ExpectedVisitor
 import com.markduenas.visischeduler.domain.entities.ExpectedVisitorStatus
 import com.markduenas.visischeduler.domain.entities.QrCodeData
 import com.markduenas.visischeduler.domain.entities.VisitorBadge
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 /**

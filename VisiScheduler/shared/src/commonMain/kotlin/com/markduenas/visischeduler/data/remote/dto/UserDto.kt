@@ -3,7 +3,7 @@ package com.markduenas.visischeduler.data.remote.dto
 import com.markduenas.visischeduler.domain.entities.NotificationPreferences
 import com.markduenas.visischeduler.domain.entities.Role
 import com.markduenas.visischeduler.domain.entities.User
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
