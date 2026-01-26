@@ -6,7 +6,9 @@ import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.markduenas.visischeduler.presentation.ui.screens.auth.ForgotPasswordScreen
 import com.markduenas.visischeduler.presentation.ui.screens.auth.LoginScreen
+import com.markduenas.visischeduler.presentation.ui.screens.auth.RegisterScreen
 import com.markduenas.visischeduler.presentation.ui.screens.auth.SplashScreen
 import com.markduenas.visischeduler.presentation.ui.screens.calendar.CalendarScreen
 import com.markduenas.visischeduler.presentation.ui.screens.dashboard.DashboardScreen
@@ -25,7 +27,9 @@ import com.markduenas.visischeduler.presentation.ui.screens.settings.SettingsScr
 import com.markduenas.visischeduler.presentation.ui.screens.visitors.AddVisitorScreen
 import com.markduenas.visischeduler.presentation.ui.screens.visitors.VisitorDetailsScreen
 import com.markduenas.visischeduler.presentation.ui.screens.visitors.VisitorListScreen
+import com.markduenas.visischeduler.presentation.viewmodel.auth.ForgotPasswordViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.auth.LoginViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.auth.RegisterViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.dashboard.DashboardViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.messaging.ConversationsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.CalendarViewModel
@@ -99,11 +103,18 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // TODO: Implement RegisterScreen
             val navigator = LocalNavigator.currentOrThrow
-            PlaceholderScreen(
-                title = "Register",
-                onNavigateBack = { navigator.pop() }
+            val viewModel: RegisterViewModel = koinInject()
+
+            RegisterScreen(
+                viewModel = viewModel,
+                onRegisterSuccess = {
+                    // After successful registration, go back to login
+                    navigator.pop()
+                },
+                onNavigateToLogin = {
+                    navigator.pop()
+                }
             )
         }
     }
@@ -116,11 +127,14 @@ sealed class AppScreen : Screen {
 
         @Composable
         override fun Content() {
-            // TODO: Implement ForgotPasswordScreen
             val navigator = LocalNavigator.currentOrThrow
-            PlaceholderScreen(
-                title = "Forgot Password",
-                onNavigateBack = { navigator.pop() }
+            val viewModel: ForgotPasswordViewModel = koinInject()
+
+            ForgotPasswordScreen(
+                viewModel = viewModel,
+                onNavigateToLogin = {
+                    navigator.pop()
+                }
             )
         }
     }
