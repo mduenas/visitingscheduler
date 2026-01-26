@@ -43,7 +43,7 @@ compose-bom = "2024.09.00"
 voyager = "1.1.0-beta02"
 
 # Image Loading
-coil = "3.0.0-alpha10"
+coil = "2.7.0"
 
 # Logging
 napier = "2.7.1"
@@ -122,8 +122,7 @@ voyager-koin = { module = "cafe.adriel.voyager:voyager-koin", version.ref = "voy
 voyager-bottom-sheet-navigator = { module = "cafe.adriel.voyager:voyager-bottom-sheet-navigator", version.ref = "voyager" }
 
 # Image Loading
-coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
-coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor", version.ref = "coil" }
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
 
 # Logging
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }

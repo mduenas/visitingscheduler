@@ -232,7 +232,7 @@ fun AddRestrictionScreen(
                     }
                 }
 
-                null, RestrictionType.BENEFICIARY_BASED, RestrictionType.RELATIONSHIP_BASED -> {
+                null, RestrictionType.BENEFICIARY_BASED, RestrictionType.RELATIONSHIP_BASED, RestrictionType.COMBINED -> {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(

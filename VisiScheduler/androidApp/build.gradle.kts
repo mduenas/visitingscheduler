@@ -52,7 +52,6 @@ kotlin {
 
             // Image Loading
             implementation(libs.coil.compose)
-            implementation(libs.coil.network.ktor)
 
             // Logging
             implementation(libs.napier)
