@@ -246,7 +246,7 @@ class CheckInRepositoryImpl(
 
     // Local cache operations
     private suspend fun cacheCheckIn(checkIn: CheckIn) {
-        database.checkInQueries.insertCheckIn(
+        database.visiSchedulerQueries.insertCheckIn(
             id = checkIn.id,
             visit_id = checkIn.visitId,
             check_in_time = checkIn.checkInTime.toEpochMilliseconds(),
@@ -258,7 +258,7 @@ class CheckInRepositoryImpl(
     }
 
     private fun getCheckInFromCache(checkInId: String): CheckIn? {
-        return database.checkInQueries.selectCheckInById(checkInId).executeAsOneOrNull()?.let {
+        return database.visiSchedulerQueries.selectCheckInById(checkInId).executeAsOneOrNull()?.let {
             CheckIn(
                 id = it.id,
                 visitId = it.visit_id,
@@ -272,7 +272,7 @@ class CheckInRepositoryImpl(
     }
 
     private fun getActiveCheckInFromCache(visitId: String): CheckIn? {
-        return database.checkInQueries.selectActiveCheckInByVisitId(visitId).executeAsOneOrNull()?.let {
+        return database.visiSchedulerQueries.selectActiveCheckInByVisitId(visitId).executeAsOneOrNull()?.let {
             CheckIn(
                 id = it.id,
                 visitId = it.visit_id,
@@ -286,7 +286,7 @@ class CheckInRepositoryImpl(
     }
 
     private fun getCheckInsFromCache(visitId: String): List<CheckIn> {
-        return database.checkInQueries.selectCheckInsByVisitId(visitId).executeAsList().map {
+        return database.visiSchedulerQueries.selectCheckInsByVisitId(visitId).executeAsList().map {
             CheckIn(
                 id = it.id,
                 visitId = it.visit_id,

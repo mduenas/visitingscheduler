@@ -112,30 +112,30 @@ class ProfileViewModel(
         launchSafe {
             updateState { copy(isSaving = true, error = null) }
 
-            when (val result = userRepository.updateProfile(
+            userRepository.updateProfile(
                 firstName = firstName,
                 lastName = lastName,
                 phoneNumber = phoneNumber,
                 profileImageUrl = currentState.avatarUri
-            )) {
-                is Result.Success -> {
+            ).fold(
+                onSuccess = { user ->
                     updateState {
                         copy(
-                            user = result.getOrNull(),
+                            user = user,
                             isEditing = false,
                             isSaving = false
                         )
                     }
                     showSnackbar("Profile updated successfully")
-                }
-                is Result.Failure -> {
+                },
+                onFailure = { error ->
                     val exception = AppException.UnknownException(
-                        result.exceptionOrNull()?.message ?: "Failed to update profile"
+                        error.message ?: "Failed to update profile"
                     )
                     updateState { copy(error = exception, isSaving = false) }
                     showSnackbar(exception.message)
                 }
-            }
+            )
         }
     }
 
@@ -146,19 +146,18 @@ class ProfileViewModel(
         launchSafe {
             updateState { copy(isUploadingAvatar = true, error = null) }
 
-            when (val result = userRepository.uploadProfileImage(imageData)) {
-                is Result.Success -> {
-                    val imageUrl = result.getOrNull()
+            userRepository.uploadProfileImage(imageData).fold(
+                onSuccess = { imageUrl ->
                     updateState { copy(avatarUri = imageUrl, isUploadingAvatar = false) }
-                }
-                is Result.Failure -> {
+                },
+                onFailure = { error ->
                     val exception = AppException.UnknownException(
-                        result.exceptionOrNull()?.message ?: "Failed to upload image"
+                        error.message ?: "Failed to upload image"
                     )
                     updateState { copy(error = exception, isUploadingAvatar = false) }
                     showSnackbar(exception.message)
                 }
-            }
+            )
         }
     }
 
@@ -176,16 +175,16 @@ class ProfileViewModel(
         launchSafe {
             updateState { copy(isLoading = true) }
 
-            when (authRepository.logout()) {
-                is Result.Success -> {
+            authRepository.logout().fold(
+                onSuccess = {
                     navigate("login")
-                }
-                is Result.Failure -> {
+                },
+                onFailure = {
                     updateState { copy(isLoading = false) }
                     // Still navigate to login even if logout API call fails
                     navigate("login")
                 }
-            }
+            )
         }
     }
 
@@ -196,9 +195,8 @@ class ProfileViewModel(
         launchSafe {
             updateState { copy(isLoading = true, error = null) }
 
-            when (val result = userRepository.syncUser()) {
-                is Result.Success -> {
-                    val user = result.getOrNull()
+            userRepository.syncUser().fold(
+                onSuccess = { user ->
                     updateState {
                         copy(
                             user = user,
@@ -207,14 +205,14 @@ class ProfileViewModel(
                         )
                     }
                     user?.let { loadVisitStats(it) }
-                }
-                is Result.Failure -> {
+                },
+                onFailure = { error ->
                     val exception = AppException.UnknownException(
-                        result.exceptionOrNull()?.message ?: "Failed to refresh profile"
+                        error.message ?: "Failed to refresh profile"
                     )
                     updateState { copy(error = exception, isLoading = false) }
                 }
-            }
+            )
         }
     }
 

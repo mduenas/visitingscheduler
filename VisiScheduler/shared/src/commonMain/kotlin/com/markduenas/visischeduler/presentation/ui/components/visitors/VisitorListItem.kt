@@ -328,3 +328,102 @@ fun VisitorListItemCompact(
         }
     }
 }
+
+/**
+ * A simpler list item component for displaying visitor information.
+ * Used when you have individual fields instead of a User object.
+ *
+ * @param name The visitor's full name
+ * @param initials The visitor's initials for the avatar
+ * @param relationship Optional relationship description
+ * @param subtitle Optional subtitle text (e.g., last visit date)
+ * @param onClick Callback when the item is clicked
+ * @param trailingContent Optional trailing content (e.g., action buttons)
+ * @param modifier Modifier to apply to the item
+ */
+@Composable
+fun VisitorListItem(
+    name: String,
+    initials: String,
+    relationship: String?,
+    subtitle: String?,
+    onClick: () -> Unit,
+    trailingContent: @Composable (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Avatar with initials
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = initials,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Info
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                if (relationship != null) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = relationship,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                if (subtitle != null) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            // Trailing content
+            if (trailingContent != null) {
+                trailingContent()
+            }
+        }
+    }
+}

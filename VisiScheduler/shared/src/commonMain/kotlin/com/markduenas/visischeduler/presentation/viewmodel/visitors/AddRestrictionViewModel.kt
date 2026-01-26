@@ -372,12 +372,16 @@ class AddRestrictionViewModel(
             errors["endDate"] = "End date is required for non-permanent restrictions"
         }
 
-        if (currentState.endDate != null && currentState.endDate < currentState.startDate) {
+        val endDate = currentState.endDate
+        val startDate = currentState.startDate
+        if (endDate != null && endDate < startDate) {
             errors["endDate"] = "End date must be after start date"
         }
 
-        if (currentState.earliestStartTime != null && currentState.latestEndTime != null &&
-            currentState.earliestStartTime >= currentState.latestEndTime) {
+        val earliestStartTime = currentState.earliestStartTime
+        val latestEndTime = currentState.latestEndTime
+        if (earliestStartTime != null && latestEndTime != null &&
+            earliestStartTime >= latestEndTime) {
             errors["time"] = "End time must be after start time"
         }
 

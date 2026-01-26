@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
 /**
@@ -188,7 +190,7 @@ class BeneficiaryRepositoryImpl(
                 emergencyContact = beneficiary.emergencyContact?.let {
                     json.encodeToString(EmergencyContact.serializer(), it)
                 },
-                restrictions = json.encodeToString(kotlinx.serialization.builtins.ListSerializer(kotlinx.serialization.builtins.serializer<String>()), beneficiary.restrictions),
+                restrictions = json.encodeToString(ListSerializer(String.serializer()), beneficiary.restrictions),
                 createdAt = beneficiary.createdAt.toString(),
                 updatedAt = beneficiary.updatedAt.toString()
             )

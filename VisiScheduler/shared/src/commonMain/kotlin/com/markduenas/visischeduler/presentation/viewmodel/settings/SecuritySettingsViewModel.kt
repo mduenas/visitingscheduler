@@ -155,27 +155,27 @@ class SecuritySettingsViewModel(
     fun toggleBiometric(enabled: Boolean) {
         launchSafe {
             if (enabled) {
-                when (authRepository.enableBiometric()) {
-                    is Result.Success -> {
+                authRepository.enableBiometric().fold(
+                    onSuccess = {
                         secureStorage.putBoolean(KEY_BIOMETRIC_ENABLED, true)
                         updateState { copy(biometricEnabled = true) }
                         showSnackbar("Biometric login enabled")
-                    }
-                    is Result.Failure -> {
+                    },
+                    onFailure = {
                         showSnackbar("Failed to enable biometric login")
                     }
-                }
+                )
             } else {
-                when (authRepository.disableBiometric()) {
-                    is Result.Success -> {
+                authRepository.disableBiometric().fold(
+                    onSuccess = {
                         secureStorage.putBoolean(KEY_BIOMETRIC_ENABLED, false)
                         updateState { copy(biometricEnabled = false) }
                         showSnackbar("Biometric login disabled")
-                    }
-                    is Result.Failure -> {
+                    },
+                    onFailure = {
                         showSnackbar("Failed to disable biometric login")
                     }
-                }
+                )
             }
         }
     }
@@ -276,11 +276,11 @@ class SecuritySettingsViewModel(
         launchSafe {
             updateState { copy(isChangingPassword = true, error = null) }
 
-            when (val result = userRepository.changePassword(
+            userRepository.changePassword(
                 currentPassword = currentState.currentPassword,
                 newPassword = currentState.newPassword
-            )) {
-                is Result.Success -> {
+            ).fold(
+                onSuccess = {
                     updateState {
                         copy(
                             isChangingPassword = false,
@@ -293,10 +293,10 @@ class SecuritySettingsViewModel(
                     }
                     showSnackbar("Password changed successfully")
                     navigateBack()
-                }
-                is Result.Failure -> {
+                },
+                onFailure = { error ->
                     val exception = AppException.UnknownException(
-                        result.exceptionOrNull()?.message ?: "Failed to change password"
+                        error.message ?: "Failed to change password"
                     )
                     updateState {
                         copy(
@@ -306,7 +306,7 @@ class SecuritySettingsViewModel(
                     }
                     showSnackbar(exception.message)
                 }
-            }
+            )
         }
     }
 
