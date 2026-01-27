@@ -355,6 +355,79 @@ class FirestoreDatabase {
         return listenToQuery(COLLECTION_NOTIFICATIONS, "userId", userId, "timestamp", 50)
     }
 
+    // ==================== Time Slot Operations ====================
+
+    suspend fun createTimeSlot(data: Map<String, Any?>): String {
+        return createFromMap(COLLECTION_TIME_SLOTS, data)
+    }
+
+    suspend fun getTimeSlot(slotId: String): DocumentSnapshot? {
+        return getById(COLLECTION_TIME_SLOTS, slotId)
+    }
+
+    suspend fun updateTimeSlot(slotId: String, updates: Map<String, Any?>) {
+        updateFromMap(COLLECTION_TIME_SLOTS, slotId, updates)
+    }
+
+    suspend fun deleteTimeSlot(slotId: String) {
+        delete(COLLECTION_TIME_SLOTS, slotId)
+    }
+
+    suspend fun getTimeSlotsForDate(facilityId: String, date: String): List<DocumentSnapshot> {
+        return firestore.collection(COLLECTION_TIME_SLOTS)
+            .whereEqualTo("facilityId", facilityId)
+            .whereEqualTo("date", date)
+            .get()
+            .await()
+            .documents
+    }
+
+    suspend fun getAvailableTimeSlotsForDate(date: String): List<DocumentSnapshot> {
+        return firestore.collection(COLLECTION_TIME_SLOTS)
+            .whereEqualTo("date", date)
+            .whereEqualTo("isAvailable", true)
+            .get()
+            .await()
+            .documents
+    }
+
+    suspend fun getTimeSlotsForDateRange(startDate: String, endDate: String): List<DocumentSnapshot> {
+        return firestore.collection(COLLECTION_TIME_SLOTS)
+            .whereGreaterThanOrEqualTo("date", startDate)
+            .whereLessThanOrEqualTo("date", endDate)
+            .get()
+            .await()
+            .documents
+    }
+
+    fun listenToTimeSlotsForDate(facilityId: String, date: String): Flow<List<DocumentSnapshot>> = callbackFlow {
+        val listener = firestore.collection(COLLECTION_TIME_SLOTS)
+            .whereEqualTo("facilityId", facilityId)
+            .whereEqualTo("date", date)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                trySend(snapshot?.documents ?: emptyList())
+            }
+        awaitClose { listener.remove() }
+    }
+
+    fun listenToAvailableTimeSlots(date: String): Flow<List<DocumentSnapshot>> = callbackFlow {
+        val listener = firestore.collection(COLLECTION_TIME_SLOTS)
+            .whereEqualTo("date", date)
+            .whereEqualTo("isAvailable", true)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                trySend(snapshot?.documents ?: emptyList())
+            }
+        awaitClose { listener.remove() }
+    }
+
     // ==================== Batch Operations ====================
 
     /**

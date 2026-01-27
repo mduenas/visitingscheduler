@@ -5,18 +5,21 @@ import com.markduenas.visischeduler.data.repository.FirestoreBeneficiaryReposito
 import com.markduenas.visischeduler.data.repository.FirestoreCheckInRepository
 import com.markduenas.visischeduler.data.repository.FirestoreMessageRepository
 import com.markduenas.visischeduler.data.repository.FirestoreRestrictionRepository
+import com.markduenas.visischeduler.data.repository.FirestoreTimeSlotRepository
 import com.markduenas.visischeduler.data.repository.FirestoreUserRepository
 import com.markduenas.visischeduler.data.repository.FirestoreVisitRepository
 import com.markduenas.visischeduler.domain.repository.BeneficiaryRepository
 import com.markduenas.visischeduler.domain.repository.CheckInRepository
 import com.markduenas.visischeduler.domain.repository.MessageRepository
 import com.markduenas.visischeduler.domain.repository.RestrictionRepository
+import com.markduenas.visischeduler.domain.repository.TimeSlotRepository
 import com.markduenas.visischeduler.domain.repository.UserRepository
 import com.markduenas.visischeduler.domain.repository.VisitRepository
 import org.koin.dsl.module
 
 /**
  * Koin module for Firebase dependencies.
+ * Provides Firebase services (Analytics, Crashlytics) and Firestore repositories.
  */
 val firebaseModule = module {
     // Firebase services
@@ -33,11 +36,13 @@ val firebaseModule = module {
     // Firebase Auth Manager
     single { FirebaseAuthManager() }
 
-    // Firestore Repositories
+    // Firestore Repositories - These override the default local implementations
+    // when Firebase is enabled, providing cloud sync functionality
     single<UserRepository> { FirestoreUserRepository(get(), get()) }
     single<VisitRepository> { FirestoreVisitRepository(get(), get()) }
     single<BeneficiaryRepository> { FirestoreBeneficiaryRepository(get(), get()) }
     single<RestrictionRepository> { FirestoreRestrictionRepository(get(), get()) }
+    single<TimeSlotRepository> { FirestoreTimeSlotRepository(get()) }
     single<MessageRepository> {
         FirestoreMessageRepository(
             get(),
