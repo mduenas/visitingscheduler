@@ -106,6 +106,11 @@ kotlin {
             // Koin
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
+
+            // GitLive Firebase KMP SDK (cross-platform Firestore & Auth)
+            implementation(libs.gitlive.firebase.app)
+            implementation(libs.gitlive.firebase.auth)
+            implementation(libs.gitlive.firebase.firestore)
         }
 
         commonTest.dependencies {

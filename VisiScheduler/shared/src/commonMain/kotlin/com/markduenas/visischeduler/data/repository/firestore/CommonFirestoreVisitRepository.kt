@@ -1,8 +1,5 @@
-package com.markduenas.visischeduler.data.repository
+package com.markduenas.visischeduler.data.repository.firestore
 
-import com.google.firebase.Timestamp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
 import com.markduenas.visischeduler.domain.entities.AdditionalVisitor
 import com.markduenas.visischeduler.domain.entities.Visit
 import com.markduenas.visischeduler.domain.entities.VisitStatus
@@ -10,22 +7,24 @@ import com.markduenas.visischeduler.domain.entities.VisitType
 import com.markduenas.visischeduler.domain.repository.VisitRepository
 import com.markduenas.visischeduler.domain.repository.VisitStatistics
 import com.markduenas.visischeduler.firebase.FirestoreDatabase
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.firestore.DocumentSnapshot
+import dev.gitlive.firebase.firestore.FieldValue
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlin.time.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 /**
- * Firestore implementation of VisitRepository.
- * Uses Firebase Firestore as the backend database.
+ * Cross-platform Firestore implementation of VisitRepository.
+ * Uses GitLive Firebase KMP SDK for both Android and iOS.
  */
-class FirestoreVisitRepository(
+class CommonFirestoreVisitRepository(
     private val firestore: FirestoreDatabase,
     private val auth: FirebaseAuth
 ) : VisitRepository {
@@ -129,11 +128,12 @@ class FirestoreVisitRepository(
                     "age" to av.age
                 )
             },
-            "createdAt" to Timestamp.now(),
-            "updatedAt" to Timestamp.now()
+            "createdAt" to firestore.serverTimestamp(),
+            "updatedAt" to firestore.serverTimestamp()
         )
 
         val id = firestore.createVisit(visitData)
+        val now = Clock.System.now()
 
         Visit(
             id = id,
@@ -147,8 +147,8 @@ class FirestoreVisitRepository(
             purpose = purpose,
             notes = notes,
             additionalVisitors = additionalVisitors,
-            createdAt = Clock.System.now(),
-            updatedAt = Clock.System.now()
+            createdAt = now,
+            updatedAt = now
         )
     }
 
@@ -160,8 +160,17 @@ class FirestoreVisitRepository(
             "visitType" to visit.visitType.name,
             "purpose" to visit.purpose,
             "notes" to visit.notes,
-            "additionalVisitors" to visit.additionalVisitors,
-            "updatedAt" to Timestamp.now()
+            "additionalVisitors" to visit.additionalVisitors.map { av ->
+                mapOf(
+                    "id" to av.id,
+                    "firstName" to av.firstName,
+                    "lastName" to av.lastName,
+                    "relationship" to av.relationship,
+                    "isMinor" to av.isMinor,
+                    "age" to av.age
+                )
+            },
+            "updatedAt" to firestore.serverTimestamp()
         )
 
         firestore.updateVisit(visit.id, updates)
@@ -175,8 +184,8 @@ class FirestoreVisitRepository(
             "status" to VisitStatus.CANCELLED.name,
             "cancelledBy" to userId,
             "cancellationReason" to reason,
-            "cancelledAt" to Timestamp.now(),
-            "updatedAt" to Timestamp.now()
+            "cancelledAt" to firestore.serverTimestamp(),
+            "updatedAt" to firestore.serverTimestamp()
         )
 
         firestore.updateVisit(visitId, updates)
@@ -191,8 +200,8 @@ class FirestoreVisitRepository(
         val updates = mutableMapOf<String, Any?>(
             "status" to VisitStatus.APPROVED.name,
             "approvedBy" to userId,
-            "approvedAt" to Timestamp.now(),
-            "updatedAt" to Timestamp.now()
+            "approvedAt" to firestore.serverTimestamp(),
+            "updatedAt" to firestore.serverTimestamp()
         )
         notes?.let { updates["approvalNotes"] = it }
 
@@ -209,7 +218,7 @@ class FirestoreVisitRepository(
             "status" to VisitStatus.DENIED.name,
             "deniedBy" to userId,
             "denialReason" to reason,
-            "updatedAt" to Timestamp.now()
+            "updatedAt" to firestore.serverTimestamp()
         )
 
         firestore.updateVisit(visitId, updates)
@@ -221,8 +230,8 @@ class FirestoreVisitRepository(
     override suspend fun checkIn(visitId: String): Result<Visit> = runCatching {
         val updates = mapOf<String, Any?>(
             "status" to VisitStatus.CHECKED_IN.name,
-            "checkInTime" to Timestamp.now(),
-            "updatedAt" to Timestamp.now()
+            "checkInTime" to firestore.serverTimestamp(),
+            "updatedAt" to firestore.serverTimestamp()
         )
 
         firestore.updateVisit(visitId, updates)
@@ -234,8 +243,8 @@ class FirestoreVisitRepository(
     override suspend fun checkOut(visitId: String): Result<Visit> = runCatching {
         val updates = mapOf<String, Any?>(
             "status" to VisitStatus.COMPLETED.name,
-            "checkOutTime" to Timestamp.now(),
-            "updatedAt" to Timestamp.now()
+            "checkOutTime" to firestore.serverTimestamp(),
+            "updatedAt" to firestore.serverTimestamp()
         )
 
         firestore.updateVisit(visitId, updates)
@@ -247,7 +256,7 @@ class FirestoreVisitRepository(
     override suspend fun markAsNoShow(visitId: String): Result<Visit> = runCatching {
         val updates = mapOf<String, Any?>(
             "status" to VisitStatus.NO_SHOW.name,
-            "updatedAt" to Timestamp.now()
+            "updatedAt" to firestore.serverTimestamp()
         )
 
         firestore.updateVisit(visitId, updates)
@@ -266,8 +275,8 @@ class FirestoreVisitRepository(
             "scheduledDate" to newDate.toString(),
             "startTime" to newStartTime.toString(),
             "endTime" to newEndTime.toString(),
-            "status" to VisitStatus.PENDING.name, // Requires re-approval
-            "updatedAt" to Timestamp.now()
+            "status" to VisitStatus.PENDING.name,
+            "updatedAt" to firestore.serverTimestamp()
         )
 
         firestore.updateVisit(visitId, updates)
@@ -307,7 +316,7 @@ class FirestoreVisitRepository(
             val map = item as? Map<*, *> ?: return@mapNotNull null
             try {
                 AdditionalVisitor(
-                    id = map["id"] as? String ?: java.util.UUID.randomUUID().toString(),
+                    id = map["id"] as? String ?: generateId(),
                     firstName = map["firstName"] as? String ?: "",
                     lastName = map["lastName"] as? String ?: "",
                     relationship = map["relationship"] as? String ?: "",
@@ -320,42 +329,36 @@ class FirestoreVisitRepository(
         }
     }
 
+    private fun generateId(): String {
+        return (1..20).map { ('a'..'z').random() }.joinToString("")
+    }
+
     private fun DocumentSnapshot.toVisit(): Visit? {
         return try {
             Visit(
                 id = id,
-                beneficiaryId = getString("beneficiaryId") ?: return null,
-                visitorId = getString("visitorId") ?: return null,
-                scheduledDate = LocalDate.parse(getString("scheduledDate") ?: return null),
-                startTime = LocalTime.parse(getString("startTime") ?: return null),
-                endTime = LocalTime.parse(getString("endTime") ?: return null),
-                status = VisitStatus.valueOf(getString("status") ?: "PENDING"),
-                visitType = VisitType.valueOf(getString("visitType") ?: "IN_PERSON"),
-                purpose = getString("purpose"),
-                notes = getString("notes"),
+                beneficiaryId = get("beneficiaryId") ?: return null,
+                visitorId = get("visitorId") ?: return null,
+                scheduledDate = LocalDate.parse(get("scheduledDate") ?: return null),
+                startTime = LocalTime.parse(get("startTime") ?: return null),
+                endTime = LocalTime.parse(get("endTime") ?: return null),
+                status = VisitStatus.valueOf(get("status") ?: "PENDING"),
+                visitType = VisitType.valueOf(get("visitType") ?: "IN_PERSON"),
+                purpose = get("purpose"),
+                notes = get("notes"),
                 additionalVisitors = parseAdditionalVisitors(get("additionalVisitors")),
-                checkInTime = getTimestamp("checkInTime")?.let {
-                    Instant.fromEpochMilliseconds(it.toDate().time)
-                },
-                checkOutTime = getTimestamp("checkOutTime")?.let {
-                    Instant.fromEpochMilliseconds(it.toDate().time)
-                },
-                approvedBy = getString("approvedBy"),
-                approvedAt = getTimestamp("approvedAt")?.let {
-                    Instant.fromEpochMilliseconds(it.toDate().time)
-                },
-                denialReason = getString("denialReason"),
-                cancellationReason = getString("cancellationReason"),
-                cancelledBy = getString("cancelledBy"),
-                cancelledAt = getTimestamp("cancelledAt")?.let {
-                    Instant.fromEpochMilliseconds(it.toDate().time)
-                },
-                createdAt = getTimestamp("createdAt")?.let {
-                    Instant.fromEpochMilliseconds(it.toDate().time)
-                } ?: Instant.fromEpochMilliseconds(0),
-                updatedAt = getTimestamp("updatedAt")?.let {
-                    Instant.fromEpochMilliseconds(it.toDate().time)
-                } ?: Instant.fromEpochMilliseconds(0)
+                checkInTime = get<Long?>("checkInTime")?.let { Instant.fromEpochMilliseconds(it) },
+                checkOutTime = get<Long?>("checkOutTime")?.let { Instant.fromEpochMilliseconds(it) },
+                approvedBy = get("approvedBy"),
+                approvedAt = get<Long?>("approvedAt")?.let { Instant.fromEpochMilliseconds(it) },
+                denialReason = get("denialReason"),
+                cancellationReason = get("cancellationReason"),
+                cancelledBy = get("cancelledBy"),
+                cancelledAt = get<Long?>("cancelledAt")?.let { Instant.fromEpochMilliseconds(it) },
+                createdAt = get<Long?>("createdAt")?.let { Instant.fromEpochMilliseconds(it) }
+                    ?: Instant.fromEpochMilliseconds(0),
+                updatedAt = get<Long?>("updatedAt")?.let { Instant.fromEpochMilliseconds(it) }
+                    ?: Instant.fromEpochMilliseconds(0)
             )
         } catch (e: Exception) {
             null

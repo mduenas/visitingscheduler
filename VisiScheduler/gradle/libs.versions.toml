@@ -9,6 +9,9 @@ firebase-bom = "33.7.0"
 google-services = "4.4.2"
 firebase-crashlytics-plugin = "3.0.2"
 
+# GitLive Firebase KMP SDK
+gitlive-firebase = "2.1.0"
+
 # AdMob
 admob = "23.6.0"
 
@@ -140,7 +143,7 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 kotest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 
-# Firebase
+# Firebase (Native Android)
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics-ktx" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics-ktx" }
@@ -148,6 +151,11 @@ firebase-firestore = { module = "com.google.firebase:firebase-firestore-ktx" }
 firebase-auth = { module = "com.google.firebase:firebase-auth-ktx" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging-ktx" }
 firebase-storage = { module = "com.google.firebase:firebase-storage-ktx" }
+
+# GitLive Firebase KMP SDK (Cross-platform)
+gitlive-firebase-app = { module = "dev.gitlive:firebase-app", version.ref = "gitlive-firebase" }
+gitlive-firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "gitlive-firebase" }
+gitlive-firebase-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = "gitlive-firebase" }
 
 # AdMob
 admob-android = { module = "com.google.android.gms:play-services-ads", version.ref = "admob" }
