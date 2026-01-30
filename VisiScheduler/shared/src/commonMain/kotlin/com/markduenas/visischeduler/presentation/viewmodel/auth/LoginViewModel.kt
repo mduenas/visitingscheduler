@@ -224,9 +224,10 @@ class LoginViewModel(
     }
 
     private fun validateEmail(email: String): String? {
+        val trimmedEmail = email.trim()
         return when {
-            email.isBlank() -> "Email is required"
-            !isValidEmailFormat(email) -> "Please enter a valid email address"
+            trimmedEmail.isBlank() -> "Email is required"
+            !isValidEmailFormat(trimmedEmail) -> "Please enter a valid email address"
             else -> null
         }
     }

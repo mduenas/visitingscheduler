@@ -16,11 +16,13 @@ class LoginUseCase(
      * @return Result containing the authenticated User or an error
      */
     suspend operator fun invoke(email: String, password: String): Result<User> {
+        val trimmedEmail = email.trim()
+
         // Validate input
-        if (email.isBlank()) {
+        if (trimmedEmail.isBlank()) {
             return Result.failure(LoginException.InvalidEmail("Email cannot be empty"))
         }
-        if (!isValidEmail(email)) {
+        if (!isValidEmail(trimmedEmail)) {
             return Result.failure(LoginException.InvalidEmail("Invalid email format"))
         }
         if (password.isBlank()) {
@@ -30,7 +32,7 @@ class LoginUseCase(
             return Result.failure(LoginException.InvalidPassword("Password must be at least 8 characters"))
         }
 
-        return authRepository.login(email.trim().lowercase(), password)
+        return authRepository.login(trimmedEmail.lowercase(), password)
     }
 
     /**

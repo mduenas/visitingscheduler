@@ -111,10 +111,11 @@ class ForgotPasswordViewModel(
     }
 
     private fun validateEmail(email: String): String? {
+        val trimmedEmail = email.trim()
         val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
         return when {
-            email.isBlank() -> "Email is required"
-            !emailRegex.matches(email) -> "Please enter a valid email address"
+            trimmedEmail.isBlank() -> "Email is required"
+            !emailRegex.matches(trimmedEmail) -> "Please enter a valid email address"
             else -> null
         }
     }

@@ -79,7 +79,6 @@
 				28EE710CDFE304FC54D742C2 /* Pods-iosApp.debug.xcconfig */,
 				03CCE6C14E1FB3989F113D60 /* Pods-iosApp.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -91,12 +90,11 @@
 			buildConfigurationList = 7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "iosApp" */;
 			buildPhases = (
 				5ED35BBEA1E28DD5AE9BF49D /* [CP] Check Pods Manifest.lock */,
-				7555FFB5242A651A00829871 /* Compile Kotlin Framework */,
 				7555FF77242A565900829871 /* Sources */,
 				7555FF78242A565900829871 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
-				7555FFB4242A651A00829871 /* Embed Frameworks */,
 				DC2DDC1CBC59D0664D0A236F /* [CP] Embed Pods Frameworks */,
+				DB4F5CF169726E6BD59C6AA1 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -176,7 +174,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		7555FFB4242A651A00829871 /* Embed Frameworks */ = {
+		DB4F5CF169726E6BD59C6AA1 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -185,33 +183,15 @@
 			);
 			inputPaths = (
 			);
-			name = "Embed Frameworks";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/shared.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Strip version number from SDK_NAME (e.g., iphonesimulator26.0 -> iphonesimulator)\nSDK_PLATFORM=$(echo ${SDK_NAME} | sed 's/[0-9.]*$//')\n\nif [ \"${CONFIGURATION}\" = \"Release\" ]; then\n    FRAMEWORK_PATH=\"${SRCROOT}/../shared/build/xcode-frameworks/Release/${SDK_PLATFORM}\"\nelse\n    FRAMEWORK_PATH=\"${SRCROOT}/../shared/build/xcode-frameworks/Debug/${SDK_PLATFORM}\"\nfi\n\necho \"Looking for framework at: ${FRAMEWORK_PATH}\"\n\nif [ -d \"${FRAMEWORK_PATH}/shared.framework\" ]; then\n    echo \"Copying framework to ${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/\"\n    cp -R \"${FRAMEWORK_PATH}/shared.framework\" \"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/\"\nelse\n    echo \"ERROR: Framework not found at ${FRAMEWORK_PATH}/shared.framework\"\n    exit 1\nfi\n";
-		};
-		7555FFB5242A651A00829871 /* Compile Kotlin Framework */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Compile Kotlin Framework";
+			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\n\n# Determine target based on platform and architecture\nif [[ \"${PLATFORM_NAME}\" == *simulator* ]]; then\n    if [[ \"${ARCHS}\" == *arm64* ]]; then\n        TARGET=\"SimulatorArm64\"\n    else\n        TARGET=\"X64\"\n    fi\nelse\n    if [[ \"${ARCHS}\" == *arm64* ]]; then\n        TARGET=\"Arm64\"\n    else\n        TARGET=\"X64\"\n    fi\nfi\n\nif [ \"${CONFIGURATION}\" = \"Release\" ]; then\n    ./gradlew :shared:linkReleaseFrameworkIos${TARGET} :shared:copyReleaseFrameworkToXcode\nelse\n    ./gradlew :shared:linkDebugFrameworkIos${TARGET} :shared:copyDebugFrameworkToXcode\nfi\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-resources.sh\"\n";
+			showEnvVarsInLog = 0;
 		};
 		DC2DDC1CBC59D0664D0A236F /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -220,8 +200,12 @@
 			);
 			inputFileListPaths = (
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -364,7 +348,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A8AAE5A4T6;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -372,18 +357,21 @@
 					"$(SRCROOT)/../shared/build/bin/iosArm64/debugFramework",
 				);
 				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = VisiScheduler;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
 					shared,
 					"-lsqlite3",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.markduenas.visischeduler;
+				PRODUCT_BUNDLE_IDENTIFIER = com.markduenas.visischeduler.visischeduler;
 				PRODUCT_NAME = VisiScheduler;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -396,7 +384,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A8AAE5A4T6;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -404,18 +393,21 @@
 					"$(SRCROOT)/../shared/build/bin/iosArm64/debugFramework",
 				);
 				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = VisiScheduler;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
 					shared,
 					"-lsqlite3",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.markduenas.visischeduler;
+				PRODUCT_BUNDLE_IDENTIFIER = com.markduenas.visischeduler.visischeduler;
 				PRODUCT_NAME = VisiScheduler;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
