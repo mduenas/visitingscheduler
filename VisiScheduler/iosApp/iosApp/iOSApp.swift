@@ -4,6 +4,7 @@ import FirebaseCore
 import FirebaseAnalytics
 import FirebaseCrashlytics
 import FirebaseFirestore
+import GoogleMobileAds
 
 /// AppDelegate for Firebase initialization
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -39,6 +40,18 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         Analytics.logEvent(AnalyticsEventAppOpen, parameters: nil)
 
         print("Firebase initialized successfully")
+
+        // Initialize Google Mobile Ads SDK
+        MobileAds.shared.start { status in
+            print("AdMob SDK initialized")
+
+            // Log adapter statuses for debugging
+            let adapterStatuses = status.adapterStatusesByClassName
+            for (adapter, adapterStatus) in adapterStatuses {
+                print("AdMob Adapter: \(adapter), State: \(adapterStatus.state.rawValue)")
+            }
+        }
+
         return true
     }
 }

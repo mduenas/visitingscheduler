@@ -4,6 +4,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.window.ComposeUIViewController
 import com.markduenas.visischeduler.di.initKoin
+import com.markduenas.visischeduler.di.iosAdModule
+import com.markduenas.visischeduler.platform.iosPlatformModule
 import com.markduenas.visischeduler.presentation.AuthStateProvider
 import com.markduenas.visischeduler.presentation.DefaultAuthStateProvider
 import com.markduenas.visischeduler.presentation.VisiSchedulerApp
@@ -12,7 +14,9 @@ import kotlinx.coroutines.delay
 import platform.UIKit.UIViewController
 
 fun MainViewController(): UIViewController {
-    initKoin()
+    initKoin(
+        platformModules = listOf(iosPlatformModule, iosAdModule)
+    )
     return ComposeUIViewController {
         // Create auth state provider that simulates session check
         val authStateProvider = remember { DefaultAuthStateProvider() }

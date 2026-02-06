@@ -1314,6 +1314,8 @@ PODS:
     - FirebaseCoreExtension (~> 12.1.0)
     - GoogleUtilities/Environment (~> 8.1)
     - GTMSessionFetcher/Core (< 6.0, >= 3.4)
+  - Google-Mobile-Ads-SDK (12.9.0):
+    - GoogleUserMessagingPlatform (>= 1.1)
   - GoogleAdsOnDeviceConversion (2.2.0):
     - GoogleUtilities/Logger (~> 8.1)
     - GoogleUtilities/Network (~> 8.1)
@@ -1343,6 +1345,7 @@ PODS:
   - GoogleDataTransport (10.1.0):
     - nanopb (~> 3.30910.0)
     - PromisesObjC (~> 2.4)
+  - GoogleUserMessagingPlatform (3.0.0)
   - GoogleUtilities/AppDelegateSwizzler (8.1.0):
     - GoogleUtilities/Environment
     - GoogleUtilities/Logger
@@ -1473,6 +1476,10 @@ PODS:
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
   - RecaptchaInterop (101.0.0)
+  - shared (1.0):
+    - FirebaseAuth (~> 12.1)
+    - FirebaseCore (~> 12.1)
+    - FirebaseFirestore (~> 12.1)
 
 DEPENDENCIES:
   - Firebase/Analytics
@@ -1482,6 +1489,8 @@ DEPENDENCIES:
   - Firebase/Firestore
   - Firebase/Messaging
   - Firebase/Storage
+  - Google-Mobile-Ads-SDK
+  - shared (from `../shared`)
 
 SPEC REPOS:
   trunk:
@@ -1504,9 +1513,11 @@ SPEC REPOS:
     - FirebaseSessions
     - FirebaseSharedSwift
     - FirebaseStorage
+    - Google-Mobile-Ads-SDK
     - GoogleAdsOnDeviceConversion
     - GoogleAppMeasurement
     - GoogleDataTransport
+    - GoogleUserMessagingPlatform
     - GoogleUtilities
     - "gRPC-C++"
     - gRPC-Core
@@ -1516,6 +1527,10 @@ SPEC REPOS:
     - PromisesObjC
     - PromisesSwift
     - RecaptchaInterop
+
+EXTERNAL SOURCES:
+  shared:
+    :path: "../shared"
 
 SPEC CHECKSUMS:
   abseil: a05cc83bf02079535e17169a73c5be5ba47f714b
@@ -1537,9 +1552,11 @@ SPEC CHECKSUMS:
   FirebaseSessions: 778459b8339fcd8201361f552db4d7223f74eb72
   FirebaseSharedSwift: ee4344de8a4d5b5290de3600667307a44f85fd40
   FirebaseStorage: 91432ddfb31e83de1e9fa5833b4399b39bc722f7
+  Google-Mobile-Ads-SDK: 36cce7d8dc1b615145d02491c8bf5640ef854e7c
   GoogleAdsOnDeviceConversion: b225b50f2ee6bbf856fd51a26684929b32657215
   GoogleAppMeasurement: 61605c4152a142d797383a713ecfa5df98fe46ca
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
+  GoogleUserMessagingPlatform: f8d0cdad3ca835406755d0a69aa634f00e76d576
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   "gRPC-C++": cc207623316fb041a7a3e774c252cf68a058b9e8
   gRPC-Core: 860978b7db482de8b4f5e10677216309b5ff6330
@@ -1549,7 +1566,8 @@ SPEC CHECKSUMS:
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
+  shared: 9e41086ef75b7a325e9a4cc10cbf3c2229f30233
 
-PODFILE CHECKSUM: 453669255d50c2e2c04b8200a245b6dc8276f8d2
+PODFILE CHECKSUM: c269fbffd81cf70f3fc025f8399fb502d31cb1d0
 
 COCOAPODS: 1.16.2

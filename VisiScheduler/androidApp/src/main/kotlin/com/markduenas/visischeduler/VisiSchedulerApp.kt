@@ -6,7 +6,7 @@ import com.google.firebase.FirebaseApp
 import com.markduenas.visischeduler.data.billing.BillingManager
 import com.markduenas.visischeduler.di.adModule
 import com.markduenas.visischeduler.di.initKoin
-import com.markduenas.visischeduler.firebase.firebaseModule
+import com.markduenas.visischeduler.di.firestoreModule
 import com.markduenas.visischeduler.platform.androidPlatformModule
 import org.koin.android.ext.android.inject
 import io.github.aakira.napier.DebugAntilog
@@ -47,7 +47,7 @@ class VisiSchedulerApp : Application() {
                 androidLogger(if (BuildConfig.DEBUG) Level.DEBUG else Level.NONE)
                 androidContext(this@VisiSchedulerApp)
             },
-            platformModules = listOf(androidPlatformModule, firebaseModule, adModule)
+            platformModules = listOf(androidPlatformModule, firestoreModule, adModule)
         )
 
         // Initialize Billing Manager

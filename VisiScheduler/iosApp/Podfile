@@ -6,6 +6,9 @@ install! 'cocoapods', :disable_input_output_paths => true
 target 'iosApp' do
   use_frameworks!
 
+  # Kotlin Multiplatform shared module
+  pod 'shared', :path => '../shared'
+
   # Firebase
   pod 'Firebase/Core'
   pod 'Firebase/Analytics'
@@ -14,6 +17,9 @@ target 'iosApp' do
   pod 'Firebase/Auth'
   pod 'Firebase/Messaging'
   pod 'Firebase/Storage'
+
+  # Google Mobile Ads (AdMob)
+  pod 'Google-Mobile-Ads-SDK'
 
   # FirebaseUI for easier authentication (optional)
   # pod 'FirebaseUI/Auth'

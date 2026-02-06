@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinSerialization)
+    kotlin("native.cocoapods")
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.sqldelight)
@@ -15,44 +16,34 @@ kotlin {
         }
     }
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
+    // iOS targets
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    // CocoaPods configuration for iOS dependencies
+    cocoapods {
+        summary = "VisiScheduler shared module"
+        homepage = "https://github.com/markduenas/visischeduler"
+        version = "1.0"
+        ios.deploymentTarget = "15.0"
+        podfile = project.file("../iosApp/Podfile")
+
+        framework {
             baseName = "shared"
-            isStatic = false
+            isStatic = true // Static linking to avoid framework lookup issues
         }
-    }
 
-    // Task to copy frameworks to xcode-frameworks directory
-    val xcodeFrameworksDir = project.layout.buildDirectory.dir("xcode-frameworks")
-
-    tasks.register<Copy>("copyDebugFrameworkToXcode") {
-        dependsOn("linkDebugFrameworkIosSimulatorArm64", "linkDebugFrameworkIosArm64")
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        from(layout.buildDirectory.dir("bin/iosSimulatorArm64/debugFramework")) {
-            into("Debug/iphonesimulator")
+        // Firebase pods required by GitLive SDK
+        pod("FirebaseCore") {
+            version = "~> 12.1"
         }
-        from(layout.buildDirectory.dir("bin/iosArm64/debugFramework")) {
-            into("Debug/iphoneos")
+        pod("FirebaseFirestore") {
+            version = "~> 12.1"
         }
-        into(xcodeFrameworksDir)
-    }
-
-    tasks.register<Copy>("copyReleaseFrameworkToXcode") {
-        dependsOn("linkReleaseFrameworkIosSimulatorArm64", "linkReleaseFrameworkIosArm64")
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        from(layout.buildDirectory.dir("bin/iosSimulatorArm64/releaseFramework")) {
-            into("Release/iphonesimulator")
+        pod("FirebaseAuth") {
+            version = "~> 12.1"
         }
-        from(layout.buildDirectory.dir("bin/iosArm64/releaseFramework")) {
-            into("Release/iphoneos")
-        }
-        into(xcodeFrameworksDir)
     }
 
     // Add opt-in for experimental APIs

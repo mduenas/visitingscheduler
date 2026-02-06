@@ -11,7 +11,7 @@ import com.markduenas.visischeduler.di.commonModule
 import com.markduenas.visischeduler.di.dataModule
 import com.markduenas.visischeduler.di.domainModule
 import com.markduenas.visischeduler.di.platformModule
-import com.markduenas.visischeduler.firebase.firebaseModule
+import com.markduenas.visischeduler.di.firestoreModule
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import org.koin.android.ext.koin.androidContext
@@ -45,7 +45,7 @@ class VisiSchedulerApp : Application() {
                 platformModule(),
                 dataModule,
                 domainModule,
-                firebaseModule,  // Firebase services and Firestore repositories
+                firestoreModule,  // Firebase services and Firestore repositories
                 androidAppModule
             )
         }
