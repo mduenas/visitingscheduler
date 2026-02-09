@@ -137,6 +137,7 @@ fun SettingsScreen(
                 )
             }
             item {
+                @Suppress("DEPRECATION")
                 SettingsNavItem(
                     icon = Icons.Default.Help,
                     title = "Help & Support",

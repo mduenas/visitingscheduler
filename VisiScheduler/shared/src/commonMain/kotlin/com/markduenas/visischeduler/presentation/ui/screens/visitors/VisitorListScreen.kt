@@ -68,6 +68,7 @@ fun VisitorListScreen(
     Scaffold(
         topBar = {
             if (showSearch) {
+                @Suppress("DEPRECATION")
                 SearchBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
@@ -120,6 +121,7 @@ fun VisitorListScreen(
                 .padding(padding)
         ) {
             // Tabs
+            @Suppress("DEPRECATION")
             TabRow(selectedTabIndex = selectedTab) {
                 tabs.forEachIndexed { index, title ->
                     val count = allVisitors.count { visitor ->

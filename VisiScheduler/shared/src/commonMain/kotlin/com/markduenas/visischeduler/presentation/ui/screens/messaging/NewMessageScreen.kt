@@ -111,6 +111,7 @@ fun NewMessageScreen(
             }
 
             // Search bar
+            @Suppress("DEPRECATION")
             SearchBar(
                 query = uiState.searchQuery,
                 onQueryChange = { viewModel.onSearchQueryChanged(it) },

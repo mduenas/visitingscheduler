@@ -231,6 +231,7 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Role Selection Dropdown
+                    @Suppress("DEPRECATION")
                     ExposedDropdownMenuBox(
                         expanded = roleDropdownExpanded,
                         onExpandedChange = { if (!uiState.isLoading) roleDropdownExpanded = it }

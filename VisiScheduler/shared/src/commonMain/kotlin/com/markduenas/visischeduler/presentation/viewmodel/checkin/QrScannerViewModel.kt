@@ -6,7 +6,7 @@ import com.markduenas.visischeduler.domain.entities.Visit
 import com.markduenas.visischeduler.domain.usecase.ScanQrCodeUseCase
 import com.markduenas.visischeduler.domain.usecase.ScanResult
 import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 /**
  * ViewModel for QR scanner screen.

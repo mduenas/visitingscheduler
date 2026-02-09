@@ -194,6 +194,7 @@ fun SecuritySettingsScreen(
             }
 
             item {
+                @Suppress("DEPRECATION")
                 ExposedDropdownMenuBox(
                     expanded = showTimeoutMenu,
                     onExpandedChange = { showTimeoutMenu = it }

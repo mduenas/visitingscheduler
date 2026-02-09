@@ -607,7 +607,7 @@ private fun formatDate(date: LocalDate): String {
     return "${monthNames[date.monthNumber - 1]} ${date.dayOfMonth}"
 }
 
-private fun formatTime(instant: kotlinx.datetime.Instant): String {
+private fun formatTime(instant: kotlin.time.Instant): String {
     val zone = TimeZone.currentSystemDefault()
     val dateTime = instant.toLocalDateTime(zone)
     val hour = dateTime.hour

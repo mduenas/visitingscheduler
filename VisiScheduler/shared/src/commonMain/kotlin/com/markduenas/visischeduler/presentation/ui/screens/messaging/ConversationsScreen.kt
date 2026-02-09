@@ -224,6 +224,7 @@ private fun ConversationsSearchBar(
     onClear: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    @Suppress("DEPRECATION")
     SearchBar(
         query = query,
         onQueryChange = onQueryChange,

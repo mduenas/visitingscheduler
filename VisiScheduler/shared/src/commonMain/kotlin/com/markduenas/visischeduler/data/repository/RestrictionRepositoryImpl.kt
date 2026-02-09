@@ -341,8 +341,8 @@ class RestrictionRepositoryImpl(
             beneficiaryConstraints = entity.beneficiaryConstraints?.let { json.decodeFromString(it) },
             facilityId = entity.facilityId,
             createdBy = entity.createdBy,
-            createdAt = kotlinx.datetime.Instant.parse(entity.createdAt),
-            updatedAt = kotlinx.datetime.Instant.parse(entity.updatedAt)
+            createdAt = kotlin.time.Instant.parse(entity.createdAt),
+            updatedAt = kotlin.time.Instant.parse(entity.updatedAt)
         )
     }
 }

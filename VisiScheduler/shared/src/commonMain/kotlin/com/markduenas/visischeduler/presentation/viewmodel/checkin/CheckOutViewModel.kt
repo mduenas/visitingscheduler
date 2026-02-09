@@ -8,7 +8,7 @@ import com.markduenas.visischeduler.domain.repository.CheckInRepository
 import com.markduenas.visischeduler.domain.repository.VisitRepository
 import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
 import kotlin.time.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 /**
  * ViewModel for check-out screen.

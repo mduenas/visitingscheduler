@@ -1,7 +1,7 @@
 package com.markduenas.visischeduler.domain.entities
 
 import kotlinx.serialization.Contextual
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 

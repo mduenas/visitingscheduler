@@ -11,7 +11,7 @@ import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 /**
  * Visit frequency statistics for a visitor.

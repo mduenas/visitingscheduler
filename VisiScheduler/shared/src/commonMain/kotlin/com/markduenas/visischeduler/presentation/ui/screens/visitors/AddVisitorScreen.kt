@@ -95,6 +95,7 @@ fun AddVisitorScreen(
             )
 
             // Relationship Dropdown
+            @Suppress("DEPRECATION")
             ExposedDropdownMenuBox(
                 expanded = showRelationshipMenu,
                 onExpandedChange = { showRelationshipMenu = it }

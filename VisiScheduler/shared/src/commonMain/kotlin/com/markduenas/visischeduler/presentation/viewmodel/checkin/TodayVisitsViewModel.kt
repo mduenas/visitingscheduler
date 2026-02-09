@@ -181,7 +181,7 @@ data class TodayVisitsViewState(
     val statusFilter: VisitorStatusFilter = VisitorStatusFilter.ALL,
     val isLoading: Boolean = false,
     val checkingInVisitorId: String? = null,
-    val lastUpdated: kotlinx.datetime.Instant? = null
+    val lastUpdated: kotlin.time.Instant? = null
 ) {
     val displayedVisitors: List<ExpectedVisitor>
         get() {

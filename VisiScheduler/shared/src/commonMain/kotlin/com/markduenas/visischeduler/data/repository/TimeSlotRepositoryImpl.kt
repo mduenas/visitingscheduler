@@ -93,7 +93,7 @@ class TimeSlotRepositoryImpl(
             // Get slots for next 30 days
             val today = kotlin.time.Clock.System.now()
                 .toEpochMilliseconds()
-                .let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
+                .let { kotlin.time.Instant.fromEpochMilliseconds(it) }
                 .let { it.toLocalDateTime(TimeZone.currentSystemDefault()).date }
 
             val endDate = today.plus(30, DateTimeUnit.DAY)
@@ -148,7 +148,7 @@ class TimeSlotRepositoryImpl(
             // Get current date range for syncing
             val today = kotlin.time.Clock.System.now()
                 .toEpochMilliseconds()
-                .let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) }
+                .let { kotlin.time.Instant.fromEpochMilliseconds(it) }
                 .let { it.toLocalDateTime(TimeZone.currentSystemDefault()).date }
 
             val endDate = today.plus(30, DateTimeUnit.DAY)

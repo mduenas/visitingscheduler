@@ -376,16 +376,16 @@ class VisitRepositoryImpl(
             purpose = entity.purpose,
             notes = entity.notes,
             additionalVisitors = json.decodeFromString(entity.additionalVisitors),
-            checkInTime = entity.checkInTime?.let { kotlinx.datetime.Instant.parse(it) },
-            checkOutTime = entity.checkOutTime?.let { kotlinx.datetime.Instant.parse(it) },
+            checkInTime = entity.checkInTime?.let { kotlin.time.Instant.parse(it) },
+            checkOutTime = entity.checkOutTime?.let { kotlin.time.Instant.parse(it) },
             approvedBy = entity.approvedBy,
-            approvedAt = entity.approvedAt?.let { kotlinx.datetime.Instant.parse(it) },
+            approvedAt = entity.approvedAt?.let { kotlin.time.Instant.parse(it) },
             denialReason = entity.denialReason,
             cancellationReason = entity.cancellationReason,
             cancelledBy = entity.cancelledBy,
-            cancelledAt = entity.cancelledAt?.let { kotlinx.datetime.Instant.parse(it) },
-            createdAt = kotlinx.datetime.Instant.parse(entity.createdAt),
-            updatedAt = kotlinx.datetime.Instant.parse(entity.updatedAt)
+            cancelledAt = entity.cancelledAt?.let { kotlin.time.Instant.parse(it) },
+            createdAt = kotlin.time.Instant.parse(entity.createdAt),
+            updatedAt = kotlin.time.Instant.parse(entity.updatedAt)
         )
     }
 }

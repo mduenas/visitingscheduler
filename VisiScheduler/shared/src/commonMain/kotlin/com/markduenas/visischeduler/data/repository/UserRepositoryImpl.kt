@@ -314,9 +314,9 @@ class UserRepositoryImpl(
             profileImageUrl = entity.profileImageUrl,
             isActive = entity.isActive == 1L,
             isEmailVerified = entity.isEmailVerified == 1L,
-            createdAt = kotlinx.datetime.Instant.parse(entity.createdAt),
-            updatedAt = kotlinx.datetime.Instant.parse(entity.updatedAt),
-            lastLoginAt = entity.lastLoginAt?.let { kotlinx.datetime.Instant.parse(it) },
+            createdAt = kotlin.time.Instant.parse(entity.createdAt),
+            updatedAt = kotlin.time.Instant.parse(entity.updatedAt),
+            lastLoginAt = entity.lastLoginAt?.let { kotlin.time.Instant.parse(it) },
             associatedBeneficiaryIds = json.decodeFromString(entity.associatedBeneficiaryIds),
             notificationPreferences = json.decodeFromString(entity.notificationPreferences)
         )
