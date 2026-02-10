@@ -1,357 +1,126 @@
 package com.markduenas.visischeduler.domain.entities
 
 import com.markduenas.visischeduler.testutil.*
-import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlin.test.*
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
 
 /**
- * Tests for Visit entity covering state transitions, validation,
- * and business rules.
+ * Tests for Visit entity covering creation, properties, and status handling.
  *
  * @test Visit Entity
  * @prerequisites None - pure domain tests
  */
 class VisitTest {
 
-    private lateinit var testClock: TestClock
-
     @BeforeTest
     fun setup() {
-        testClock = TestClock()
         TestFixtures.resetIdCounter()
     }
 
     // ============================================================
-    // STATE TRANSITION TESTS
+    // CREATION TESTS
     // ============================================================
 
     @Test
-    fun `should allow transition from PENDING to APPROVED`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(status = VisitStatus.PENDING)
-
-        // Act
-        val result = visit.canTransitionTo(VisitStatus.APPROVED)
+    fun `should create visit with required fields`() {
+        // Arrange & Act
+        val visit = TestFixtures.createVisit(
+            beneficiaryId = "beneficiary-1",
+            visitorId = "visitor-1",
+        )
 
         // Assert
-        assertTrue(result, "PENDING -> APPROVED should be allowed")
+        assertNotNull(visit)
+        assertEquals("beneficiary-1", visit.beneficiaryId)
+        assertEquals("visitor-1", visit.visitorId)
     }
 
     @Test
-    fun `should allow transition from PENDING to DENIED`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(status = VisitStatus.PENDING)
-
-        // Act
-        val result = visit.canTransitionTo(VisitStatus.DENIED)
+    fun `should create visit with default pending status`() {
+        // Arrange & Act
+        val visit = TestFixtures.createVisit()
 
         // Assert
-        assertTrue(result, "PENDING -> DENIED should be allowed")
+        assertEquals(VisitStatus.PENDING, visit.status)
     }
 
     @Test
-    fun `should allow transition from PENDING to CANCELLED`() {
+    fun `should create visit with scheduled date and times`() {
         // Arrange
-        val visit = TestFixtures.createVisit(status = VisitStatus.PENDING)
+        val date = LocalDate(2024, 6, 15)
+        val startTime = LocalTime(10, 0)
+        val endTime = LocalTime(11, 0)
 
         // Act
-        val result = visit.canTransitionTo(VisitStatus.CANCELLED)
+        val visit = TestFixtures.createVisit(
+            scheduledDate = date,
+            startTime = startTime,
+            endTime = endTime,
+        )
 
         // Assert
-        assertTrue(result, "PENDING -> CANCELLED should be allowed")
+        assertEquals(date, visit.scheduledDate)
+        assertEquals(startTime, visit.startTime)
+        assertEquals(endTime, visit.endTime)
+    }
+
+    // ============================================================
+    // STATUS TESTS
+    // ============================================================
+
+    @Test
+    fun `should create pending visit`() {
+        // Arrange & Act
+        val visit = TestFixtures.createVisit(status = VisitStatus.PENDING)
+
+        // Assert
+        assertEquals(VisitStatus.PENDING, visit.status)
+        assertNull(visit.approvedBy)
+        assertNull(visit.approvedAt)
     }
 
     @Test
-    fun `should allow transition from PENDING to WAITLISTED`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(status = VisitStatus.PENDING)
-
-        // Act
-        val result = visit.canTransitionTo(VisitStatus.WAITLISTED)
-
-        // Assert
-        assertTrue(result, "PENDING -> WAITLISTED should be allowed")
-    }
-
-    @Test
-    fun `should allow transition from APPROVED to CHECKED_IN`() {
-        // Arrange
+    fun `should create approved visit`() {
+        // Arrange & Act
         val visit = TestFixtures.createApprovedVisit()
 
-        // Act
-        val result = visit.canTransitionTo(VisitStatus.CHECKED_IN)
-
         // Assert
-        assertTrue(result, "APPROVED -> CHECKED_IN should be allowed")
+        assertEquals(VisitStatus.APPROVED, visit.status)
+        assertNotNull(visit.approvedBy)
+        assertNotNull(visit.approvedAt)
     }
 
     @Test
-    fun `should allow transition from APPROVED to CANCELLED`() {
-        // Arrange
-        val visit = TestFixtures.createApprovedVisit()
-
-        // Act
-        val result = visit.canTransitionTo(VisitStatus.CANCELLED)
+    fun `should create denied visit with reason`() {
+        // Arrange & Act
+        val visit = TestFixtures.createDeniedVisit(
+            denialReason = "Conflict with medical procedure",
+        )
 
         // Assert
-        assertTrue(result, "APPROVED -> CANCELLED should be allowed")
+        assertEquals(VisitStatus.DENIED, visit.status)
+        assertEquals("Conflict with medical procedure", visit.denialReason)
     }
 
     @Test
-    fun `should allow transition from APPROVED to NO_SHOW`() {
-        // Arrange
-        val visit = TestFixtures.createApprovedVisit()
-
-        // Act
-        val result = visit.canTransitionTo(VisitStatus.NO_SHOW)
-
-        // Assert
-        assertTrue(result, "APPROVED -> NO_SHOW should be allowed")
-    }
-
-    @Test
-    fun `should allow transition from CHECKED_IN to COMPLETED`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(status = VisitStatus.CHECKED_IN)
-
-        // Act
-        val result = visit.canTransitionTo(VisitStatus.COMPLETED)
-
-        // Assert
-        assertTrue(result, "CHECKED_IN -> COMPLETED should be allowed")
-    }
-
-    @Test
-    fun `should allow transition from WAITLISTED to APPROVED`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(status = VisitStatus.WAITLISTED)
-
-        // Act
-        val result = visit.canTransitionTo(VisitStatus.APPROVED)
-
-        // Assert
-        assertTrue(result, "WAITLISTED -> APPROVED should be allowed")
-    }
-
-    @Test
-    fun `should not allow transition from DENIED to APPROVED`() {
-        // Arrange
-        val visit = TestFixtures.createDeniedVisit()
-
-        // Act
-        val result = visit.canTransitionTo(VisitStatus.APPROVED)
-
-        // Assert
-        assertFalse(result, "DENIED -> APPROVED should not be allowed")
-    }
-
-    @Test
-    fun `should not allow transition from COMPLETED to any other state`() {
-        // Arrange
+    fun `should create completed visit with check-in and check-out times`() {
+        // Arrange & Act
         val visit = TestFixtures.createCompletedVisit()
 
-        // Act & Assert
-        VisitStatus.entries.forEach { status ->
-            if (status != VisitStatus.COMPLETED) {
-                assertFalse(
-                    visit.canTransitionTo(status),
-                    "COMPLETED -> $status should not be allowed"
-                )
-            }
-        }
+        // Assert
+        assertEquals(VisitStatus.COMPLETED, visit.status)
+        assertNotNull(visit.checkInTime)
+        assertNotNull(visit.checkOutTime)
     }
 
     @Test
-    fun `should not allow transition from CANCELLED to any other state`() {
-        // Arrange
+    fun `should create cancelled visit`() {
+        // Arrange & Act
         val visit = TestFixtures.createVisit(status = VisitStatus.CANCELLED)
 
-        // Act & Assert
-        VisitStatus.entries.forEach { status ->
-            if (status != VisitStatus.CANCELLED) {
-                assertFalse(
-                    visit.canTransitionTo(status),
-                    "CANCELLED -> $status should not be allowed"
-                )
-            }
-        }
-    }
-
-    // ============================================================
-    // DURATION VALIDATION TESTS
-    // ============================================================
-
-    @Test
-    fun `should accept valid duration`() {
-        // Arrange
-        val startTime = testClock.now()
-        val duration = 1.hours
-
-        // Act
-        val visit = TestFixtures.createVisit(
-            startTime = startTime,
-            duration = duration,
-        )
-
         // Assert
-        assertTrue(visit.isValidDuration(), "1 hour duration should be valid")
-        assertEquals(startTime.plus(duration), visit.endTime)
-    }
-
-    @Test
-    fun `should reject zero duration`() {
-        // Arrange
-        val startTime = testClock.now()
-
-        // Act
-        val visit = Visit(
-            id = "test",
-            beneficiaryId = "b1",
-            visitorId = "v1",
-            visitorName = "Test",
-            status = VisitStatus.PENDING,
-            startTime = startTime,
-            endTime = startTime, // Same as start = 0 duration
-            visitType = VisitType.IN_PERSON,
-            numberOfGuests = 0,
-            reason = null,
-            notes = null,
-            createdAt = startTime,
-            approvedBy = null,
-            approvedAt = null,
-            denialReason = null,
-        )
-
-        // Assert
-        assertFalse(visit.isValidDuration(), "Zero duration should be invalid")
-    }
-
-    @Test
-    fun `should reject negative duration`() {
-        // Arrange
-        val startTime = testClock.now()
-
-        // Act
-        val visit = Visit(
-            id = "test",
-            beneficiaryId = "b1",
-            visitorId = "v1",
-            visitorName = "Test",
-            status = VisitStatus.PENDING,
-            startTime = startTime,
-            endTime = startTime.minus(1.hours), // End before start
-            visitType = VisitType.IN_PERSON,
-            numberOfGuests = 0,
-            reason = null,
-            notes = null,
-            createdAt = startTime,
-            approvedBy = null,
-            approvedAt = null,
-            denialReason = null,
-        )
-
-        // Assert
-        assertFalse(visit.isValidDuration(), "Negative duration should be invalid")
-    }
-
-    @Test
-    fun `should accept minimum duration of 15 minutes`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(duration = 15.minutes)
-
-        // Assert
-        assertTrue(visit.duration >= 15.minutes, "Should accept 15 minute minimum")
-    }
-
-    @Test
-    fun `should accept maximum duration of 4 hours`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(duration = 4.hours)
-
-        // Assert
-        assertTrue(visit.duration <= 4.hours, "Should accept 4 hour maximum")
-    }
-
-    // ============================================================
-    // CAPACITY CHECKS
-    // ============================================================
-
-    @Test
-    fun `should report zero guests correctly`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(numberOfGuests = 0)
-
-        // Assert
-        assertEquals(1, visit.totalAttendees) // Visitor only
-    }
-
-    @Test
-    fun `should report total attendees including guests`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(numberOfGuests = 3)
-
-        // Assert
-        assertEquals(4, visit.totalAttendees) // Visitor + 3 guests
-    }
-
-    @Test
-    fun `should validate guest count is non-negative`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(numberOfGuests = 0)
-
-        // Assert
-        assertTrue(visit.numberOfGuests >= 0)
-    }
-
-    // ============================================================
-    // TIME-BASED CHECKS
-    // ============================================================
-
-    @Test
-    fun `should detect future visit`() {
-        // Arrange
-        val futureStart = testClock.now().plus(1.hours)
-        val visit = TestFixtures.createVisit(startTime = futureStart)
-
-        // Act
-        val isFuture = visit.startTime > testClock.now()
-
-        // Assert
-        assertTrue(isFuture, "Visit should be in the future")
-    }
-
-    @Test
-    fun `should detect past visit`() {
-        // Arrange
-        val pastStart = testClock.now().minus(2.hours)
-        val visit = TestFixtures.createVisit(
-            startTime = pastStart,
-            duration = 1.hours,
-        )
-
-        // Act
-        val isPast = visit.endTime < testClock.now()
-
-        // Assert
-        assertTrue(isPast, "Visit should be in the past")
-    }
-
-    @Test
-    fun `should detect ongoing visit`() {
-        // Arrange
-        val startTime = testClock.now().minus(30.minutes)
-        val visit = TestFixtures.createVisit(
-            startTime = startTime,
-            duration = 1.hours,
-        )
-
-        // Act
-        val isOngoing = visit.startTime <= testClock.now() && visit.endTime > testClock.now()
-
-        // Assert
-        assertTrue(isOngoing, "Visit should be ongoing")
+        assertEquals(VisitStatus.CANCELLED, visit.status)
     }
 
     // ============================================================
@@ -359,160 +128,208 @@ class VisitTest {
     // ============================================================
 
     @Test
-    fun `should support in-person visit type`() {
-        // Arrange
+    fun `should create in-person visit`() {
+        // Arrange & Act
         val visit = TestFixtures.createVisit(visitType = VisitType.IN_PERSON)
 
         // Assert
         assertEquals(VisitType.IN_PERSON, visit.visitType)
-        assertTrue(visit.requiresPhysicalPresence)
     }
 
     @Test
-    fun `should support virtual visit type`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(visitType = VisitType.VIRTUAL)
+    fun `should create video call visit`() {
+        // Arrange & Act
+        val visit = TestFixtures.createVisit(visitType = VisitType.VIDEO_CALL)
 
         // Assert
-        assertEquals(VisitType.VIRTUAL, visit.visitType)
-        assertFalse(visit.requiresPhysicalPresence)
-    }
-
-    @Test
-    fun `should support hybrid visit type`() {
-        // Arrange
-        val visit = TestFixtures.createVisit(visitType = VisitType.HYBRID)
-
-        // Assert
-        assertEquals(VisitType.HYBRID, visit.visitType)
+        assertEquals(VisitType.VIDEO_CALL, visit.visitType)
     }
 
     // ============================================================
-    // APPROVAL METADATA TESTS
+    // ADDITIONAL VISITORS TESTS
     // ============================================================
 
     @Test
-    fun `approved visit should have approval metadata`() {
+    fun `should create visit with additional visitors`() {
         // Arrange
-        val visit = TestFixtures.createApprovedVisit(
+        val additionalVisitors = listOf(
+            TestFixtures.createAdditionalVisitor(
+                firstName = "John",
+                lastName = "Doe",
+                relationship = "Brother",
+            ),
+            TestFixtures.createAdditionalVisitor(
+                firstName = "Jane",
+                lastName = "Doe",
+                relationship = "Sister",
+                isMinor = true,
+                age = 15,
+            ),
+        )
+
+        // Act
+        val visit = TestFixtures.createVisit(
+            additionalVisitors = additionalVisitors,
+        )
+
+        // Assert
+        assertEquals(2, visit.additionalVisitors.size)
+        assertEquals("John", visit.additionalVisitors[0].firstName)
+        assertEquals("Jane", visit.additionalVisitors[1].firstName)
+        assertTrue(visit.additionalVisitors[1].isMinor)
+    }
+
+    @Test
+    fun `should create additional visitor with all fields`() {
+        // Arrange & Act
+        val visitor = TestFixtures.createAdditionalVisitor(
+            firstName = "Child",
+            lastName = "Visitor",
+            relationship = "Grandchild",
+            isMinor = true,
+            age = 10,
+        )
+
+        // Assert
+        assertEquals("Child", visitor.firstName)
+        assertEquals("Visitor", visitor.lastName)
+        assertEquals("Grandchild", visitor.relationship)
+        assertTrue(visitor.isMinor)
+        assertEquals(10, visitor.age)
+    }
+
+    // ============================================================
+    // PURPOSE AND NOTES TESTS
+    // ============================================================
+
+    @Test
+    fun `should create visit with purpose`() {
+        // Arrange & Act
+        val visit = TestFixtures.createVisit(purpose = "Birthday celebration")
+
+        // Assert
+        assertEquals("Birthday celebration", visit.purpose)
+    }
+
+    @Test
+    fun `should create visit with notes`() {
+        // Arrange & Act
+        val visit = TestFixtures.createVisit(notes = "Bringing cake and presents")
+
+        // Assert
+        assertEquals("Bringing cake and presents", visit.notes)
+    }
+
+    // ============================================================
+    // COPY TESTS
+    // ============================================================
+
+    @Test
+    fun `should copy visit with modified status`() {
+        // Arrange
+        val original = TestFixtures.createVisit(status = VisitStatus.PENDING)
+
+        // Act
+        val approved = original.copy(
+            status = VisitStatus.APPROVED,
             approvedBy = "coordinator-1",
         )
 
         // Assert
-        assertNotNull(visit.approvedBy)
-        assertNotNull(visit.approvedAt)
-        assertEquals("coordinator-1", visit.approvedBy)
+        assertEquals(VisitStatus.APPROVED, approved.status)
+        assertEquals("coordinator-1", approved.approvedBy)
+        assertEquals(original.id, approved.id) // ID preserved
+        assertEquals(original.beneficiaryId, approved.beneficiaryId) // Other fields preserved
     }
 
     @Test
-    fun `pending visit should not have approval metadata`() {
+    fun `should copy visit with cancellation details`() {
         // Arrange
-        val visit = TestFixtures.createVisit(status = VisitStatus.PENDING)
+        val original = TestFixtures.createApprovedVisit()
+        val testClock = TestClock()
 
-        // Assert
-        assertNull(visit.approvedBy)
-        assertNull(visit.approvedAt)
-    }
-
-    @Test
-    fun `denied visit should have denial reason`() {
-        // Arrange
-        val visit = TestFixtures.createDeniedVisit(
-            denialReason = "Schedule conflict",
+        // Act
+        val cancelled = original.copy(
+            status = VisitStatus.CANCELLED,
+            cancellationReason = "Visitor unavailable",
+            cancelledBy = "visitor-1",
+            cancelledAt = testClock.now(),
         )
 
         // Assert
-        assertEquals(VisitStatus.DENIED, visit.status)
-        assertEquals("Schedule conflict", visit.denialReason)
+        assertEquals(VisitStatus.CANCELLED, cancelled.status)
+        assertEquals("Visitor unavailable", cancelled.cancellationReason)
+        assertEquals("visitor-1", cancelled.cancelledBy)
+        assertNotNull(cancelled.cancelledAt)
     }
 
     // ============================================================
-    // EDGE CASES
+    // TIMESTAMP TESTS
     // ============================================================
 
     @Test
-    fun `should handle visit spanning midnight`() {
+    fun `should have created and updated timestamps`() {
+        // Arrange & Act
+        val visit = TestFixtures.createVisit()
+
+        // Assert
+        assertNotNull(visit.createdAt)
+        assertNotNull(visit.updatedAt)
+    }
+
+    @Test
+    fun `approved visit should have approval timestamp`() {
+        // Arrange & Act
+        val visit = TestFixtures.createApprovedVisit()
+
+        // Assert
+        assertNotNull(visit.approvedAt)
+    }
+
+    @Test
+    fun `completed visit should have check-in and check-out timestamps`() {
+        // Arrange & Act
+        val visit = TestFixtures.createCompletedVisit()
+
+        // Assert
+        assertNotNull(visit.checkInTime)
+        assertNotNull(visit.checkOutTime)
+    }
+
+    // ============================================================
+    // TIME VALIDATION TESTS
+    // ============================================================
+
+    @Test
+    fun `end time should be after start time`() {
         // Arrange
-        val lateNightStart = testClock.now()
-        testClock.setDateTime(2024, 6, 15, 23, 0) // 11 PM
+        val startTime = LocalTime(10, 0)
+        val endTime = LocalTime(11, 0)
+
+        // Act
         val visit = TestFixtures.createVisit(
-            startTime = testClock.now(),
-            duration = 2.hours, // Ends at 1 AM next day
+            startTime = startTime,
+            endTime = endTime,
         )
 
         // Assert
         assertTrue(visit.endTime > visit.startTime)
-        // End time should be next day
-        val startDay = visit.startTime.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date
-        val endDay = visit.endTime.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date
-        assertNotEquals(startDay, endDay, "Visit should span to next day")
     }
 
     @Test
-    fun `should calculate correct duration`() {
+    fun `should calculate visit duration`() {
         // Arrange
-        val startTime = testClock.now()
-        val expectedDuration = 90.minutes
+        val startTime = LocalTime(10, 0)
+        val endTime = LocalTime(11, 30)
+
         val visit = TestFixtures.createVisit(
             startTime = startTime,
-            duration = expectedDuration,
+            endTime = endTime,
         )
 
-        // Act
-        val calculatedDuration = visit.duration
-
-        // Assert
-        assertEquals(expectedDuration, calculatedDuration)
+        // Assert - 90 minutes difference
+        val startMinutes = visit.startTime.hour * 60 + visit.startTime.minute
+        val endMinutes = visit.endTime.hour * 60 + visit.endTime.minute
+        assertEquals(90, endMinutes - startMinutes)
     }
-}
-
-// ============================================================
-// EXTENSION FUNCTIONS FOR VISIT
-// ============================================================
-
-/**
- * Extension properties and functions for Visit testing
- */
-val Visit.duration: kotlin.time.Duration
-    get() = endTime - startTime
-
-val Visit.totalAttendees: Int
-    get() = 1 + numberOfGuests // Visitor + guests
-
-val Visit.requiresPhysicalPresence: Boolean
-    get() = visitType == VisitType.IN_PERSON
-
-fun Visit.isValidDuration(): Boolean {
-    return endTime > startTime
-}
-
-fun Visit.canTransitionTo(newStatus: VisitStatus): Boolean {
-    return when (status) {
-        VisitStatus.PENDING -> newStatus in listOf(
-            VisitStatus.APPROVED,
-            VisitStatus.DENIED,
-            VisitStatus.CANCELLED,
-            VisitStatus.WAITLISTED,
-        )
-        VisitStatus.APPROVED -> newStatus in listOf(
-            VisitStatus.CHECKED_IN,
-            VisitStatus.CANCELLED,
-            VisitStatus.NO_SHOW,
-        )
-        VisitStatus.CHECKED_IN -> newStatus == VisitStatus.COMPLETED
-        VisitStatus.WAITLISTED -> newStatus in listOf(
-            VisitStatus.APPROVED,
-            VisitStatus.CANCELLED,
-        )
-        VisitStatus.DENIED,
-        VisitStatus.CANCELLED,
-        VisitStatus.COMPLETED,
-        VisitStatus.NO_SHOW -> false
-    }
-}
-
-private fun kotlinx.datetime.Instant.toLocalDateTime(
-    timeZone: kotlinx.datetime.TimeZone
-): kotlinx.datetime.LocalDateTime {
-    return kotlinx.datetime.toLocalDateTime(timeZone)
 }

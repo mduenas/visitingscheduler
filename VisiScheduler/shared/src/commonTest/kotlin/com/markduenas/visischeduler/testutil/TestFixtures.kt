@@ -1,15 +1,29 @@
 package com.markduenas.visischeduler.testutil
 
-import kotlinx.datetime.*
+import com.markduenas.visischeduler.domain.entities.*
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 
 /**
- * Test fixtures factory for creating consistent test data.
+ * Test fixtures factory for creating consistent test data using actual domain entities.
  * All factories use sensible defaults that can be overridden.
  */
 object TestFixtures {
+
+    private val now: Instant get() = Clock.System.now()
+    private val today: LocalDate get() = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
 
     // ============================================================
     // USER FIXTURES
@@ -18,78 +32,103 @@ object TestFixtures {
     fun createUser(
         id: String = generateId("user"),
         email: String = "test@example.com",
-        name: String = "Test User",
-        role: UserRole = UserRole.VISITOR,
-        permissions: Set<Permission> = role.defaultPermissions,
+        firstName: String = "Test",
+        lastName: String = "User",
+        role: Role = Role.APPROVED_VISITOR,
+        phoneNumber: String? = null,
+        profileImageUrl: String? = null,
         isActive: Boolean = true,
-        mfaEnabled: Boolean = false,
-        createdAt: Instant = Clock.System.now(),
+        isEmailVerified: Boolean = true,
+        createdAt: Instant = now,
+        updatedAt: Instant = now,
+        lastLoginAt: Instant? = null,
+        associatedBeneficiaryIds: List<String> = emptyList(),
+        notificationPreferences: NotificationPreferences = NotificationPreferences()
     ) = User(
         id = id,
         email = email,
-        name = name,
+        firstName = firstName,
+        lastName = lastName,
         role = role,
-        permissions = permissions,
+        phoneNumber = phoneNumber,
+        profileImageUrl = profileImageUrl,
         isActive = isActive,
-        mfaEnabled = mfaEnabled,
+        isEmailVerified = isEmailVerified,
         createdAt = createdAt,
+        updatedAt = updatedAt,
+        lastLoginAt = lastLoginAt,
+        associatedBeneficiaryIds = associatedBeneficiaryIds,
+        notificationPreferences = notificationPreferences
     )
 
-    fun createAdministrator(
+    fun createAdmin(
         id: String = generateId("admin"),
         email: String = "admin@visischeduler.com",
-        name: String = "Admin User",
+        firstName: String = "Admin",
+        lastName: String = "User"
     ) = createUser(
         id = id,
         email = email,
-        name = name,
-        role = UserRole.ADMINISTRATOR,
-        mfaEnabled = true,
+        firstName = firstName,
+        lastName = lastName,
+        role = Role.ADMIN
     )
 
     fun createPrimaryCoordinator(
         id: String = generateId("coord"),
         email: String = "coordinator@example.com",
-        name: String = "Primary Coordinator",
-        beneficiaryIds: List<String> = emptyList(),
+        firstName: String = "Primary",
+        lastName: String = "Coordinator",
+        associatedBeneficiaryIds: List<String> = emptyList()
     ) = createUser(
         id = id,
         email = email,
-        name = name,
-        role = UserRole.PRIMARY_COORDINATOR,
-    ).copy(assignedBeneficiaryIds = beneficiaryIds)
+        firstName = firstName,
+        lastName = lastName,
+        role = Role.PRIMARY_COORDINATOR,
+        associatedBeneficiaryIds = associatedBeneficiaryIds
+    )
 
     fun createSecondaryCoordinator(
         id: String = generateId("coord2"),
         email: String = "secondary@example.com",
-        name: String = "Secondary Coordinator",
+        firstName: String = "Secondary",
+        lastName: String = "Coordinator"
     ) = createUser(
         id = id,
         email = email,
-        name = name,
-        role = UserRole.SECONDARY_COORDINATOR,
+        firstName = firstName,
+        lastName = lastName,
+        role = Role.SECONDARY_COORDINATOR
     )
 
     fun createApprovedVisitor(
         id: String = generateId("visitor"),
         email: String = "visitor@example.com",
-        name: String = "Approved Visitor",
+        firstName: String = "Approved",
+        lastName: String = "Visitor",
+        associatedBeneficiaryIds: List<String> = emptyList()
     ) = createUser(
         id = id,
         email = email,
-        name = name,
-        role = UserRole.APPROVED_VISITOR,
+        firstName = firstName,
+        lastName = lastName,
+        role = Role.APPROVED_VISITOR,
+        associatedBeneficiaryIds = associatedBeneficiaryIds
     )
 
     fun createPendingVisitor(
         id: String = generateId("pending"),
         email: String = "pending@example.com",
-        name: String = "Pending Visitor",
+        firstName: String = "Pending",
+        lastName: String = "Visitor"
     ) = createUser(
         id = id,
         email = email,
-        name = name,
-        role = UserRole.PENDING_VISITOR,
+        firstName = firstName,
+        lastName = lastName,
+        role = Role.PENDING_VISITOR,
+        isEmailVerified = false
     )
 
     // ============================================================
@@ -98,18 +137,38 @@ object TestFixtures {
 
     fun createBeneficiary(
         id: String = generateId("beneficiary"),
-        name: String = "Test Patient",
-        roomNumber: String = "101A",
-        unitType: UnitType = UnitType.GENERAL,
-        coordinatorIds: List<String> = emptyList(),
-        isActive: Boolean = true,
+        firstName: String = "Test",
+        lastName: String = "Patient",
+        dateOfBirth: LocalDate? = null,
+        facilityId: String = generateId("facility"),
+        roomNumber: String? = "101A",
+        status: BeneficiaryStatus = BeneficiaryStatus.ACTIVE,
+        specialInstructions: String? = null,
+        maxVisitorsPerSlot: Int = 2,
+        maxVisitsPerDay: Int = 2,
+        maxVisitsPerWeek: Int = 7,
+        photoUrl: String? = null,
+        emergencyContact: EmergencyContact? = null,
+        restrictions: List<String> = emptyList(),
+        createdAt: Instant = now,
+        updatedAt: Instant = now
     ) = Beneficiary(
         id = id,
-        name = name,
+        firstName = firstName,
+        lastName = lastName,
+        dateOfBirth = dateOfBirth,
+        facilityId = facilityId,
         roomNumber = roomNumber,
-        unitType = unitType,
-        coordinatorIds = coordinatorIds,
-        isActive = isActive,
+        status = status,
+        specialInstructions = specialInstructions,
+        maxVisitorsPerSlot = maxVisitorsPerSlot,
+        maxVisitsPerDay = maxVisitsPerDay,
+        maxVisitsPerWeek = maxVisitsPerWeek,
+        photoUrl = photoUrl,
+        emergencyContact = emergencyContact,
+        restrictions = restrictions,
+        createdAt = createdAt,
+        updatedAt = updatedAt
     )
 
     // ============================================================
@@ -120,85 +179,112 @@ object TestFixtures {
         id: String = generateId("visit"),
         beneficiaryId: String = generateId("beneficiary"),
         visitorId: String = generateId("visitor"),
-        visitorName: String = "Test Visitor",
+        scheduledDate: LocalDate = today.plus(DatePeriod(days = 1)),
+        startTime: LocalTime = LocalTime(10, 0),
+        endTime: LocalTime = LocalTime(11, 0),
         status: VisitStatus = VisitStatus.PENDING,
-        startTime: Instant = Clock.System.now().plus(1.hours),
-        duration: Duration = 1.hours,
         visitType: VisitType = VisitType.IN_PERSON,
-        numberOfGuests: Int = 0,
-        reason: String? = null,
+        purpose: String? = "Regular visit",
         notes: String? = null,
-        createdAt: Instant = Clock.System.now(),
+        additionalVisitors: List<AdditionalVisitor> = emptyList(),
+        checkInTime: Instant? = null,
+        checkOutTime: Instant? = null,
         approvedBy: String? = null,
         approvedAt: Instant? = null,
         denialReason: String? = null,
+        cancellationReason: String? = null,
+        cancelledBy: String? = null,
+        cancelledAt: Instant? = null,
+        createdAt: Instant = now,
+        updatedAt: Instant = now
     ) = Visit(
         id = id,
         beneficiaryId = beneficiaryId,
         visitorId = visitorId,
-        visitorName = visitorName,
-        status = status,
+        scheduledDate = scheduledDate,
         startTime = startTime,
-        endTime = startTime.plus(duration),
+        endTime = endTime,
+        status = status,
         visitType = visitType,
-        numberOfGuests = numberOfGuests,
-        reason = reason,
+        purpose = purpose,
         notes = notes,
-        createdAt = createdAt,
+        additionalVisitors = additionalVisitors,
+        checkInTime = checkInTime,
+        checkOutTime = checkOutTime,
         approvedBy = approvedBy,
         approvedAt = approvedAt,
         denialReason = denialReason,
+        cancellationReason = cancellationReason,
+        cancelledBy = cancelledBy,
+        cancelledAt = cancelledAt,
+        createdAt = createdAt,
+        updatedAt = updatedAt
     )
 
     fun createApprovedVisit(
         id: String = generateId("visit"),
         beneficiaryId: String = generateId("beneficiary"),
         visitorId: String = generateId("visitor"),
-        visitorName: String = "Approved Visitor",
-        startTime: Instant = Clock.System.now().plus(1.hours),
-        duration: Duration = 1.hours,
-        approvedBy: String = generateId("coordinator"),
+        scheduledDate: LocalDate = today.plus(DatePeriod(days = 1)),
+        startTime: LocalTime = LocalTime(10, 0),
+        endTime: LocalTime = LocalTime(11, 0),
+        approvedBy: String = generateId("coordinator")
     ) = createVisit(
         id = id,
         beneficiaryId = beneficiaryId,
         visitorId = visitorId,
-        visitorName = visitorName,
-        status = VisitStatus.APPROVED,
+        scheduledDate = scheduledDate,
         startTime = startTime,
-        duration = duration,
+        endTime = endTime,
+        status = VisitStatus.APPROVED,
         approvedBy = approvedBy,
-        approvedAt = Clock.System.now(),
+        approvedAt = now
     )
 
     fun createDeniedVisit(
         id: String = generateId("visit"),
         beneficiaryId: String = generateId("beneficiary"),
         visitorId: String = generateId("visitor"),
-        denialReason: String = "Conflict with medical procedure",
+        denialReason: String = "Conflict with medical procedure"
     ) = createVisit(
         id = id,
         beneficiaryId = beneficiaryId,
         visitorId = visitorId,
         status = VisitStatus.DENIED,
-        denialReason = denialReason,
+        denialReason = denialReason
     )
 
     fun createCompletedVisit(
         id: String = generateId("visit"),
         beneficiaryId: String = generateId("beneficiary"),
         visitorId: String = generateId("visitor"),
-        checkInTime: Instant = Clock.System.now().minus(2.hours),
-        checkOutTime: Instant = Clock.System.now().minus(1.hours),
+        scheduledDate: LocalDate = today,
+        checkInTime: Instant = now.minus(2.hours),
+        checkOutTime: Instant = now.minus(1.hours)
     ) = createVisit(
         id = id,
         beneficiaryId = beneficiaryId,
         visitorId = visitorId,
+        scheduledDate = scheduledDate,
         status = VisitStatus.COMPLETED,
-        startTime = checkInTime,
-        duration = 1.hours,
-    ).copy(
-        actualCheckIn = checkInTime,
-        actualCheckOut = checkOutTime,
+        checkInTime = checkInTime,
+        checkOutTime = checkOutTime
+    )
+
+    fun createAdditionalVisitor(
+        id: String = generateId("additional"),
+        firstName: String = "Additional",
+        lastName: String = "Visitor",
+        relationship: String = "Friend",
+        isMinor: Boolean = false,
+        age: Int? = null
+    ) = AdditionalVisitor(
+        id = id,
+        firstName = firstName,
+        lastName = lastName,
+        relationship = relationship,
+        isMinor = isMinor,
+        age = age
     )
 
     // ============================================================
@@ -206,45 +292,56 @@ object TestFixtures {
     // ============================================================
 
     fun createTimeSlot(
-        startTime: Instant = Clock.System.now().plus(1.hours),
-        endTime: Instant = Clock.System.now().plus(2.hours),
-        isAvailable: Boolean = true,
-        capacity: Int = 3,
+        id: String = generateId("slot"),
+        facilityId: String = generateId("facility"),
+        date: LocalDate = today.plus(DatePeriod(days = 1)),
+        startTime: LocalTime = LocalTime(10, 0),
+        endTime: LocalTime = LocalTime(11, 0),
+        maxCapacity: Int = 3,
         currentBookings: Int = 0,
+        isAvailable: Boolean = true,
+        slotType: SlotType = SlotType.REGULAR,
+        notes: String? = null
     ) = TimeSlot(
+        id = id,
+        facilityId = facilityId,
+        date = date,
         startTime = startTime,
         endTime = endTime,
-        isAvailable = isAvailable,
-        capacity = capacity,
+        maxCapacity = maxCapacity,
         currentBookings = currentBookings,
+        isAvailable = isAvailable,
+        slotType = slotType,
+        notes = notes
     )
 
     fun createAvailableSlots(
-        date: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+        facilityId: String = generateId("facility"),
+        date: LocalDate = today.plus(DatePeriod(days = 1)),
         startHour: Int = 9,
         endHour: Int = 17,
-        slotDurationMinutes: Int = 60,
-        bufferMinutes: Int = 15,
+        slotDurationMinutes: Int = 60
     ): List<TimeSlot> {
         val slots = mutableListOf<TimeSlot>()
-        var currentHour = startHour
+        var currentMinutes = startHour * 60
 
-        while (currentHour < endHour) {
-            val startDateTime = LocalDateTime(date, LocalTime(currentHour, 0))
-            val startInstant = startDateTime.toInstant(TimeZone.currentSystemDefault())
-            val endInstant = startInstant.plus(slotDurationMinutes.minutes)
+        while (currentMinutes < endHour * 60) {
+            val startHr = currentMinutes / 60
+            val startMin = currentMinutes % 60
+            val endMinutes = currentMinutes + slotDurationMinutes
+            val endHr = endMinutes / 60
+            val endMin = endMinutes % 60
 
             slots.add(
-                TimeSlot(
-                    startTime = startInstant,
-                    endTime = endInstant,
-                    isAvailable = true,
-                    capacity = 3,
-                    currentBookings = 0,
+                createTimeSlot(
+                    facilityId = facilityId,
+                    date = date,
+                    startTime = LocalTime(startHr, startMin),
+                    endTime = LocalTime(endHr, endMin),
+                    isAvailable = true
                 )
             )
-
-            currentHour += (slotDurationMinutes + bufferMinutes) / 60
+            currentMinutes += slotDurationMinutes
         }
 
         return slots
@@ -256,183 +353,72 @@ object TestFixtures {
 
     fun createRestriction(
         id: String = generateId("restriction"),
-        beneficiaryId: String = generateId("beneficiary"),
-        type: RestrictionType = RestrictionType.BLACKOUT_DATE,
-        startTime: Instant? = null,
-        endTime: Instant? = null,
-        dayOfWeek: DayOfWeek? = null,
-        visitorId: String? = null,
-        reason: String = "Test restriction",
+        name: String = "Test Restriction",
+        description: String = "Test restriction description",
+        type: RestrictionType = RestrictionType.TIME_BASED,
+        scope: RestrictionScope = RestrictionScope.FACILITY_WIDE,
+        priority: Int = 0,
         isActive: Boolean = true,
-        createdBy: String = generateId("coordinator"),
-        expiresAt: Instant? = null,
+        effectiveFrom: LocalDate = today,
+        effectiveUntil: LocalDate? = null,
+        timeConstraints: TimeConstraints? = null,
+        visitorConstraints: VisitorConstraints? = null,
+        beneficiaryConstraints: BeneficiaryConstraints? = null,
+        facilityId: String? = generateId("facility"),
+        createdBy: String = generateId("admin"),
+        createdAt: Instant = now,
+        updatedAt: Instant = now
     ) = Restriction(
         id = id,
-        beneficiaryId = beneficiaryId,
+        name = name,
+        description = description,
         type = type,
-        startTime = startTime,
-        endTime = endTime,
-        dayOfWeek = dayOfWeek,
-        visitorId = visitorId,
-        reason = reason,
+        scope = scope,
+        priority = priority,
         isActive = isActive,
+        effectiveFrom = effectiveFrom,
+        effectiveUntil = effectiveUntil,
+        timeConstraints = timeConstraints,
+        visitorConstraints = visitorConstraints,
+        beneficiaryConstraints = beneficiaryConstraints,
+        facilityId = facilityId,
         createdBy = createdBy,
-        expiresAt = expiresAt,
+        createdAt = createdAt,
+        updatedAt = updatedAt
     )
 
-    fun createBlackoutDateRestriction(
-        beneficiaryId: String = generateId("beneficiary"),
-        date: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.plus(DatePeriod(days = 1)),
-    ): Restriction {
-        val startOfDay = LocalDateTime(date, LocalTime(0, 0)).toInstant(TimeZone.currentSystemDefault())
-        val endOfDay = LocalDateTime(date, LocalTime(23, 59, 59)).toInstant(TimeZone.currentSystemDefault())
-
-        return createRestriction(
-            beneficiaryId = beneficiaryId,
-            type = RestrictionType.BLACKOUT_DATE,
-            startTime = startOfDay,
-            endTime = endOfDay,
-            reason = "Full day blackout",
-        )
-    }
-
-    fun createMealTimeRestriction(
-        beneficiaryId: String = generateId("beneficiary"),
-        startHour: Int = 12,
-        startMinute: Int = 0,
-        endHour: Int = 13,
-        endMinute: Int = 0,
+    fun createTimeBasedRestriction(
+        id: String = generateId("restriction"),
+        name: String = "Time Restriction",
+        blockedDays: List<DayOfWeek>? = null,
+        earliestStartTime: LocalTime? = LocalTime(9, 0),
+        latestEndTime: LocalTime? = LocalTime(17, 0),
+        maxDurationMinutes: Int? = 60
     ) = createRestriction(
-        beneficiaryId = beneficiaryId,
-        type = RestrictionType.MEAL_TIME,
-        reason = "Meal time - no visitors",
-    ).copy(
-        recurringStartTime = LocalTime(startHour, startMinute),
-        recurringEndTime = LocalTime(endHour, endMinute),
+        id = id,
+        name = name,
+        type = RestrictionType.TIME_BASED,
+        timeConstraints = TimeConstraints(
+            blockedDays = blockedDays,
+            earliestStartTime = earliestStartTime,
+            latestEndTime = latestEndTime,
+            maxDurationMinutes = maxDurationMinutes
+        )
     )
 
     fun createVisitorBlockRestriction(
-        beneficiaryId: String = generateId("beneficiary"),
+        id: String = generateId("restriction"),
         blockedVisitorId: String,
-        reason: String = "Visitor not permitted",
+        reason: String = "Visitor not permitted"
     ) = createRestriction(
-        beneficiaryId = beneficiaryId,
-        type = RestrictionType.VISITOR_BLOCKED,
-        visitorId = blockedVisitorId,
-        reason = reason,
-    )
-
-    fun createProcedureBlockRestriction(
-        beneficiaryId: String = generateId("beneficiary"),
-        procedureTime: Instant = Clock.System.now().plus(1.hours),
-        recoveryDuration: Duration = 2.hours,
-    ) = createRestriction(
-        beneficiaryId = beneficiaryId,
-        type = RestrictionType.MEDICAL_PROCEDURE,
-        startTime = procedureTime,
-        endTime = procedureTime.plus(recoveryDuration),
-        reason = "Medical procedure and recovery",
-    )
-
-    // ============================================================
-    // SCHEDULE REQUEST FIXTURES
-    // ============================================================
-
-    fun createScheduleVisitRequest(
-        beneficiaryId: String = generateId("beneficiary"),
-        visitorId: String = generateId("visitor"),
-        preferredSlots: List<TimeSlot> = listOf(createTimeSlot()),
-        duration: Duration = 1.hours,
-        visitType: VisitType = VisitType.IN_PERSON,
-        numberOfGuests: Int = 0,
-        reason: String? = "Regular visit",
-    ) = ScheduleVisitRequest(
-        beneficiaryId = beneficiaryId,
-        visitorId = visitorId,
-        preferredSlots = preferredSlots,
-        requestedDuration = duration,
-        visitType = visitType,
-        numberOfGuests = numberOfGuests,
-        reason = reason,
-    )
-
-    // ============================================================
-    // APPROVAL FIXTURES
-    // ============================================================
-
-    fun createApprovalRequest(
-        visitId: String = generateId("visit"),
-        coordinatorId: String = generateId("coordinator"),
-        action: ApprovalAction = ApprovalAction.APPROVE,
-        notes: String? = null,
-    ) = ApprovalRequest(
-        visitId = visitId,
-        coordinatorId = coordinatorId,
-        action = action,
-        notes = notes,
-    )
-
-    // ============================================================
-    // CREDENTIALS & AUTH FIXTURES
-    // ============================================================
-
-    fun createCredentials(
-        email: String = "test@example.com",
-        password: String = "SecurePassword123!",
-    ) = Credentials(
-        email = email,
-        password = password,
-    )
-
-    fun createInvalidCredentials() = createCredentials(
-        email = "invalid@example.com",
-        password = "wrongpassword",
-    )
-
-    fun createAuthToken(
-        accessToken: String = "test-access-token-${generateId("token")}",
-        refreshToken: String = "test-refresh-token-${generateId("token")}",
-        expiresAt: Instant = Clock.System.now().plus(1.hours),
-        userId: String = generateId("user"),
-    ) = AuthToken(
-        accessToken = accessToken,
-        refreshToken = refreshToken,
-        expiresAt = expiresAt,
-        userId = userId,
-    )
-
-    fun createMfaChallenge(
-        challengeId: String = generateId("mfa"),
-        userId: String = generateId("user"),
-        method: MfaMethod = MfaMethod.TOTP,
-        expiresAt: Instant = Clock.System.now().plus(5.minutes),
-    ) = MfaChallenge(
-        challengeId = challengeId,
-        userId = userId,
-        method = method,
-        expiresAt = expiresAt,
-    )
-
-    // ============================================================
-    // SESSION FIXTURES
-    // ============================================================
-
-    fun createSession(
-        id: String = generateId("session"),
-        userId: String = generateId("user"),
-        token: AuthToken = createAuthToken(userId = userId),
-        createdAt: Instant = Clock.System.now(),
-        lastActivityAt: Instant = Clock.System.now(),
-        isActive: Boolean = true,
-        deviceInfo: DeviceInfo? = null,
-    ) = Session(
         id = id,
-        userId = userId,
-        token = token,
-        createdAt = createdAt,
-        lastActivityAt = lastActivityAt,
-        isActive = isActive,
-        deviceInfo = deviceInfo,
+        name = "Blocked Visitor",
+        description = reason,
+        type = RestrictionType.VISITOR_BASED,
+        scope = RestrictionScope.VISITOR_SPECIFIC,
+        visitorConstraints = VisitorConstraints(
+            blockedVisitorIds = listOf(blockedVisitorId)
+        )
     )
 
     // ============================================================
@@ -460,229 +446,16 @@ object TestFixtures {
      */
     fun pastInstant(hoursAgo: Int): Instant =
         Clock.System.now().minus(hoursAgo.hours)
+
+    /**
+     * Creates a LocalDate for testing
+     */
+    fun futureDate(daysFromNow: Int): LocalDate =
+        today.plus(DatePeriod(days = daysFromNow))
+
+    /**
+     * Creates a LocalTime for testing
+     */
+    fun timeAt(hour: Int, minute: Int = 0): LocalTime =
+        LocalTime(hour, minute)
 }
-
-// ============================================================
-// DATA CLASSES FOR TEST FIXTURES
-// (These would normally be in the domain layer)
-// ============================================================
-
-enum class UserRole {
-    ADMINISTRATOR,
-    PRIMARY_COORDINATOR,
-    SECONDARY_COORDINATOR,
-    APPROVED_VISITOR,
-    PENDING_VISITOR;
-
-    val defaultPermissions: Set<Permission>
-        get() = when (this) {
-            ADMINISTRATOR -> Permission.entries.toSet()
-            PRIMARY_COORDINATOR -> setOf(
-                Permission.VIEW_SCHEDULE,
-                Permission.CREATE_VISIT,
-                Permission.MODIFY_VISIT,
-                Permission.APPROVE_VISIT,
-                Permission.DENY_VISIT,
-                Permission.MANAGE_RESTRICTIONS,
-                Permission.VIEW_VISITORS,
-                Permission.MANAGE_VISITORS,
-            )
-            SECONDARY_COORDINATOR -> setOf(
-                Permission.VIEW_SCHEDULE,
-                Permission.CREATE_VISIT,
-                Permission.VIEW_VISITORS,
-            )
-            APPROVED_VISITOR -> setOf(
-                Permission.VIEW_SCHEDULE,
-                Permission.CREATE_VISIT,
-                Permission.VIEW_OWN_VISITS,
-            )
-            PENDING_VISITOR -> setOf(
-                Permission.VIEW_OWN_VISITS,
-            )
-        }
-}
-
-enum class Permission {
-    VIEW_SCHEDULE,
-    CREATE_VISIT,
-    MODIFY_VISIT,
-    CANCEL_VISIT,
-    APPROVE_VISIT,
-    DENY_VISIT,
-    VIEW_OWN_VISITS,
-    VIEW_ALL_VISITS,
-    VIEW_VISITORS,
-    MANAGE_VISITORS,
-    MANAGE_RESTRICTIONS,
-    MANAGE_USERS,
-    ADMIN_ACCESS,
-}
-
-enum class VisitStatus {
-    PENDING,
-    APPROVED,
-    DENIED,
-    CANCELLED,
-    CHECKED_IN,
-    COMPLETED,
-    NO_SHOW,
-    WAITLISTED,
-}
-
-enum class VisitType {
-    IN_PERSON,
-    VIRTUAL,
-    HYBRID,
-}
-
-enum class UnitType {
-    GENERAL,
-    ICU,
-    PEDIATRIC,
-    MATERNITY,
-    PSYCHIATRIC,
-}
-
-enum class RestrictionType {
-    BLACKOUT_DATE,
-    BLACKOUT_HOURS,
-    MEDICAL_PROCEDURE,
-    MEAL_TIME,
-    REST_PERIOD,
-    VISITOR_BLOCKED,
-    VISITOR_CONDITIONAL,
-    CAPACITY_LIMIT,
-    AGE_RESTRICTION,
-}
-
-enum class MfaMethod {
-    TOTP,
-    SMS,
-    EMAIL,
-}
-
-enum class ApprovalAction {
-    APPROVE,
-    DENY,
-    REQUEST_INFO,
-    DELEGATE,
-}
-
-// Simplified data classes for testing
-data class User(
-    val id: String,
-    val email: String,
-    val name: String,
-    val role: UserRole,
-    val permissions: Set<Permission>,
-    val isActive: Boolean,
-    val mfaEnabled: Boolean,
-    val createdAt: Instant,
-    val assignedBeneficiaryIds: List<String> = emptyList(),
-)
-
-data class Beneficiary(
-    val id: String,
-    val name: String,
-    val roomNumber: String,
-    val unitType: UnitType,
-    val coordinatorIds: List<String>,
-    val isActive: Boolean,
-)
-
-data class Visit(
-    val id: String,
-    val beneficiaryId: String,
-    val visitorId: String,
-    val visitorName: String,
-    val status: VisitStatus,
-    val startTime: Instant,
-    val endTime: Instant,
-    val visitType: VisitType,
-    val numberOfGuests: Int,
-    val reason: String?,
-    val notes: String?,
-    val createdAt: Instant,
-    val approvedBy: String?,
-    val approvedAt: Instant?,
-    val denialReason: String?,
-    val actualCheckIn: Instant? = null,
-    val actualCheckOut: Instant? = null,
-)
-
-data class TimeSlot(
-    val startTime: Instant,
-    val endTime: Instant,
-    val isAvailable: Boolean,
-    val capacity: Int,
-    val currentBookings: Int,
-)
-
-data class Restriction(
-    val id: String,
-    val beneficiaryId: String,
-    val type: RestrictionType,
-    val startTime: Instant?,
-    val endTime: Instant?,
-    val dayOfWeek: DayOfWeek?,
-    val visitorId: String?,
-    val reason: String,
-    val isActive: Boolean,
-    val createdBy: String,
-    val expiresAt: Instant?,
-    val recurringStartTime: LocalTime? = null,
-    val recurringEndTime: LocalTime? = null,
-)
-
-data class ScheduleVisitRequest(
-    val beneficiaryId: String,
-    val visitorId: String,
-    val preferredSlots: List<TimeSlot>,
-    val requestedDuration: Duration,
-    val visitType: VisitType,
-    val numberOfGuests: Int,
-    val reason: String?,
-)
-
-data class ApprovalRequest(
-    val visitId: String,
-    val coordinatorId: String,
-    val action: ApprovalAction,
-    val notes: String?,
-)
-
-data class Credentials(
-    val email: String,
-    val password: String,
-)
-
-data class AuthToken(
-    val accessToken: String,
-    val refreshToken: String,
-    val expiresAt: Instant,
-    val userId: String,
-)
-
-data class MfaChallenge(
-    val challengeId: String,
-    val userId: String,
-    val method: MfaMethod,
-    val expiresAt: Instant,
-)
-
-data class Session(
-    val id: String,
-    val userId: String,
-    val token: AuthToken,
-    val createdAt: Instant,
-    val lastActivityAt: Instant,
-    val isActive: Boolean,
-    val deviceInfo: DeviceInfo?,
-)
-
-data class DeviceInfo(
-    val deviceId: String,
-    val platform: String,
-    val appVersion: String,
-)

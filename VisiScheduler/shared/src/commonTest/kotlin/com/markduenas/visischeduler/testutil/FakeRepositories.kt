@@ -1,10 +1,15 @@
 package com.markduenas.visischeduler.testutil
 
+import com.markduenas.visischeduler.domain.entities.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.*
-import kotlin.time.Duration
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Fake repository implementations for testing.
@@ -44,12 +49,12 @@ interface VisitRepository {
     suspend fun getById(id: String): Result<Visit?>
     suspend fun getByBeneficiary(beneficiaryId: String): Result<List<Visit>>
     suspend fun getByVisitor(visitorId: String): Result<List<Visit>>
-    suspend fun getByDateRange(beneficiaryId: String, start: Instant, end: Instant): Result<List<Visit>>
+    suspend fun getByDateRange(beneficiaryId: String, startDate: LocalDate, endDate: LocalDate): Result<List<Visit>>
     suspend fun save(visit: Visit): Result<String>
     suspend fun update(visit: Visit): Result<Unit>
     suspend fun delete(id: String): Result<Unit>
-    suspend fun isSlotAvailable(beneficiaryId: String, startTime: Instant, endTime: Instant): Result<Boolean>
-    suspend fun getConflictingVisits(beneficiaryId: String, startTime: Instant, endTime: Instant): Result<List<Visit>>
+    suspend fun isSlotAvailable(beneficiaryId: String, date: LocalDate, startTime: LocalTime, endTime: LocalTime): Result<Boolean>
+    suspend fun getConflictingVisits(beneficiaryId: String, date: LocalDate, startTime: LocalTime, endTime: LocalTime): Result<List<Visit>>
     fun observeByBeneficiary(beneficiaryId: String): Flow<List<Visit>>
     fun observePending(beneficiaryId: String): Flow<List<Visit>>
 }
@@ -70,24 +75,34 @@ interface UserRepository {
 
 interface RestrictionRepository {
     suspend fun getById(id: String): Result<Restriction?>
-    suspend fun getByBeneficiary(beneficiaryId: String): Result<List<Restriction>>
-    suspend fun getActiveByBeneficiary(beneficiaryId: String): Result<List<Restriction>>
+    suspend fun getByFacility(facilityId: String): Result<List<Restriction>>
+    suspend fun getActiveByFacility(facilityId: String): Result<List<Restriction>>
     suspend fun save(restriction: Restriction): Result<String>
     suspend fun update(restriction: Restriction): Result<Unit>
     suspend fun delete(id: String): Result<Unit>
     suspend fun getApplicableRestrictions(
-        beneficiaryId: String,
+        facilityId: String,
         visitorId: String?,
-        timeSlot: TimeSlot
+        date: LocalDate,
+        startTime: LocalTime,
+        endTime: LocalTime
     ): Result<List<Restriction>>
 }
 
-interface SessionRepository {
-    suspend fun save(session: Session): Result<Unit>
-    suspend fun getByToken(token: String): Result<Session?>
-    suspend fun invalidate(sessionId: String): Result<Unit>
-    suspend fun invalidateAllForUser(userId: String): Result<Unit>
-    suspend fun updateLastActivity(sessionId: String): Result<Unit>
+interface BeneficiaryRepository {
+    suspend fun getById(id: String): Result<Beneficiary?>
+    suspend fun getByFacility(facilityId: String): Result<List<Beneficiary>>
+    suspend fun save(beneficiary: Beneficiary): Result<String>
+    suspend fun update(beneficiary: Beneficiary): Result<Unit>
+    suspend fun delete(id: String): Result<Unit>
+}
+
+interface TimeSlotRepository {
+    suspend fun getById(id: String): Result<TimeSlot?>
+    suspend fun getByFacilityAndDate(facilityId: String, date: LocalDate): Result<List<TimeSlot>>
+    suspend fun getAvailable(facilityId: String, date: LocalDate): Result<List<TimeSlot>>
+    suspend fun save(timeSlot: TimeSlot): Result<String>
+    suspend fun update(timeSlot: TimeSlot): Result<Unit>
 }
 
 // ============================================================
@@ -101,8 +116,6 @@ class FakeVisitRepository : VisitRepository {
     // Test control flags
     var shouldFail = false
     var failureException: Throwable = Exception("Simulated failure")
-    var simulateNetworkDelay = false
-    var networkDelayMs: Long = 100
 
     override suspend fun getById(id: String): Result<Visit?> {
         if (shouldFail) return Result.error(failureException)
@@ -121,15 +134,15 @@ class FakeVisitRepository : VisitRepository {
 
     override suspend fun getByDateRange(
         beneficiaryId: String,
-        start: Instant,
-        end: Instant
+        startDate: LocalDate,
+        endDate: LocalDate
     ): Result<List<Visit>> {
         if (shouldFail) return Result.error(failureException)
         return Result.success(
             visits.values.filter {
                 it.beneficiaryId == beneficiaryId &&
-                    it.startTime >= start &&
-                    it.startTime <= end
+                    it.scheduledDate >= startDate &&
+                    it.scheduledDate <= endDate
             }
         )
     }
@@ -162,29 +175,33 @@ class FakeVisitRepository : VisitRepository {
 
     override suspend fun isSlotAvailable(
         beneficiaryId: String,
-        startTime: Instant,
-        endTime: Instant
+        date: LocalDate,
+        startTime: LocalTime,
+        endTime: LocalTime
     ): Result<Boolean> {
         if (shouldFail) return Result.error(failureException)
         val conflicting = visits.values.any {
             it.beneficiaryId == beneficiaryId &&
+                it.scheduledDate == date &&
                 it.status in listOf(VisitStatus.APPROVED, VisitStatus.PENDING) &&
-                hasOverlap(it.startTime, it.endTime, startTime, endTime)
+                hasTimeOverlap(it.startTime, it.endTime, startTime, endTime)
         }
         return Result.success(!conflicting)
     }
 
     override suspend fun getConflictingVisits(
         beneficiaryId: String,
-        startTime: Instant,
-        endTime: Instant
+        date: LocalDate,
+        startTime: LocalTime,
+        endTime: LocalTime
     ): Result<List<Visit>> {
         if (shouldFail) return Result.error(failureException)
         return Result.success(
             visits.values.filter {
                 it.beneficiaryId == beneficiaryId &&
+                    it.scheduledDate == date &&
                     it.status in listOf(VisitStatus.APPROVED, VisitStatus.PENDING) &&
-                    hasOverlap(it.startTime, it.endTime, startTime, endTime)
+                    hasTimeOverlap(it.startTime, it.endTime, startTime, endTime)
             }
         )
     }
@@ -220,11 +237,11 @@ class FakeVisitRepository : VisitRepository {
         visitsFlow.value = visits.values.toList()
     }
 
-    private fun hasOverlap(
-        start1: Instant,
-        end1: Instant,
-        start2: Instant,
-        end2: Instant
+    private fun hasTimeOverlap(
+        start1: LocalTime,
+        end1: LocalTime,
+        start2: LocalTime,
+        end2: LocalTime
     ): Boolean {
         return start1 < end2 && start2 < end1
     }
@@ -275,8 +292,8 @@ class FakeUserRepository : UserRepository {
         if (shouldFail) return Result.error(failureException)
         return Result.success(
             users.values.filter {
-                it.role in listOf(UserRole.PRIMARY_COORDINATOR, UserRole.SECONDARY_COORDINATOR) &&
-                    beneficiaryId in it.assignedBeneficiaryIds
+                it.role in listOf(Role.PRIMARY_COORDINATOR, Role.SECONDARY_COORDINATOR) &&
+                    beneficiaryId in it.associatedBeneficiaryIds
             }
         )
     }
@@ -285,7 +302,8 @@ class FakeUserRepository : UserRepository {
         if (shouldFail) return Result.error(failureException)
         return Result.success(
             users.values.filter {
-                it.role in listOf(UserRole.APPROVED_VISITOR, UserRole.PENDING_VISITOR)
+                it.role in listOf(Role.APPROVED_VISITOR, Role.PENDING_VISITOR) &&
+                    beneficiaryId in it.associatedBeneficiaryIds
             }
         )
     }
@@ -346,19 +364,20 @@ class FakeRestrictionRepository : RestrictionRepository {
         return Result.success(restrictions[id])
     }
 
-    override suspend fun getByBeneficiary(beneficiaryId: String): Result<List<Restriction>> {
+    override suspend fun getByFacility(facilityId: String): Result<List<Restriction>> {
         if (shouldFail) return Result.error(failureException)
-        return Result.success(restrictions.values.filter { it.beneficiaryId == beneficiaryId })
+        return Result.success(restrictions.values.filter { it.facilityId == facilityId })
     }
 
-    override suspend fun getActiveByBeneficiary(beneficiaryId: String): Result<List<Restriction>> {
+    override suspend fun getActiveByFacility(facilityId: String): Result<List<Restriction>> {
         if (shouldFail) return Result.error(failureException)
-        val now = Clock.System.now()
+        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         return Result.success(
             restrictions.values.filter {
-                it.beneficiaryId == beneficiaryId &&
+                it.facilityId == facilityId &&
                     it.isActive &&
-                    (it.expiresAt == null || it.expiresAt > now)
+                    it.effectiveFrom <= today &&
+                    (it.effectiveUntil == null || it.effectiveUntil >= today)
             }
         )
     }
@@ -387,18 +406,20 @@ class FakeRestrictionRepository : RestrictionRepository {
     }
 
     override suspend fun getApplicableRestrictions(
-        beneficiaryId: String,
+        facilityId: String,
         visitorId: String?,
-        timeSlot: TimeSlot
+        date: LocalDate,
+        startTime: LocalTime,
+        endTime: LocalTime
     ): Result<List<Restriction>> {
         if (shouldFail) return Result.error(failureException)
-        val now = Clock.System.now()
         return Result.success(
             restrictions.values.filter { restriction ->
-                restriction.beneficiaryId == beneficiaryId &&
+                restriction.facilityId == facilityId &&
                     restriction.isActive &&
-                    (restriction.expiresAt == null || restriction.expiresAt > now) &&
-                    isRestrictionApplicable(restriction, visitorId, timeSlot)
+                    restriction.effectiveFrom <= date &&
+                    (restriction.effectiveUntil == null || restriction.effectiveUntil >= date) &&
+                    isRestrictionApplicable(restriction, visitorId, date, startTime, endTime)
             }
         )
     }
@@ -406,50 +427,29 @@ class FakeRestrictionRepository : RestrictionRepository {
     private fun isRestrictionApplicable(
         restriction: Restriction,
         visitorId: String?,
-        timeSlot: TimeSlot
+        date: LocalDate,
+        startTime: LocalTime,
+        endTime: LocalTime
     ): Boolean {
         return when (restriction.type) {
-            RestrictionType.VISITOR_BLOCKED -> {
-                visitorId != null && restriction.visitorId == visitorId
+            RestrictionType.VISITOR_BASED -> {
+                val blockedIds = restriction.visitorConstraints?.blockedVisitorIds
+                visitorId != null && blockedIds != null && visitorId in blockedIds
             }
-            RestrictionType.BLACKOUT_DATE,
-            RestrictionType.MEDICAL_PROCEDURE -> {
-                restriction.startTime != null && restriction.endTime != null &&
-                    hasTimeOverlap(
-                        restriction.startTime,
-                        restriction.endTime,
-                        timeSlot.startTime,
-                        timeSlot.endTime
-                    )
-            }
-            RestrictionType.MEAL_TIME,
-            RestrictionType.REST_PERIOD,
-            RestrictionType.BLACKOUT_HOURS -> {
-                // Check recurring time restrictions
-                isRecurringTimeApplicable(restriction, timeSlot)
+            RestrictionType.TIME_BASED -> {
+                val timeConstraints = restriction.timeConstraints ?: return false
+                val blockedDays = timeConstraints.blockedDays
+                if (blockedDays != null && date.dayOfWeek in blockedDays) return true
+
+                val earliest = timeConstraints.earliestStartTime
+                val latest = timeConstraints.latestEndTime
+                if (earliest != null && startTime < earliest) return true
+                if (latest != null && endTime > latest) return true
+
+                false
             }
             else -> false
         }
-    }
-
-    private fun hasTimeOverlap(
-        start1: Instant,
-        end1: Instant,
-        start2: Instant,
-        end2: Instant
-    ): Boolean {
-        return start1 < end2 && start2 < end1
-    }
-
-    private fun isRecurringTimeApplicable(restriction: Restriction, timeSlot: TimeSlot): Boolean {
-        val slotLocalTime = timeSlot.startTime
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .time
-
-        val recurStart = restriction.recurringStartTime ?: return false
-        val recurEnd = restriction.recurringEndTime ?: return false
-
-        return slotLocalTime >= recurStart && slotLocalTime < recurEnd
     }
 
     // Test helpers
@@ -464,68 +464,109 @@ class FakeRestrictionRepository : RestrictionRepository {
     fun getAllRestrictions(): List<Restriction> = restrictions.values.toList()
 }
 
-class FakeSessionRepository : SessionRepository {
-    private val sessions = mutableMapOf<String, Session>()
-    private val tokenIndex = mutableMapOf<String, String>() // token -> sessionId
+class FakeBeneficiaryRepository : BeneficiaryRepository {
+    private val beneficiaries = mutableMapOf<String, Beneficiary>()
 
     var shouldFail = false
     var failureException: Throwable = Exception("Simulated failure")
 
-    override suspend fun save(session: Session): Result<Unit> {
+    override suspend fun getById(id: String): Result<Beneficiary?> {
         if (shouldFail) return Result.error(failureException)
-        sessions[session.id] = session
-        tokenIndex[session.token.accessToken] = session.id
-        return Result.success(Unit)
+        return Result.success(beneficiaries[id])
     }
 
-    override suspend fun getByToken(token: String): Result<Session?> {
+    override suspend fun getByFacility(facilityId: String): Result<List<Beneficiary>> {
         if (shouldFail) return Result.error(failureException)
-        val sessionId = tokenIndex[token]
-        return Result.success(sessionId?.let { sessions[it] })
+        return Result.success(beneficiaries.values.filter { it.facilityId == facilityId })
     }
 
-    override suspend fun invalidate(sessionId: String): Result<Unit> {
+    override suspend fun save(beneficiary: Beneficiary): Result<String> {
         if (shouldFail) return Result.error(failureException)
-        val session = sessions[sessionId]
-        if (session != null) {
-            tokenIndex.remove(session.token.accessToken)
-            sessions[sessionId] = session.copy(isActive = false)
+        val id = beneficiary.id.ifEmpty { TestFixtures.generateId("beneficiary") }
+        val saved = beneficiary.copy(id = id)
+        beneficiaries[id] = saved
+        return Result.success(id)
+    }
+
+    override suspend fun update(beneficiary: Beneficiary): Result<Unit> {
+        if (shouldFail) return Result.error(failureException)
+        if (!beneficiaries.containsKey(beneficiary.id)) {
+            return Result.error(IllegalArgumentException("Beneficiary not found: ${beneficiary.id}"))
         }
+        beneficiaries[beneficiary.id] = beneficiary
         return Result.success(Unit)
     }
 
-    override suspend fun invalidateAllForUser(userId: String): Result<Unit> {
+    override suspend fun delete(id: String): Result<Unit> {
         if (shouldFail) return Result.error(failureException)
-        sessions.values
-            .filter { it.userId == userId }
-            .forEach { session ->
-                tokenIndex.remove(session.token.accessToken)
-                sessions[session.id] = session.copy(isActive = false)
-            }
-        return Result.success(Unit)
-    }
-
-    override suspend fun updateLastActivity(sessionId: String): Result<Unit> {
-        if (shouldFail) return Result.error(failureException)
-        val session = sessions[sessionId]
-        if (session != null) {
-            sessions[sessionId] = session.copy(lastActivityAt = Clock.System.now())
-        }
+        beneficiaries.remove(id)
         return Result.success(Unit)
     }
 
     // Test helpers
-    fun addSession(session: Session) {
-        sessions[session.id] = session
-        tokenIndex[session.token.accessToken] = session.id
+    fun addBeneficiary(beneficiary: Beneficiary) {
+        beneficiaries[beneficiary.id] = beneficiary
     }
 
     fun clear() {
-        sessions.clear()
-        tokenIndex.clear()
+        beneficiaries.clear()
     }
 
-    fun getSession(id: String): Session? = sessions[id]
+    fun getAllBeneficiaries(): List<Beneficiary> = beneficiaries.values.toList()
+}
 
-    fun getAllSessions(): List<Session> = sessions.values.toList()
+class FakeTimeSlotRepository : TimeSlotRepository {
+    private val timeSlots = mutableMapOf<String, TimeSlot>()
+
+    var shouldFail = false
+    var failureException: Throwable = Exception("Simulated failure")
+
+    override suspend fun getById(id: String): Result<TimeSlot?> {
+        if (shouldFail) return Result.error(failureException)
+        return Result.success(timeSlots[id])
+    }
+
+    override suspend fun getByFacilityAndDate(facilityId: String, date: LocalDate): Result<List<TimeSlot>> {
+        if (shouldFail) return Result.error(failureException)
+        return Result.success(
+            timeSlots.values.filter { it.facilityId == facilityId && it.date == date }
+        )
+    }
+
+    override suspend fun getAvailable(facilityId: String, date: LocalDate): Result<List<TimeSlot>> {
+        if (shouldFail) return Result.error(failureException)
+        return Result.success(
+            timeSlots.values.filter {
+                it.facilityId == facilityId && it.date == date && it.isAvailable && !it.isFull
+            }
+        )
+    }
+
+    override suspend fun save(timeSlot: TimeSlot): Result<String> {
+        if (shouldFail) return Result.error(failureException)
+        val id = timeSlot.id.ifEmpty { TestFixtures.generateId("slot") }
+        val saved = timeSlot.copy(id = id)
+        timeSlots[id] = saved
+        return Result.success(id)
+    }
+
+    override suspend fun update(timeSlot: TimeSlot): Result<Unit> {
+        if (shouldFail) return Result.error(failureException)
+        if (!timeSlots.containsKey(timeSlot.id)) {
+            return Result.error(IllegalArgumentException("TimeSlot not found: ${timeSlot.id}"))
+        }
+        timeSlots[timeSlot.id] = timeSlot
+        return Result.success(Unit)
+    }
+
+    // Test helpers
+    fun addTimeSlot(timeSlot: TimeSlot) {
+        timeSlots[timeSlot.id] = timeSlot
+    }
+
+    fun clear() {
+        timeSlots.clear()
+    }
+
+    fun getAllTimeSlots(): List<TimeSlot> = timeSlots.values.toList()
 }

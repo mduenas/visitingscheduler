@@ -1,5 +1,6 @@
 package com.markduenas.visischeduler.data.repository
 
+import com.markduenas.visischeduler.domain.entities.Role
 import com.markduenas.visischeduler.testutil.*
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
@@ -35,7 +36,8 @@ class UserRepositoryTest {
         // Arrange
         val user = TestFixtures.createUser(
             email = "new@example.com",
-            name = "New User",
+            firstName = "New",
+            lastName = "User",
         )
 
         // Act
@@ -52,9 +54,9 @@ class UserRepositoryTest {
         val user = TestFixtures.createUser(
             id = "user-123",
             email = "complete@example.com",
-            name = "Complete User",
-            role = UserRole.PRIMARY_COORDINATOR,
-            mfaEnabled = true,
+            firstName = "Complete",
+            lastName = "User",
+            role = Role.PRIMARY_COORDINATOR,
             isActive = true,
         )
 
@@ -65,9 +67,9 @@ class UserRepositoryTest {
         // Assert
         assertNotNull(retrieved)
         assertEquals("complete@example.com", retrieved.email)
-        assertEquals("Complete User", retrieved.name)
-        assertEquals(UserRole.PRIMARY_COORDINATOR, retrieved.role)
-        assertTrue(retrieved.mfaEnabled)
+        assertEquals("Complete", retrieved.firstName)
+        assertEquals("User", retrieved.lastName)
+        assertEquals(Role.PRIMARY_COORDINATOR, retrieved.role)
         assertTrue(retrieved.isActive)
     }
 
@@ -171,14 +173,16 @@ class UserRepositoryTest {
         // Arrange
         val user = TestFixtures.createUser(
             id = "update-user",
-            name = "Original Name",
-            role = UserRole.PENDING_VISITOR,
+            firstName = "Original",
+            lastName = "Name",
+            role = Role.PENDING_VISITOR,
         )
         repository.save(user)
 
         val updated = user.copy(
-            name = "Updated Name",
-            role = UserRole.APPROVED_VISITOR,
+            firstName = "Updated",
+            lastName = "Name",
+            role = Role.APPROVED_VISITOR,
         )
 
         // Act
@@ -187,8 +191,8 @@ class UserRepositoryTest {
         // Assert
         assertTrue(result.isSuccess)
         val retrieved = repository.getById("update-user").getOrNull()
-        assertEquals("Updated Name", retrieved?.name)
-        assertEquals(UserRole.APPROVED_VISITOR, retrieved?.role)
+        assertEquals("Updated", retrieved?.firstName)
+        assertEquals(Role.APPROVED_VISITOR, retrieved?.role)
     }
 
     @Test
@@ -210,13 +214,13 @@ class UserRepositoryTest {
         val original = TestFixtures.createUser(
             id = "preserve-test",
             email = "preserve@example.com",
-            name = "Preserve User",
-            role = UserRole.APPROVED_VISITOR,
-            mfaEnabled = true,
+            firstName = "Preserve",
+            lastName = "User",
+            role = Role.APPROVED_VISITOR,
         )
         repository.save(original)
 
-        val updated = original.copy(name = "New Name")
+        val updated = original.copy(firstName = "New")
 
         // Act
         repository.update(updated)
@@ -224,8 +228,7 @@ class UserRepositoryTest {
         // Assert
         val retrieved = repository.getById("preserve-test").getOrNull()
         assertEquals("preserve@example.com", retrieved?.email)
-        assertEquals(UserRole.APPROVED_VISITOR, retrieved?.role)
-        assertTrue(retrieved?.mfaEnabled == true)
+        assertEquals(Role.APPROVED_VISITOR, retrieved?.role)
     }
 
     // ============================================================
@@ -267,19 +270,19 @@ class UserRepositoryTest {
         repository.save(
             TestFixtures.createPrimaryCoordinator(
                 id = "coord-1",
-                beneficiaryIds = listOf(beneficiaryId),
+                associatedBeneficiaryIds = listOf(beneficiaryId),
             )
         )
         repository.save(
             TestFixtures.createPrimaryCoordinator(
                 id = "coord-2",
-                beneficiaryIds = listOf(beneficiaryId, "other-beneficiary"),
+                associatedBeneficiaryIds = listOf(beneficiaryId, "other-beneficiary"),
             )
         )
         repository.save(
             TestFixtures.createPrimaryCoordinator(
                 id = "coord-3",
-                beneficiaryIds = listOf("different-beneficiary"),
+                associatedBeneficiaryIds = listOf("different-beneficiary"),
             )
         )
 
@@ -312,12 +315,12 @@ class UserRepositoryTest {
         repository.save(
             TestFixtures.createPrimaryCoordinator(
                 id = "primary",
-                beneficiaryIds = listOf(beneficiaryId),
+                associatedBeneficiaryIds = listOf(beneficiaryId),
             )
         )
 
         val secondary = TestFixtures.createSecondaryCoordinator(id = "secondary")
-            .copy(assignedBeneficiaryIds = listOf(beneficiaryId))
+            .copy(associatedBeneficiaryIds = listOf(beneficiaryId))
         repository.save(secondary)
 
         // Act
@@ -435,20 +438,31 @@ class UserRepositoryTest {
 
     @Test
     fun `should get visitors for beneficiary`() = runTest {
-        // Arrange
-        repository.save(TestFixtures.createApprovedVisitor(id = "v1"))
-        repository.save(TestFixtures.createApprovedVisitor(id = "v2"))
-        repository.save(TestFixtures.createPendingVisitor(id = "v3"))
+        // Arrange - create visitors associated with beneficiary-1
+        val beneficiaryId = "beneficiary-1"
+        repository.save(TestFixtures.createApprovedVisitor(
+            id = "v1",
+            associatedBeneficiaryIds = listOf(beneficiaryId)
+        ))
+        repository.save(TestFixtures.createApprovedVisitor(
+            id = "v2",
+            associatedBeneficiaryIds = listOf(beneficiaryId)
+        ))
+        repository.save(TestFixtures.createUser(
+            id = "v3",
+            role = Role.PENDING_VISITOR,
+            associatedBeneficiaryIds = listOf(beneficiaryId)
+        ))
         repository.save(TestFixtures.createPrimaryCoordinator(id = "c1")) // Not a visitor
 
         // Act
-        val result = repository.getVisitorsByBeneficiary("beneficiary-1")
+        val result = repository.getVisitorsByBeneficiary(beneficiaryId)
 
         // Assert
         assertTrue(result.isSuccess)
         val visitors = result.getOrNull()!!
         assertEquals(3, visitors.size)
-        assertTrue(visitors.all { it.role in listOf(UserRole.APPROVED_VISITOR, UserRole.PENDING_VISITOR) })
+        assertTrue(visitors.all { it.role in listOf(Role.APPROVED_VISITOR, Role.PENDING_VISITOR) })
     }
 
     // ============================================================
@@ -489,17 +503,17 @@ class UserRepositoryTest {
     @Test
     fun `should correctly identify user roles`() = runTest {
         // Arrange
-        repository.save(TestFixtures.createAdministrator(id = "admin"))
+        repository.save(TestFixtures.createAdmin(id = "admin"))
         repository.save(TestFixtures.createPrimaryCoordinator(id = "primary"))
         repository.save(TestFixtures.createSecondaryCoordinator(id = "secondary"))
         repository.save(TestFixtures.createApprovedVisitor(id = "approved"))
         repository.save(TestFixtures.createPendingVisitor(id = "pending"))
 
         // Act & Assert
-        assertEquals(UserRole.ADMINISTRATOR, repository.getById("admin").getOrNull()?.role)
-        assertEquals(UserRole.PRIMARY_COORDINATOR, repository.getById("primary").getOrNull()?.role)
-        assertEquals(UserRole.SECONDARY_COORDINATOR, repository.getById("secondary").getOrNull()?.role)
-        assertEquals(UserRole.APPROVED_VISITOR, repository.getById("approved").getOrNull()?.role)
-        assertEquals(UserRole.PENDING_VISITOR, repository.getById("pending").getOrNull()?.role)
+        assertEquals(Role.ADMIN, repository.getById("admin").getOrNull()?.role)
+        assertEquals(Role.PRIMARY_COORDINATOR, repository.getById("primary").getOrNull()?.role)
+        assertEquals(Role.SECONDARY_COORDINATOR, repository.getById("secondary").getOrNull()?.role)
+        assertEquals(Role.APPROVED_VISITOR, repository.getById("approved").getOrNull()?.role)
+        assertEquals(Role.PENDING_VISITOR, repository.getById("pending").getOrNull()?.role)
     }
 }

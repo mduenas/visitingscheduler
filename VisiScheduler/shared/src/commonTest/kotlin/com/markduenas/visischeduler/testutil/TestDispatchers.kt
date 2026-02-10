@@ -8,8 +8,20 @@ import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.*
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Instant
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Coroutine test utilities for VisiScheduler testing.
@@ -68,10 +80,12 @@ class TestCoroutineRule {
     /**
      * Run a test with proper setup and teardown.
      */
-    fun runTest(block: suspend TestScope.() -> Unit) {
+    fun runBlockingTest(block: suspend TestScope.() -> Unit) {
         before()
         try {
-            testScope.runTest(block)
+            kotlinx.coroutines.test.runTest {
+                block()
+            }
         } finally {
             after()
         }
@@ -156,10 +170,11 @@ fun runTestWithDispatchers(
     dispatchers: TestAppDispatchers = TestAppDispatchers(),
     block: suspend TestScope.() -> Unit
 ) {
-    val testScope = TestScope(dispatchers.main as TestDispatcher)
     Dispatchers.setMain(dispatchers.main)
     try {
-        testScope.runTest(block)
+        kotlinx.coroutines.test.runTest {
+            block()
+        }
     } finally {
         Dispatchers.resetMain()
     }
@@ -171,10 +186,11 @@ fun runTestWithDispatchers(
 @OptIn(ExperimentalCoroutinesApi::class)
 fun runUnconfinedTest(block: suspend TestScope.() -> Unit) {
     val dispatcher = UnconfinedTestDispatcher()
-    val testScope = TestScope(dispatcher)
     Dispatchers.setMain(dispatcher)
     try {
-        testScope.runTest(block)
+        kotlinx.coroutines.test.runTest {
+            block()
+        }
     } finally {
         Dispatchers.resetMain()
     }

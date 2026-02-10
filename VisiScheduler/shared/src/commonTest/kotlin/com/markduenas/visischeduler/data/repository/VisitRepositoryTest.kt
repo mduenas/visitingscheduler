@@ -1,12 +1,12 @@
 package com.markduenas.visischeduler.data.repository
 
+import com.markduenas.visischeduler.domain.entities.VisitStatus
+import com.markduenas.visischeduler.domain.entities.VisitType
 import com.markduenas.visischeduler.testutil.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.*
 import kotlin.test.*
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
 
 /**
  * Tests for VisitRepository implementation covering CRUD operations,
@@ -64,11 +64,9 @@ class VisitRepositoryTest {
             id = "custom-id",
             beneficiaryId = testBeneficiaryId,
             visitorId = testVisitorId,
-            visitorName = "John Doe",
             status = VisitStatus.PENDING,
             visitType = VisitType.IN_PERSON,
-            numberOfGuests = 2,
-            reason = "Family visit",
+            purpose = "Family visit",
         )
 
         // Act
@@ -79,11 +77,9 @@ class VisitRepositoryTest {
         assertNotNull(retrieved)
         assertEquals(visit.beneficiaryId, retrieved.beneficiaryId)
         assertEquals(visit.visitorId, retrieved.visitorId)
-        assertEquals(visit.visitorName, retrieved.visitorName)
         assertEquals(visit.status, retrieved.status)
         assertEquals(visit.visitType, retrieved.visitType)
-        assertEquals(visit.numberOfGuests, retrieved.numberOfGuests)
-        assertEquals(visit.reason, retrieved.reason)
+        assertEquals(visit.purpose, retrieved.purpose)
     }
 
     @Test
@@ -209,15 +205,15 @@ class VisitRepositoryTest {
     @Test
     fun `should get visits within date range`() = runTest {
         // Arrange
-        val baseTime = testClock.now()
+        val today = TestFixtures.futureDate(0)
 
-        repository.save(TestFixtures.createVisit(id = "v1", beneficiaryId = testBeneficiaryId, startTime = baseTime))
-        repository.save(TestFixtures.createVisit(id = "v2", beneficiaryId = testBeneficiaryId, startTime = baseTime.plus(1.days)))
-        repository.save(TestFixtures.createVisit(id = "v3", beneficiaryId = testBeneficiaryId, startTime = baseTime.plus(2.days)))
-        repository.save(TestFixtures.createVisit(id = "v4", beneficiaryId = testBeneficiaryId, startTime = baseTime.plus(5.days))) // Outside range
+        repository.save(TestFixtures.createVisit(id = "v1", beneficiaryId = testBeneficiaryId, scheduledDate = today))
+        repository.save(TestFixtures.createVisit(id = "v2", beneficiaryId = testBeneficiaryId, scheduledDate = today.plus(DatePeriod(days = 1))))
+        repository.save(TestFixtures.createVisit(id = "v3", beneficiaryId = testBeneficiaryId, scheduledDate = today.plus(DatePeriod(days = 2))))
+        repository.save(TestFixtures.createVisit(id = "v4", beneficiaryId = testBeneficiaryId, scheduledDate = today.plus(DatePeriod(days = 5)))) // Outside range
 
-        val rangeStart = baseTime.minus(1.hours)
-        val rangeEnd = baseTime.plus(3.days)
+        val rangeStart = today
+        val rangeEnd = today.plus(DatePeriod(days = 3))
 
         // Act
         val result = repository.getByDateRange(testBeneficiaryId, rangeStart, rangeEnd)
@@ -232,21 +228,21 @@ class VisitRepositoryTest {
     @Test
     fun `should exclude visits outside date range`() = runTest {
         // Arrange
-        val baseTime = testClock.now()
+        val today = TestFixtures.futureDate(0)
 
         repository.save(TestFixtures.createVisit(
             id = "past",
             beneficiaryId = testBeneficiaryId,
-            startTime = baseTime.minus(5.days)
+            scheduledDate = today.minus(DatePeriod(days = 5))
         ))
         repository.save(TestFixtures.createVisit(
             id = "future",
             beneficiaryId = testBeneficiaryId,
-            startTime = baseTime.plus(5.days)
+            scheduledDate = today.plus(DatePeriod(days = 5))
         ))
 
-        val rangeStart = baseTime.minus(1.days)
-        val rangeEnd = baseTime.plus(1.days)
+        val rangeStart = today.minus(DatePeriod(days = 1))
+        val rangeEnd = today.plus(DatePeriod(days = 1))
 
         // Act
         val result = repository.getByDateRange(testBeneficiaryId, rangeStart, rangeEnd)
@@ -332,13 +328,14 @@ class VisitRepositoryTest {
     @Test
     fun `should return true when slot is available`() = runTest {
         // Arrange
-        val slotStart = testClock.now().plus(2.hours)
-        val slotEnd = slotStart.plus(1.hours)
+        val date = TestFixtures.futureDate(1)
+        val slotStart = LocalTime(14, 0)
+        val slotEnd = LocalTime(15, 0)
 
         // No conflicting visits
 
         // Act
-        val result = repository.isSlotAvailable(testBeneficiaryId, slotStart, slotEnd)
+        val result = repository.isSlotAvailable(testBeneficiaryId, date, slotStart, slotEnd)
 
         // Assert
         assertTrue(result.isSuccess)
@@ -348,18 +345,21 @@ class VisitRepositoryTest {
     @Test
     fun `should return false when slot has approved visit`() = runTest {
         // Arrange
-        val slotStart = testClock.now().plus(2.hours)
-        val slotEnd = slotStart.plus(1.hours)
+        val date = TestFixtures.futureDate(1)
+        val slotStart = LocalTime(14, 0)
+        val slotEnd = LocalTime(15, 0)
 
         repository.save(
             TestFixtures.createApprovedVisit(
                 beneficiaryId = testBeneficiaryId,
+                scheduledDate = date,
                 startTime = slotStart,
+                endTime = slotEnd,
             )
         )
 
         // Act
-        val result = repository.isSlotAvailable(testBeneficiaryId, slotStart, slotEnd)
+        val result = repository.isSlotAvailable(testBeneficiaryId, date, slotStart, slotEnd)
 
         // Assert
         assertTrue(result.isSuccess)
@@ -369,19 +369,22 @@ class VisitRepositoryTest {
     @Test
     fun `should return false when slot has pending visit`() = runTest {
         // Arrange
-        val slotStart = testClock.now().plus(2.hours)
-        val slotEnd = slotStart.plus(1.hours)
+        val date = TestFixtures.futureDate(1)
+        val slotStart = LocalTime(14, 0)
+        val slotEnd = LocalTime(15, 0)
 
         repository.save(
             TestFixtures.createVisit(
                 beneficiaryId = testBeneficiaryId,
+                scheduledDate = date,
                 startTime = slotStart,
+                endTime = slotEnd,
                 status = VisitStatus.PENDING,
             )
         )
 
         // Act
-        val result = repository.isSlotAvailable(testBeneficiaryId, slotStart, slotEnd)
+        val result = repository.isSlotAvailable(testBeneficiaryId, date, slotStart, slotEnd)
 
         // Assert
         assertTrue(result.isSuccess)
@@ -391,19 +394,22 @@ class VisitRepositoryTest {
     @Test
     fun `should return true when only cancelled visits in slot`() = runTest {
         // Arrange
-        val slotStart = testClock.now().plus(2.hours)
-        val slotEnd = slotStart.plus(1.hours)
+        val date = TestFixtures.futureDate(1)
+        val slotStart = LocalTime(14, 0)
+        val slotEnd = LocalTime(15, 0)
 
         repository.save(
             TestFixtures.createVisit(
                 beneficiaryId = testBeneficiaryId,
+                scheduledDate = date,
                 startTime = slotStart,
+                endTime = slotEnd,
                 status = VisitStatus.CANCELLED,
             )
         )
 
         // Act
-        val result = repository.isSlotAvailable(testBeneficiaryId, slotStart, slotEnd)
+        val result = repository.isSlotAvailable(testBeneficiaryId, date, slotStart, slotEnd)
 
         // Assert
         assertTrue(result.isSuccess)
@@ -417,19 +423,21 @@ class VisitRepositoryTest {
     @Test
     fun `should return conflicting visits`() = runTest {
         // Arrange
-        val slotStart = testClock.now().plus(2.hours)
-        val slotEnd = slotStart.plus(1.hours)
+        val date = TestFixtures.futureDate(1)
+        val slotStart = LocalTime(14, 0)
+        val slotEnd = LocalTime(15, 0)
 
         val conflictingVisit = TestFixtures.createApprovedVisit(
             id = "conflict-1",
             beneficiaryId = testBeneficiaryId,
-            startTime = slotStart.plus(30.minutes), // Overlaps
-            duration = 1.hours,
+            scheduledDate = date,
+            startTime = LocalTime(14, 30), // Overlaps with the slot
+            endTime = LocalTime(15, 30),
         )
         repository.save(conflictingVisit)
 
         // Act
-        val result = repository.getConflictingVisits(testBeneficiaryId, slotStart, slotEnd)
+        val result = repository.getConflictingVisits(testBeneficiaryId, date, slotStart, slotEnd)
 
         // Assert
         assertTrue(result.isSuccess)
@@ -441,16 +449,18 @@ class VisitRepositoryTest {
     @Test
     fun `should not return non-overlapping visits as conflicts`() = runTest {
         // Arrange
-        val slotStart = testClock.now().plus(2.hours)
-        val slotEnd = slotStart.plus(1.hours)
+        val date = TestFixtures.futureDate(1)
+        val slotStart = LocalTime(14, 0)
+        val slotEnd = LocalTime(15, 0)
 
         // Visit before the slot
         repository.save(
             TestFixtures.createApprovedVisit(
                 id = "before",
                 beneficiaryId = testBeneficiaryId,
-                startTime = slotStart.minus(2.hours),
-                duration = 1.hours,
+                scheduledDate = date,
+                startTime = LocalTime(12, 0),
+                endTime = LocalTime(13, 0),
             )
         )
 
@@ -459,13 +469,14 @@ class VisitRepositoryTest {
             TestFixtures.createApprovedVisit(
                 id = "after",
                 beneficiaryId = testBeneficiaryId,
-                startTime = slotEnd.plus(1.hours),
-                duration = 1.hours,
+                scheduledDate = date,
+                startTime = LocalTime(16, 0),
+                endTime = LocalTime(17, 0),
             )
         )
 
         // Act
-        val result = repository.getConflictingVisits(testBeneficiaryId, slotStart, slotEnd)
+        val result = repository.getConflictingVisits(testBeneficiaryId, date, slotStart, slotEnd)
 
         // Assert
         assertTrue(result.isSuccess)
