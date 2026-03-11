@@ -15,6 +15,10 @@ import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.presentation.ui.components.visitors.AvatarSize
 import com.markduenas.visischeduler.presentation.ui.components.visitors.VisitorAvatar
 import com.markduenas.visischeduler.presentation.ui.components.visitors.RelationshipChip
+import com.markduenas.visischeduler.presentation.viewmodel.visitors.VisitorDetailsViewModel
+import org.koin.compose.koinInject
+import kotlinx.datetime.*
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,28 +26,14 @@ fun VisitorDetailsScreen(
     visitorId: String,
     onNavigateBack: () -> Unit,
     onEditVisitor: (String) -> Unit,
+    viewModel: VisitorDetailsViewModel = koinInject(),
     modifier: Modifier = Modifier
 ) {
-    var showBlockDialog by remember { mutableStateOf(false) }
-    var showRemoveDialog by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Mock data
-    val visitorName = "John Smith"
-    val visitorInitials = "JS"
-    val relationship = "Son"
-    val email = "john.smith@email.com"
-    val phone = "+1 (555) 123-4567"
-    val accessLevel = "Auto-approve"
-    val totalVisits = 24
-    val lastVisit = "January 20, 2026"
-
-    val recentVisits = listOf(
-        "Jan 20, 2026 - 2:00 PM (1 hour)",
-        "Jan 13, 2026 - 3:00 PM (45 min)",
-        "Jan 6, 2026 - 2:30 PM (1 hour)",
-        "Dec 30, 2025 - 1:00 PM (30 min)",
-        "Dec 23, 2025 - 2:00 PM (1 hour)"
-    )
+    LaunchedEffect(visitorId) {
+        viewModel.refresh()
+    }
 
     Scaffold(
         topBar = {
@@ -55,8 +45,10 @@ fun VisitorDetailsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onEditVisitor(visitorId) }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    if (uiState.canEdit) {
+                        IconButton(onClick = { onEditVisitor(visitorId) }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit")
+                        }
                     }
                     var showMenu by remember { mutableStateOf(false) }
                     IconButton(onClick = { showMenu = true }) {
@@ -66,303 +58,347 @@ fun VisitorDetailsScreen(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
                     ) {
-                        DropdownMenuItem(
-                            text = { Text("Block Visitor") },
-                            onClick = {
-                                showMenu = false
-                                showBlockDialog = true
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.Block, contentDescription = null)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Remove Visitor", color = MaterialTheme.colorScheme.error) },
-                            onClick = {
-                                showMenu = false
-                                showRemoveDialog = true
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Default.PersonRemove,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        VisitorAvatar(
-                            fullName = visitorName,
-                            size = AvatarSize.LARGE
-                        )
-                        Text(
-                            text = visitorName,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        RelationshipChip(relationship = relationship)
-                    }
-                }
-            }
-
-            // Contact Info
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Contact Information",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Email,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
+                        if (uiState.canBlock) {
+                            val blockLabel = if (uiState.isBlocked) "Unblock Visitor" else "Block Visitor"
+                            DropdownMenuItem(
+                                text = { Text(blockLabel) },
+                                onClick = {
+                                    showMenu = false
+                                    if (uiState.isBlocked) viewModel.unblockVisitor() else viewModel.showBlockDialog()
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Block, contentDescription = null)
+                                }
                             )
-                            Text(email)
                         }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Phone,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Text(phone)
-                        }
-                    }
-                }
-            }
-
-            // Access Level
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Permissions",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Access Level")
-                            AssistChip(
-                                onClick = { },
-                                label = { Text(accessLevel) },
+                        if (uiState.canRemove) {
+                            DropdownMenuItem(
+                                text = { Text("Remove Visitor", color = MaterialTheme.colorScheme.error) },
+                                onClick = {
+                                    showMenu = false
+                                    viewModel.showRemoveDialog()
+                                },
                                 leadingIcon = {
                                     Icon(
-                                        Icons.Default.CheckCircle,
+                                        Icons.Default.PersonRemove,
                                         contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
+                                        tint = MaterialTheme.colorScheme.error
                                     )
                                 }
                             )
                         }
                     }
                 }
+            )
+        }
+    ) { padding ->
+        if (uiState.isLoading && uiState.visitor == null) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-
-            // Visit Statistics
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+        } else if (uiState.visitor == null) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text("Visitor not found")
+            }
+        } else {
+            val visitor = uiState.visitor!!
+            
+            LazyColumn(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "Visit Statistics",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = totalVisits.toString(),
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = "Total Visits",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "Weekly",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = "Frequency",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-                        HorizontalDivider()
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Last Visit")
+                            VisitorAvatar(
+                                fullName = visitor.fullName,
+                                size = AvatarSize.LARGE
+                            )
                             Text(
-                                text = lastVisit,
-                                fontWeight = FontWeight.Medium
+                                text = visitor.fullName,
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
                             )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                RelationshipChip(relationship = visitor.metadata["relationship"] ?: "Visitor")
+                                Badge(
+                                    containerColor = when {
+                                        uiState.isBlocked -> MaterialTheme.colorScheme.errorContainer
+                                        uiState.isPending -> MaterialTheme.colorScheme.tertiaryContainer
+                                        else -> MaterialTheme.colorScheme.primaryContainer
+                                    }
+                                ) {
+                                    Text(
+                                        text = uiState.visitorStatus,
+                                        modifier = Modifier.padding(4.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
-            }
 
-            // Recent Visits
-            item {
-                Text(
-                    text = "Recent Visits",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-
-            items(recentVisits) { visit ->
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                // Approval Actions
+                if (uiState.isPending && uiState.canApprove) {
+                    item {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(
-                                Icons.Default.Event,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Text(visit)
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text("Pending Approval", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("This visitor has requested access to the care circle.", style = MaterialTheme.typography.bodyMedium)
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    OutlinedButton(
+                                        onClick = { viewModel.removeVisitor() },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                    ) {
+                                        Text("Deny")
+                                    }
+                                    Button(
+                                        onClick = { viewModel.approveVisitor() },
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("Approve")
+                                    }
+                                }
+                            }
                         }
-                        Icon(
-                            Icons.Default.ChevronRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                }
+
+                // Contact Info
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "Contact Information",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Email,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(visitor.email)
+                            }
+                            visitor.phoneNumber?.let { phone ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Phone,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(phone)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Visit Statistics
+                item {
+                    val stats = uiState.visitFrequency
+                    Card(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                text = "Visit Statistics",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = stats.totalVisits.toString(),
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "Total Visits",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = stats.upcomingVisits.toString(),
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "Upcoming",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                            HorizontalDivider()
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Last Visit")
+                                Text(
+                                    text = stats.lastVisitDate?.let { formatDate(it) } ?: "Never",
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Recent Visits
+                if (uiState.visitHistory.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Recent History",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(vertical = 8.dp)
                         )
                     }
-                }
-            }
 
-            item {
-                Spacer(modifier = Modifier.height(80.dp))
+                    items(uiState.visitHistory.take(5)) { visit ->
+                        Card(
+                            onClick = { viewModel.onVisitClick(visit.id) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Event,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Column {
+                                        Text(formatDate(visit.scheduledDate))
+                                        Text(
+                                            text = visit.status.name.lowercase().capitalize(),
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
+                }
             }
         }
     }
 
-    // Block Dialog
-    if (showBlockDialog) {
+    // Dialogs
+    if (uiState.showBlockDialog) {
         AlertDialog(
-            onDismissRequest = { showBlockDialog = false },
+            onDismissRequest = { viewModel.hideBlockDialog() },
             title = { Text("Block Visitor?") },
             text = {
-                Text("$visitorName will no longer be able to request or schedule visits. You can unblock them later.")
+                Text("${uiState.visitor?.fullName} will no longer be able to request or schedule visits. You can unblock them later.")
             },
             confirmButton = {
                 TextButton(
-                    onClick = {
-                        showBlockDialog = false
-                        // TODO: Block visitor
-                    }
+                    onClick = { viewModel.blockVisitor() }
                 ) {
                     Text("Block", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showBlockDialog = false }) {
+                TextButton(onClick = { viewModel.hideBlockDialog() }) {
                     Text("Cancel")
                 }
             }
         )
     }
 
-    // Remove Dialog
-    if (showRemoveDialog) {
+    if (uiState.showRemoveDialog) {
         AlertDialog(
-            onDismissRequest = { showRemoveDialog = false },
+            onDismissRequest = { viewModel.hideRemoveDialog() },
             title = { Text("Remove Visitor?") },
             text = {
-                Text("This will permanently remove $visitorName from your visitor list. This action cannot be undone.")
+                Text("This will permanently remove ${uiState.visitor?.fullName} from your visitor list. This action cannot be undone.")
             },
             confirmButton = {
                 TextButton(
-                    onClick = {
-                        showRemoveDialog = false
-                        onNavigateBack()
-                        // TODO: Remove visitor
-                    }
+                    onClick = { viewModel.removeVisitor() }
                 ) {
                     Text("Remove", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showRemoveDialog = false }) {
+                TextButton(onClick = { viewModel.hideRemoveDialog() }) {
                     Text("Cancel")
                 }
             }
         )
     }
 }
+
+// Helpers
+private fun formatDate(date: LocalDate): String {
+    return \"${date.month} ${date.dayOfMonth}, ${date.year}\"
+}
+
+private fun formatDate(instant: Instant): String {
+    // simplified
+    return instant.toString().take(10)
+}
+
+private fun String.capitalize() = this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }

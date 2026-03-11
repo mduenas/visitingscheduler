@@ -29,6 +29,9 @@ val androidPlatformModule = module {
 
     // Platform-specific notification handler
     single<NotificationHandler> { AndroidNotificationHandler(androidContext()) }
+
+    // Platform-specific permission manager
+    single<PermissionManager> { AndroidPermissionManager(androidContext()) }
 }
 
 /**

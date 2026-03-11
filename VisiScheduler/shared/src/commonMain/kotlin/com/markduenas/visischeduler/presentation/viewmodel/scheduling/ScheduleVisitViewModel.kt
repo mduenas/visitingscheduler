@@ -46,9 +46,12 @@ data class ScheduleVisitUiState(
     val selectedDuration: VisitDuration = VisitDuration.ONE_HOUR,
     val visitType: VisitType = VisitType.IN_PERSON,
     val reason: String = "",
-    val notes: String = "",
+    val notes: String = \"\",
     val additionalVisitors: List<AdditionalVisitor> = emptyList(),
+    val videoCallLink: String? = null,
+    val videoCallPlatform: String? = null,
     val isLoadingSlots: Boolean = false,
+
     val isSubmitting: Boolean = false,
     val error: AppException? = null,
     val validationErrors: Map<String, String> = emptyMap(),
@@ -172,6 +175,20 @@ class ScheduleVisitViewModel(
     }
 
     /**
+     * Set the video call link.
+     */
+    fun setVideoCallLink(link: String?) {
+        updateState { copy(videoCallLink = link) }
+    }
+
+    /**
+     * Set the video call platform.
+     */
+    fun setVideoCallPlatform(platform: String?) {
+        updateState { copy(videoCallPlatform = platform) }
+    }
+
+    /**
      * Update additional notes.
      */
     fun setNotes(notes: String) {
@@ -203,6 +220,26 @@ class ScheduleVisitViewModel(
             copy(
                 additionalVisitors = additionalVisitors.filter { it.id != visitorId }
             )
+        }
+    }
+
+    /**
+     * Increment the number of additional guests.
+     */
+    fun incrementGuestCount() {
+        if (currentState.additionalVisitors.size < 5) {
+            val nextId = (currentState.additionalVisitors.size + 1).toString()
+            addAdditionalVisitor(AdditionalVisitor(nextId, "Guest $nextId", ""))
+        }
+    }
+
+    /**
+     * Decrement the number of additional guests.
+     */
+    fun decrementGuestCount() {
+        if (currentState.additionalVisitors.isNotEmpty()) {
+            val lastVisitorId = currentState.additionalVisitors.last().id
+            removeAdditionalVisitor(lastVisitorId)
         }
     }
 
@@ -261,7 +298,7 @@ class ScheduleVisitViewModel(
 
         launchSafe {
             val request = ScheduleVisitRequest(
-                visitorId = "", // Will be populated by use case from current user
+                visitorId = \"\", // Will be populated by use case from current user
                 beneficiaryId = state.beneficiaryId!!,
                 scheduledDate = state.selectedDate,
                 startTime = startTime,
@@ -269,8 +306,11 @@ class ScheduleVisitViewModel(
                 visitType = state.visitType,
                 purpose = state.reason.takeIf { it.isNotBlank() },
                 notes = state.notes.takeIf { it.isNotBlank() },
-                additionalVisitors = state.additionalVisitors
+                additionalVisitors = state.additionalVisitors,
+                videoCallLink = state.videoCallLink,
+                videoCallPlatform = state.videoCallPlatform
             )
+
 
             val result = scheduleVisitUseCase(request)
 

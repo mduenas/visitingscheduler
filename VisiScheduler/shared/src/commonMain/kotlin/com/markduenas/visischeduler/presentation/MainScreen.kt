@@ -6,54 +6,51 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.markduenas.visischeduler.presentation.navigation.MainTab
-import com.markduenas.visischeduler.presentation.navigation.MainNavigatorState
-import com.markduenas.visischeduler.presentation.navigation.TabBadge
-import com.markduenas.visischeduler.presentation.navigation.TabBadgeState
-import com.markduenas.visischeduler.presentation.navigation.navigateToNotifications
-import com.markduenas.visischeduler.presentation.navigation.navigateToScheduleVisit
-import com.markduenas.visischeduler.presentation.navigation.navigateToComposeMessage
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.markduenas.visischeduler.presentation.navigation.*
+import com.markduenas.visischeduler.presentation.ui.screens.dashboard.DashboardScreen
+import com.markduenas.visischeduler.presentation.ui.screens.calendar.CalendarScreen
+import com.markduenas.visischeduler.presentation.ui.screens.scheduling.PendingRequestsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.messaging.ConversationsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.profile.ProfileScreen
+import com.markduenas.visischeduler.presentation.viewmodel.dashboard.DashboardViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.scheduling.CalendarViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.messaging.ConversationsViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.settings.ProfileViewModel
+import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 
 /**
  * Main screen with bottom navigation, hosting all main tabs.
- * This is the primary screen after authentication.
  */
 class MainScreen : Screen {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val navigatorState = rememberMainNavigatorState()
+        
+        // Injected ViewModels for each tab
+        val dashboardViewModel: DashboardViewModel = koinInject()
+        val calendarViewModel: CalendarViewModel = koinInject()
+        val conversationsViewModel: ConversationsViewModel = koinInject()
+        val profileViewModel: ProfileViewModel = koinInject()
 
-        // In a real app, these would be injected via Koin
-        val navigatorState = MainNavigatorState()
-        val notificationCount = MutableStateFlow(0)
+        // Sync manager for offline reliability
+        val syncManager: com.markduenas.visischeduler.data.sync.SyncManager = koinInject()
+        
+        LaunchedEffect(Unit) {
+            syncManager.startPeriodicSync()
+        }
 
         MainScreenContent(
             navigatorState = navigatorState,
-            notificationCount = notificationCount,
             onNotificationsClick = { navigator.navigateToNotifications() },
             onFabClick = { tab ->
                 when (tab) {
@@ -63,23 +60,68 @@ class MainScreen : Screen {
                     else -> {}
                 }
             },
-            homeContent = { HomeTabContent() },
-            calendarContent = { CalendarTabContent() },
-            requestsContent = { RequestsTabContent() },
-            messagesContent = { MessagesTabContent() },
-            profileContent = { ProfileTabContent() }
+            homeContent = {
+                DashboardScreen(
+                    viewModel = dashboardViewModel,
+                    onNavigate = { route ->
+                        when (route) {
+                            "calendar" -> navigatorState.selectTab(MainTab.Calendar)
+                            "pending_requests" -> navigatorState.selectTab(MainTab.Requests)
+                            "messages" -> navigatorState.selectTab(MainTab.Messages)
+                            "profile" -> navigatorState.selectTab(MainTab.Profile)
+                            "notifications" -> navigator.navigateToNotifications()
+                            "settings" -> navigator.navigateToSettings()
+                            else -> { /* Handle deep link routes if needed */ }
+                        }
+                    }
+                )
+            },
+            calendarContent = {
+                CalendarScreen(
+                    viewModel = calendarViewModel,
+                    onNavigateToSchedule = { date ->
+                        navigator.navigateToScheduleVisit("default")
+                    },
+                    onNavigateToVisitDetails = { visitId ->
+                        navigator.navigateToVisitDetails(visitId)
+                    }
+                )
+            },
+            requestsContent = {
+                PendingRequestsScreen(
+                    onNavigateBack = { navigatorState.selectTab(MainTab.Home) },
+                    onViewDetails = { visitId ->
+                        navigator.navigateToVisitDetails(visitId)
+                    }
+                )
+            },
+            messagesContent = {
+                ConversationsScreen(
+                    viewModel = conversationsViewModel
+                )
+            },
+            profileContent = {
+                ProfileScreen(
+                    viewModel = profileViewModel,
+                    onNavigateToEditProfile = {
+                        navigator.push(AppScreen.EditProfile)
+                    },
+                    onNavigateToSettings = {
+                        navigator.navigateToSettings()
+                    },
+                    onNavigateToNotifications = {
+                        navigator.navigateToNotifications()
+                    }
+                )
+            }
         )
     }
 }
 
-/**
- * Main screen content with scaffold layout.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreenContent(
     navigatorState: MainNavigatorState,
-    notificationCount: StateFlow<Int>,
     onNotificationsClick: () -> Unit,
     onFabClick: (MainTab) -> Unit,
     homeContent: @Composable () -> Unit,
@@ -90,33 +132,37 @@ fun MainScreenContent(
 ) {
     val currentTab by navigatorState.currentTab.collectAsState()
     val badgeState by navigatorState.badgeState.collectAsState()
-    val notifications by notificationCount.collectAsState()
-
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            MainTopAppBar(
-                currentTab = currentTab,
-                notificationCount = notifications,
-                onNotificationsClick = onNotificationsClick,
-                scrollBehavior = scrollBehavior
-            )
-        },
         bottomBar = {
-            MainBottomBar(
-                currentTab = currentTab,
-                badgeState = badgeState,
-                onTabSelected = { navigatorState.selectTab(it) }
-            )
+            NavigationBar {
+                MainTab.entries.forEach { tab ->
+                    val badge = badgeState.getBadge(tab)
+                    val isSelected = currentTab == tab
+
+                    NavigationBarItem(
+                        selected = isSelected,
+                        onClick = { navigatorState.selectTab(tab) },
+                        icon = {
+                            TabIconWithBadge(
+                                tab = tab,
+                                isSelected = isSelected,
+                                badge = badge
+                            )
+                        },
+                        label = { Text(tab.title) }
+                    )
+                }
+            }
         },
         floatingActionButton = {
             if (shouldShowFab(currentTab)) {
-                MainFloatingActionButton(
-                    currentTab = currentTab,
-                    onClick = { onFabClick(currentTab) }
-                )
+                FloatingActionButton(onClick = { onFabClick(currentTab) }) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = getFabContentDescription(currentTab)
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -136,78 +182,6 @@ fun MainScreenContent(
     }
 }
 
-/**
- * Top app bar with title and notifications.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MainTopAppBar(
-    currentTab: MainTab,
-    notificationCount: Int,
-    onNotificationsClick: () -> Unit,
-    scrollBehavior: TopAppBarScrollBehavior
-) {
-    CenterAlignedTopAppBar(
-        title = { Text(getTopBarTitle(currentTab)) },
-        actions = {
-            IconButton(onClick = onNotificationsClick) {
-                if (notificationCount > 0) {
-                    BadgedBox(
-                        badge = {
-                            Badge {
-                                Text(if (notificationCount > 99) "99+" else notificationCount.toString())
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications"
-                        )
-                    }
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifications"
-                    )
-                }
-            }
-        }
-    )
-}
-
-/**
- * Bottom navigation bar.
- */
-@Composable
-private fun MainBottomBar(
-    currentTab: MainTab,
-    badgeState: TabBadgeState,
-    onTabSelected: (MainTab) -> Unit
-) {
-    NavigationBar {
-        MainTab.entries.forEach { tab ->
-            val badge = badgeState.getBadge(tab)
-            val isSelected = currentTab == tab
-
-            NavigationBarItem(
-                selected = isSelected,
-                onClick = { onTabSelected(tab) },
-                icon = {
-                    TabIconWithBadge(
-                        tab = tab,
-                        isSelected = isSelected,
-                        badge = badge
-                    )
-                },
-                label = { Text(tab.title) }
-            )
-        }
-    }
-}
-
-/**
- * Tab icon with badge support.
- */
 @Composable
 private fun TabIconWithBadge(
     tab: MainTab,
@@ -233,36 +207,6 @@ private fun TabIconWithBadge(
     }
 }
 
-/**
- * Floating action button.
- */
-@Composable
-private fun MainFloatingActionButton(
-    currentTab: MainTab,
-    onClick: () -> Unit
-) {
-    FloatingActionButton(onClick = onClick) {
-        Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = getFabContentDescription(currentTab)
-        )
-    }
-}
-
-/**
- * Get top bar title based on current tab.
- */
-private fun getTopBarTitle(tab: MainTab): String = when (tab) {
-    MainTab.Home -> "VisiScheduler"
-    MainTab.Calendar -> "Calendar"
-    MainTab.Requests -> "Pending Requests"
-    MainTab.Messages -> "Messages"
-    MainTab.Profile -> "Profile"
-}
-
-/**
- * Determine if FAB should be shown for current tab.
- */
 private fun shouldShowFab(tab: MainTab): Boolean = when (tab) {
     MainTab.Home -> true
     MainTab.Calendar -> true
@@ -271,64 +215,9 @@ private fun shouldShowFab(tab: MainTab): Boolean = when (tab) {
     MainTab.Profile -> false
 }
 
-/**
- * Get FAB content description for accessibility.
- */
 private fun getFabContentDescription(tab: MainTab): String = when (tab) {
     MainTab.Home -> "Schedule new visit"
     MainTab.Calendar -> "Add event"
     MainTab.Messages -> "New message"
     else -> "Add"
-}
-
-// ==================== Tab Content Placeholders ====================
-
-/**
- * Home tab content placeholder.
- */
-@Composable
-private fun HomeTabContent() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Text("Home Content")
-    }
-}
-
-/**
- * Calendar tab content placeholder.
- */
-@Composable
-private fun CalendarTabContent() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Text("Calendar Content")
-    }
-}
-
-/**
- * Requests tab content placeholder.
- */
-@Composable
-private fun RequestsTabContent() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Text("Pending Requests Content")
-    }
-}
-
-/**
- * Messages tab content placeholder.
- */
-@Composable
-private fun MessagesTabContent() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Text("Messages Content")
-    }
-}
-
-/**
- * Profile tab content placeholder.
- */
-@Composable
-private fun ProfileTabContent() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Text("Profile Content")
-    }
 }

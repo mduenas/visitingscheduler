@@ -11,21 +11,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.markduenas.visischeduler.presentation.viewmodel.settings.NotificationSettingsViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.settings.ReminderTime
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationSettingsScreen(
     onNavigateBack: () -> Unit,
+    viewModel: NotificationSettingsViewModel = koinInject(),
     modifier: Modifier = Modifier
 ) {
-    var pushEnabled by remember { mutableStateOf(true) }
-    var emailEnabled by remember { mutableStateOf(true) }
-    var smsEnabled by remember { mutableStateOf(false) }
-    var reminder24h by remember { mutableStateOf(true) }
-    var reminder2h by remember { mutableStateOf(true) }
-    var reminder30m by remember { mutableStateOf(false) }
-    var soundEnabled by remember { mutableStateOf(true) }
-    var vibrationEnabled by remember { mutableStateOf(true) }
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -39,127 +36,171 @@ fun NotificationSettingsScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Channels Section
-            item {
-                Text(
-                    text = "Notification Channels",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
+        } else {
+            LazyColumn(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Channels Section
+                item {
+                    Text(
+                        text = "Notification Channels",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
 
-            item {
-                NotificationToggleItem(
-                    icon = Icons.Default.Notifications,
-                    title = "Push Notifications",
-                    subtitle = "Receive alerts on your device",
-                    checked = pushEnabled,
-                    onCheckedChange = { pushEnabled = it }
-                )
-            }
+                item {
+                    NotificationToggleItem(
+                        icon = Icons.Default.Notifications,
+                        title = "Push Notifications",
+                        subtitle = "Receive alerts on your device",
+                        checked = uiState.pushEnabled,
+                        onCheckedChange = { viewModel.togglePushNotifications(it) }
+                    )
+                }
 
-            item {
-                NotificationToggleItem(
-                    icon = Icons.Default.Email,
-                    title = "Email Notifications",
-                    subtitle = "Receive updates via email",
-                    checked = emailEnabled,
-                    onCheckedChange = { emailEnabled = it }
-                )
-            }
+                item {
+                    NotificationToggleItem(
+                        icon = Icons.Default.Email,
+                        title = "Email Notifications",
+                        subtitle = "Receive updates via email",
+                        checked = uiState.emailEnabled,
+                        onCheckedChange = { viewModel.toggleEmailNotifications(it) }
+                    )
+                }
 
-            item {
-                NotificationToggleItem(
-                    icon = Icons.Default.Sms,
-                    title = "SMS Notifications",
-                    subtitle = "Receive text message alerts",
-                    checked = smsEnabled,
-                    onCheckedChange = { smsEnabled = it }
-                )
-            }
+                item {
+                    NotificationToggleItem(
+                        icon = Icons.Default.Sms,
+                        title = "SMS Notifications",
+                        subtitle = "Receive text message alerts",
+                        checked = uiState.smsEnabled,
+                        onCheckedChange = { viewModel.toggleSmsNotifications(it) }
+                    )
+                }
 
-            // Reminders Section
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Visit Reminders",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
+                // Subscriptions Section
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Alert Types",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
 
-            item {
-                NotificationToggleItem(
-                    icon = Icons.Default.NotificationsActive,
-                    title = "24 Hours Before",
-                    subtitle = "Reminder one day before visit",
-                    checked = reminder24h,
-                    onCheckedChange = { reminder24h = it }
-                )
-            }
+                item {
+                    NotificationToggleItem(
+                        icon = Icons.Default.FactCheck,
+                        title = "Visit Approvals",
+                        subtitle = "Notify when a visit is approved or denied",
+                        checked = uiState.approvalNotificationsEnabled,
+                        onCheckedChange = { viewModel.toggleApprovalNotifications(it) }
+                    )
+                }
 
-            item {
-                NotificationToggleItem(
-                    icon = Icons.Default.NotificationsActive,
-                    title = "2 Hours Before",
-                    subtitle = "Reminder 2 hours before visit",
-                    checked = reminder2h,
-                    onCheckedChange = { reminder2h = it }
-                )
-            }
+                item {
+                    NotificationToggleItem(
+                        icon = Icons.Default.EditCalendar,
+                        title = "Schedule Changes",
+                        subtitle = "Notify when a visit is rescheduled or cancelled",
+                        checked = uiState.scheduleChangesEnabled,
+                        onCheckedChange = { viewModel.toggleScheduleChanges(it) }
+                    )
+                }
 
-            item {
-                NotificationToggleItem(
-                    icon = Icons.Default.NotificationsActive,
-                    title = "30 Minutes Before",
-                    subtitle = "Reminder 30 minutes before visit",
-                    checked = reminder30m,
-                    onCheckedChange = { reminder30m = it }
-                )
-            }
+                // Reminders Section
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Visit Reminders",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
 
-            // Sound & Vibration Section
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Sound & Vibration",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
+                item {
+                    NotificationToggleItem(
+                        icon = Icons.Default.NotificationsActive,
+                        title = "Enable Reminders",
+                        subtitle = "Get notified before your visits start",
+                        checked = uiState.visitRemindersEnabled,
+                        onCheckedChange = { viewModel.toggleVisitReminders(it) }
+                    )
+                }
 
-            item {
-                NotificationToggleItem(
-                    icon = Icons.Default.VolumeUp,
-                    title = "Notification Sound",
-                    subtitle = "Play sound for notifications",
-                    checked = soundEnabled,
-                    onCheckedChange = { soundEnabled = it }
-                )
-            }
+                if (uiState.visitRemindersEnabled) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("Reminder Times", style = MaterialTheme.typography.labelMedium)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
+                                ReminderTime.entries.forEach { time ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Checkbox(
+                                            checked = uiState.reminderTimes.contains(time),
+                                            onCheckedChange = { viewModel.toggleReminderTime(time) }
+                                        )
+                                        Text(time.displayName, style = MaterialTheme.typography.bodyMedium)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 
-            item {
-                NotificationToggleItem(
-                    icon = Icons.Default.Vibration,
-                    title = "Vibration",
-                    subtitle = "Vibrate for notifications",
-                    checked = vibrationEnabled,
-                    onCheckedChange = { vibrationEnabled = it }
-                )
-            }
+                // Sound & Vibration Section
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Sound & Vibration",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
 
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
+                item {
+                    NotificationToggleItem(
+                        icon = Icons.Default.VolumeUp,
+                        title = "Notification Sound",
+                        subtitle = "Play sound for notifications",
+                        checked = uiState.soundEnabled,
+                        onCheckedChange = { viewModel.toggleSound(it) }
+                    )
+                }
+
+                item {
+                    NotificationToggleItem(
+                        icon = Icons.Default.Vibration,
+                        title = "Vibration",
+                        subtitle = "Vibrate for notifications",
+                        checked = uiState.vibrationEnabled,
+                        onCheckedChange = { viewModel.toggleVibration(it) }
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
             }
         }
     }

@@ -8,6 +8,7 @@ import com.markduenas.visischeduler.presentation.viewmodel.checkin.CheckInViewMo
 import com.markduenas.visischeduler.presentation.viewmodel.checkin.CheckOutViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.dashboard.DashboardViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.messaging.ConversationsViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.notifications.NotificationsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.CalendarViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.PendingRequestsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.ScheduleVisitViewModel
@@ -36,7 +37,7 @@ val viewModelModule = module {
     // ==========================================
     // Main/Dashboard ViewModels
     // ==========================================
-    factory { DashboardViewModel(get(), get(), get()) }
+    factory { DashboardViewModel(get(), get(), get(), get()) }
 
     // ==========================================
     // Schedule ViewModels
@@ -50,12 +51,26 @@ val viewModelModule = module {
     // Visitor Management ViewModels
     // ==========================================
     factory { VisitorListViewModel(get()) }
+    factory { (visitorId: String) ->
+        com.markduenas.visischeduler.presentation.viewmodel.visitors.VisitorDetailsViewModel(get(), visitorId)
+    }
+    factory { com.markduenas.visischeduler.presentation.viewmodel.visitors.AddVisitorViewModel(get()) }
+    factory { com.markduenas.visischeduler.presentation.viewmodel.visitors.RestrictionsViewModel(get()) }
+    factory { (restrictionId: String?) ->
+        com.markduenas.visischeduler.presentation.viewmodel.visitors.AddRestrictionViewModel(get(), restrictionId)
+    }
+    factory { (inviteCode: String) ->
+        com.markduenas.visischeduler.presentation.viewmodel.visitors.AcceptInvitationViewModel(get(), inviteCode)
+    }
 
     // ==========================================
     // Profile/Settings ViewModels
     // ==========================================
     factory { ProfileViewModel(get(), get()) }
-    factory { SettingsViewModel(get(), get()) }
+    factory { SettingsViewModel(get(), get(), get()) }
+    factory { (beneficiaryId: String?) ->
+        com.markduenas.visischeduler.presentation.viewmodel.settings.BeneficiarySettingsViewModel(get(), beneficiaryId)
+    }
 
     // ==========================================
     // Check-in ViewModels
@@ -67,4 +82,17 @@ val viewModelModule = module {
     // Messaging ViewModels
     // ==========================================
     factory { ConversationsViewModel(get(), get()) }
+    factory { (conversationId: String) ->
+        com.markduenas.visischeduler.presentation.viewmodel.messaging.ChatViewModel(
+            conversationId = conversationId,
+            messageRepository = get(),
+            sendMessageUseCase = get()
+        )
+    }
+    factory { com.markduenas.visischeduler.presentation.viewmodel.messaging.NewMessageViewModel(get(), get(), get()) }
+
+    // ==========================================
+    // Notification ViewModels
+    // ==========================================
+    factory { NotificationsViewModel(get(), get()) }
 }

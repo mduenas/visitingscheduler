@@ -11,38 +11,27 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.presentation.ui.components.visitors.AccessLevelSelector
-import com.markduenas.visischeduler.presentation.viewmodel.visitors.AccessLevel
+import com.markduenas.visischeduler.presentation.viewmodel.visitors.AddVisitorViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.visitors.RelationshipType
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddVisitorScreen(
     onNavigateBack: () -> Unit,
     onVisitorAdded: (String) -> Unit,
+    viewModel: AddVisitorViewModel = koinInject(),
     modifier: Modifier = Modifier
 ) {
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var selectedRelationship by remember { mutableStateOf("") }
-    var selectedAccessLevel by remember { mutableStateOf(AccessLevel.REQUIRES_APPROVAL) }
-    var notes by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
     var showRelationshipMenu by remember { mutableStateOf(false) }
 
-    val relationships = listOf(
-        "Family - Spouse",
-        "Family - Child",
-        "Family - Parent",
-        "Family - Sibling",
-        "Family - Other",
-        "Friend",
-        "Healthcare Provider",
-        "Caregiver",
-        "Clergy/Spiritual",
-        "Other"
-    )
-
-    val isFormValid = name.isNotBlank() && email.isNotBlank() && selectedRelationship.isNotBlank()
+    // Navigation trigger on success
+    LaunchedEffect(uiState.invitationSent) {
+        if (uiState.invitationSent) {
+            onVisitorAdded(uiState.email)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -64,32 +53,50 @@ fun AddVisitorScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Name Field
+            // First Name Field
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Full Name *") },
+                value = uiState.firstName,
+                onValueChange = { viewModel.onFirstNameChange(it) },
+                label = { Text("First Name *") },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                isError = uiState.validationErrors.containsKey("firstName"),
+                supportingText = uiState.validationErrors["firstName"]?.let { { Text(it) } },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            // Last Name Field
+            OutlinedTextField(
+                value = uiState.lastName,
+                onValueChange = { viewModel.onLastNameChange(it) },
+                label = { Text("Last Name *") },
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                isError = uiState.validationErrors.containsKey("lastName"),
+                supportingText = uiState.validationErrors["lastName"]?.let { { Text(it) } },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
 
             // Email Field
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
+                value = uiState.email,
+                onValueChange = { viewModel.onEmailChange(it) },
                 label = { Text("Email Address *") },
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                isError = uiState.validationErrors.containsKey("email"),
+                supportingText = uiState.validationErrors["email"]?.let { { Text(it) } },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
 
             // Phone Field
             OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
+                value = uiState.phone,
+                onValueChange = { viewModel.onPhoneChange(it) },
                 label = { Text("Phone Number (Optional)") },
                 leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
+                isError = uiState.validationErrors.containsKey("phone"),
+                supportingText = uiState.validationErrors["phone"]?.let { { Text(it) } },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -101,7 +108,7 @@ fun AddVisitorScreen(
                 onExpandedChange = { showRelationshipMenu = it }
             ) {
                 OutlinedTextField(
-                    value = selectedRelationship,
+                    value = uiState.relationship.displayName,
                     onValueChange = { },
                     readOnly = true,
                     label = { Text("Relationship *") },
@@ -115,11 +122,11 @@ fun AddVisitorScreen(
                     expanded = showRelationshipMenu,
                     onDismissRequest = { showRelationshipMenu = false }
                 ) {
-                    relationships.forEach { relationship ->
+                    RelationshipType.entries.forEach { relationship ->
                         DropdownMenuItem(
-                            text = { Text(relationship) },
+                            text = { Text(relationship.displayName) },
                             onClick = {
-                                selectedRelationship = relationship
+                                viewModel.onRelationshipChange(relationship)
                                 showRelationshipMenu = false
                             }
                         )
@@ -133,15 +140,49 @@ fun AddVisitorScreen(
                 style = MaterialTheme.typography.titleMedium
             )
             AccessLevelSelector(
-                selectedLevel = selectedAccessLevel,
-                onLevelSelected = { selectedAccessLevel = it },
+                selectedLevel = uiState.accessLevel,
+                onLevelSelected = { viewModel.onAccessLevelChange(it) },
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Custom Restrictions Toggle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Custom Restrictions",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "Apply specific visiting hours or rules for this visitor",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = uiState.customRestrictionsEnabled,
+                    onCheckedChange = { viewModel.onCustomRestrictionsToggle(it) }
+                )
+            }
+
+            if (uiState.customRestrictionsEnabled) {
+                OutlinedButton(
+                    onClick = { viewModel.onConfigureRestrictionsClick() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Tune, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Configure Restrictions")
+                }
+            }
+
             // Notes
             OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
+                value = uiState.notes,
+                onValueChange = { viewModel.onNotesChange(it) },
                 label = { Text("Notes (Optional)") },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
@@ -178,15 +219,11 @@ fun AddVisitorScreen(
 
             // Submit Button
             Button(
-                onClick = {
-                    isLoading = true
-                    // TODO: Save visitor
-                    onVisitorAdded("new_visitor_id")
-                },
-                enabled = isFormValid && !isLoading,
+                onClick = { viewModel.sendInvitation() },
+                enabled = uiState.isValid && !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (isLoading) {
+                if (uiState.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = MaterialTheme.colorScheme.onPrimary
@@ -200,5 +237,19 @@ fun AddVisitorScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+
+    // Error handling
+    uiState.error?.let { error ->
+        AlertDialog(
+            onDismissRequest = { viewModel.clearError() },
+            title = { Text("Error") },
+            text = { Text(error.message ?: "An unknown error occurred") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.clearError() }) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }

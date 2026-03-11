@@ -4,6 +4,7 @@ import com.markduenas.visischeduler.data.repository.firestore.CommonFirestoreAut
 import com.markduenas.visischeduler.data.repository.firestore.CommonFirestoreBeneficiaryRepository
 import com.markduenas.visischeduler.data.repository.firestore.CommonFirestoreCheckInRepository
 import com.markduenas.visischeduler.data.repository.firestore.CommonFirestoreMessageRepository
+import com.markduenas.visischeduler.data.repository.firestore.CommonFirestoreNotificationRepository
 import com.markduenas.visischeduler.data.repository.firestore.CommonFirestoreRestrictionRepository
 import com.markduenas.visischeduler.data.repository.firestore.CommonFirestoreTimeSlotRepository
 import com.markduenas.visischeduler.data.repository.firestore.CommonFirestoreUserRepository
@@ -12,6 +13,7 @@ import com.markduenas.visischeduler.domain.repository.AuthRepository
 import com.markduenas.visischeduler.domain.repository.BeneficiaryRepository
 import com.markduenas.visischeduler.domain.repository.CheckInRepository
 import com.markduenas.visischeduler.domain.repository.MessageRepository
+import com.markduenas.visischeduler.domain.repository.NotificationRepository
 import com.markduenas.visischeduler.domain.repository.RestrictionRepository
 import com.markduenas.visischeduler.domain.repository.TimeSlotRepository
 import com.markduenas.visischeduler.domain.repository.UserRepository
@@ -113,6 +115,16 @@ val firestoreModule = module {
         CommonFirestoreMessageRepository(
             firestore = get(),
             auth = get()
+        )
+    }
+
+    // ==================== Notification Repository ====================
+    single { CommonFirestoreNotificationRepository(get()) }
+    single<NotificationRepository> {
+        com.markduenas.visischeduler.data.repository.NotificationRepositoryImpl(
+            database = get(),
+            firestoreRepository = get(),
+            authRepository = get()
         )
     }
 }

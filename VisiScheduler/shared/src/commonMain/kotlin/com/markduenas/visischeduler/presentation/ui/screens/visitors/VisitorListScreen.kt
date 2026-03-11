@@ -11,20 +11,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.markduenas.visischeduler.domain.entities.User
 import com.markduenas.visischeduler.presentation.ui.components.visitors.VisitorListItem
-
-data class VisitorItem(
-    val id: String,
-    val name: String,
-    val initials: String,
-    val relationship: String,
-    val status: VisitorStatus,
-    val lastVisit: String?
-)
-
-enum class VisitorStatus {
-    APPROVED, PENDING, BLOCKED
-}
+import com.markduenas.visischeduler.presentation.viewmodel.visitors.VisitorFilter
+import com.markduenas.visischeduler.presentation.viewmodel.visitors.VisitorListViewModel
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,46 +23,25 @@ fun VisitorListScreen(
     onNavigateBack: () -> Unit,
     onAddVisitor: () -> Unit,
     onViewVisitor: (String) -> Unit,
+    viewModel: VisitorListViewModel = koinInject(),
     modifier: Modifier = Modifier
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
-    var searchQuery by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsState()
     var showSearch by remember { mutableStateOf(false) }
 
-    val tabs = listOf("Approved", "Pending", "Blocked")
-
-    // Mock data
-    val allVisitors = remember {
-        listOf(
-            VisitorItem("1", "John Smith", "JS", "Son", VisitorStatus.APPROVED, "Jan 20, 2026"),
-            VisitorItem("2", "Jane Smith", "JS", "Daughter", VisitorStatus.APPROVED, "Jan 18, 2026"),
-            VisitorItem("3", "Bob Wilson", "BW", "Friend", VisitorStatus.APPROVED, "Jan 15, 2026"),
-            VisitorItem("4", "Alice Brown", "AB", "Caregiver", VisitorStatus.APPROVED, null),
-            VisitorItem("5", "Tom Davis", "TD", "Nephew", VisitorStatus.PENDING, null),
-            VisitorItem("6", "Sarah Miller", "SM", "Friend", VisitorStatus.PENDING, null),
-            VisitorItem("7", "Mike Johnson", "MJ", "Unknown", VisitorStatus.BLOCKED, null)
-        )
-    }
-
-    val filteredVisitors = allVisitors.filter { visitor ->
-        val matchesTab = when (selectedTab) {
-            0 -> visitor.status == VisitorStatus.APPROVED
-            1 -> visitor.status == VisitorStatus.PENDING
-            2 -> visitor.status == VisitorStatus.BLOCKED
-            else -> true
-        }
-        val matchesSearch = searchQuery.isEmpty() ||
-                visitor.name.contains(searchQuery, ignoreCase = true)
-        matchesTab && matchesSearch
-    }
+    val tabs = listOf(
+        VisitorFilter.APPROVED to "Approved",
+        VisitorFilter.PENDING to "Pending",
+        VisitorFilter.BLOCKED to "Blocked"
+    )
 
     Scaffold(
         topBar = {
             if (showSearch) {
                 @Suppress("DEPRECATION")
                 SearchBar(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
+                    query = uiState.searchQuery,
+                    onQueryChange = { viewModel.onSearchQueryChange(it) },
                     onSearch = { },
                     active = false,
                     onActiveChange = { },
@@ -79,14 +49,14 @@ fun VisitorListScreen(
                     leadingIcon = {
                         IconButton(onClick = {
                             showSearch = false
-                            searchQuery = ""
+                            viewModel.onSearchQueryChange("")
                         }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close search")
                         }
                     },
                     trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
+                        if (uiState.searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
                                 Icon(Icons.Default.Clear, contentDescription = "Clear")
                             }
                         }
@@ -105,6 +75,9 @@ fun VisitorListScreen(
                         IconButton(onClick = { showSearch = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Search")
                         }
+                        IconButton(onClick = { viewModel.refresh() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        }
                     }
                 )
             }
@@ -122,19 +95,19 @@ fun VisitorListScreen(
         ) {
             // Tabs
             @Suppress("DEPRECATION")
-            TabRow(selectedTabIndex = selectedTab) {
-                tabs.forEachIndexed { index, title ->
-                    val count = allVisitors.count { visitor ->
-                        when (index) {
-                            0 -> visitor.status == VisitorStatus.APPROVED
-                            1 -> visitor.status == VisitorStatus.PENDING
-                            2 -> visitor.status == VisitorStatus.BLOCKED
-                            else -> false
-                        }
+            SecondaryTabRow(
+                selectedTabIndex = tabs.indexOfFirst { it.first == uiState.selectedFilter }.coerceAtLeast(0)
+            ) {
+                tabs.forEach { (filter, title) ->
+                    val count = when (filter) {
+                        VisitorFilter.APPROVED -> uiState.approvedVisitors.size
+                        VisitorFilter.PENDING -> uiState.pendingVisitors.size
+                        VisitorFilter.BLOCKED -> uiState.blockedVisitors.size
+                        else -> 0
                     }
                     Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
+                        selected = uiState.selectedFilter == filter,
+                        onClick = { viewModel.onFilterChange(filter) },
                         text = {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -150,7 +123,11 @@ fun VisitorListScreen(
                 }
             }
 
-            if (filteredVisitors.isEmpty()) {
+            if (uiState.isLoading && !uiState.hasVisitors) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.isEmptyForFilter) {
                 // Empty State
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -161,9 +138,9 @@ fun VisitorListScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Icon(
-                            when (selectedTab) {
-                                0 -> Icons.Default.People
-                                1 -> Icons.Default.HourglassEmpty
+                            when (uiState.selectedFilter) {
+                                VisitorFilter.APPROVED -> Icons.Default.People
+                                VisitorFilter.PENDING -> Icons.Default.HourglassEmpty
                                 else -> Icons.Default.Block
                             },
                             contentDescription = null,
@@ -171,14 +148,14 @@ fun VisitorListScreen(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = when (selectedTab) {
-                                0 -> "No approved visitors"
-                                1 -> "No pending requests"
+                            text = when (uiState.selectedFilter) {
+                                VisitorFilter.APPROVED -> "No approved visitors"
+                                VisitorFilter.PENDING -> "No pending requests"
                                 else -> "No blocked visitors"
                             },
                             style = MaterialTheme.typography.titleMedium
                         )
-                        if (selectedTab == 0) {
+                        if (uiState.selectedFilter == VisitorFilter.APPROVED) {
                             Button(onClick = onAddVisitor) {
                                 Icon(Icons.Default.PersonAdd, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -192,25 +169,25 @@ fun VisitorListScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(filteredVisitors) { visitor ->
+                    items(uiState.filteredVisitors) { visitor ->
                         VisitorListItem(
-                            name = visitor.name,
-                            initials = visitor.initials,
-                            relationship = visitor.relationship,
-                            subtitle = visitor.lastVisit?.let { "Last visit: $it" },
+                            name = visitor.fullName,
+                            initials = "${visitor.firstName.firstOrNull() ?: ""}${visitor.lastName.firstOrNull() ?: ""}",
+                            relationship = visitor.metadata["relationship"] ?: "Visitor",
+                            subtitle = visitor.email,
                             onClick = { onViewVisitor(visitor.id) },
                             trailingContent = {
-                                when (visitor.status) {
-                                    VisitorStatus.PENDING -> {
+                                when (uiState.selectedFilter) {
+                                    VisitorFilter.PENDING -> {
                                         Row {
-                                            IconButton(onClick = { /* Deny */ }) {
+                                            IconButton(onClick = { viewModel.denyVisitor(visitor.id, "Denied by coordinator") }) {
                                                 Icon(
                                                     Icons.Default.Close,
                                                     contentDescription = "Deny",
                                                     tint = MaterialTheme.colorScheme.error
                                                 )
                                             }
-                                            IconButton(onClick = { /* Approve */ }) {
+                                            IconButton(onClick = { viewModel.approveVisitor(visitor.id) }) {
                                                 Icon(
                                                     Icons.Default.Check,
                                                     contentDescription = "Approve",
@@ -219,8 +196,8 @@ fun VisitorListScreen(
                                             }
                                         }
                                     }
-                                    VisitorStatus.BLOCKED -> {
-                                        TextButton(onClick = { /* Unblock */ }) {
+                                    VisitorFilter.BLOCKED -> {
+                                        TextButton(onClick = { viewModel.unblockVisitor(visitor.id) }) {
                                             Text("Unblock")
                                         }
                                     }
@@ -238,5 +215,19 @@ fun VisitorListScreen(
                 }
             }
         }
+    }
+
+    // Error handling
+    uiState.error?.let { error ->
+        AlertDialog(
+            onDismissRequest = { viewModel.clearError() },
+            title = { Text("Error") },
+            text = { Text(error.message ?: "An unknown error occurred") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.clearError() }) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }

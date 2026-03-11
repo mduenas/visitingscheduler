@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 fun VisiSchedulerApp(
     authStateProvider: AuthStateProvider? = null,
     deepLinkHandler: DeepLinkHandler? = null,
+    syncManager: com.markduenas.visischeduler.data.sync.SyncManager = org.koin.compose.koinInject(),
     themeContent: @Composable (content: @Composable () -> Unit) -> Unit = { content -> content() }
 ) {
     val authState = authStateProvider?.authState
@@ -39,6 +40,13 @@ fun VisiSchedulerApp(
 
     val currentAuthState by authState.collectAsState()
     val handler = deepLinkHandler ?: remember { DeepLinkHandler() }
+
+    // Initialize sync when authenticated
+    LaunchedEffect(currentAuthState) {
+        if (currentAuthState == AuthState.AUTHENTICATED) {
+            syncManager.startPeriodicSync()
+        }
+    }
 
     themeContent {
         Surface(

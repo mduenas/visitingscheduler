@@ -13,7 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.domain.entities.VisitStatus
+import com.markduenas.visischeduler.domain.entities.VisitType
 import com.markduenas.visischeduler.presentation.ui.components.calendar.VisitStatusBadge
+import com.markduenas.visischeduler.presentation.viewmodel.scheduling.VisitDetailsViewModel
+import org.koin.compose.koinInject
+import kotlinx.datetime.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,14 +25,14 @@ fun VisitDetailsScreen(
     visitId: String,
     onNavigateBack: () -> Unit,
     onEditVisit: (String) -> Unit,
-    onCheckIn: (String) -> Unit,
+    viewModel: VisitDetailsViewModel = koinInject(),
     modifier: Modifier = Modifier
 ) {
-    // Mock data - would come from ViewModel
-    var showCancelDialog by remember { mutableStateOf(false) }
-    var showApproveDialog by remember { mutableStateOf(false) }
-    val visitStatus = VisitStatus.APPROVED
-    val isCoordinator = true // From user role
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(visitId) {
+        viewModel.loadVisit(visitId)
+    }
 
     Scaffold(
         topBar = {
@@ -40,7 +44,7 @@ fun VisitDetailsScreen(
                     }
                 },
                 actions = {
-                    if (visitStatus == VisitStatus.PENDING || visitStatus == VisitStatus.APPROVED) {
+                    if (uiState.canEdit) {
                         IconButton(onClick = { onEditVisit(visitId) }) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit")
                         }
@@ -49,248 +53,320 @@ fun VisitDetailsScreen(
             )
         }
     ) { padding ->
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Status Badge
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Visit #${visitId.take(8)}",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                VisitStatusBadge(status = visitStatus)
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-
-            HorizontalDivider()
-
-            // Date & Time Section
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.CalendarToday,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("Date", style = MaterialTheme.typography.labelMedium)
-                            Text("January 25, 2026", style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Schedule,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("Time", style = MaterialTheme.typography.labelMedium)
-                            Text("2:00 PM - 3:00 PM (1 hour)", style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-                }
+        } else if (uiState.visit == null) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text("Visit not found")
             }
-
-            // Visitor Info Section
-            Card(
-                modifier = Modifier.fillMaxWidth()
+        } else {
+            val visit = uiState.visit!!
+            
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                // Status Badge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Visitor Information",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = "Visit #${visit.id.take(8)}",
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("John Smith", style = MaterialTheme.typography.bodyLarge)
-                            Text("Family - Son", style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Group,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("2 guests total", style = MaterialTheme.typography.bodyLarge)
-                    }
+                    VisitStatusBadge(status = visit.status)
                 }
-            }
 
-            // Reason Section
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Reason for Visit",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Regular weekly visit to check in and bring supplies.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
+                HorizontalDivider()
 
-            // Notes Section
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Notes",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Please use entrance B. Parking available in Lot 3.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Action Buttons
-            when (visitStatus) {
-                VisitStatus.PENDING -> {
-                    if (isCoordinator) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = { showCancelDialog = true },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.error
-                                )
-                            ) {
-                                Icon(Icons.Default.Close, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Deny")
-                            }
-                            Button(
-                                onClick = { showApproveDialog = true },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(Icons.Default.Check, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Approve")
-                            }
-                        }
-                    }
-                }
-                VisitStatus.APPROVED -> {
-                    Button(
-                        onClick = { onCheckIn(visitId) },
-                        modifier = Modifier.fillMaxWidth()
+                // Date & Time Section
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(Icons.Default.QrCodeScanner, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Check In")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text("Date", style = MaterialTheme.typography.labelMedium)
+                                Text(formatDate(visit.scheduledDate), style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text("Time", style = MaterialTheme.typography.labelMedium)
+                                Text("${formatTime(visit.startTime)} - ${formatTime(visit.endTime)}", style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
                     }
-                    OutlinedButton(
-                        onClick = { showCancelDialog = true },
+                }
+
+                // Visit Type Section (Virtual Details)
+                if (visit.visitType == VisitType.VIDEO_CALL) {
+                    Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                     ) {
-                        Icon(Icons.Default.Cancel, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Cancel Visit")
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.VideoCall, contentDescription = null)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text("Virtual Visit", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    visit.videoCallPlatform?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                                }
+                            }
+                            
+                            visit.videoCallLink?.let { link ->
+                                Button(
+                                    onClick = { /* Handle opening link */ },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                ) {
+                                    Icon(Icons.Default.Launch, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Join Call")
+                                }
+                            } ?: Text("Link will be available before the call starts", style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
-                else -> { /* No actions for other statuses */ }
+
+                // Visitor Info Section
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text("Visitor Information", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(visit.visitorName, style = MaterialTheme.typography.bodyLarge)
+                                // relationship could be added to Visit entity if available
+                            }
+                        }
+
+                        if (visit.additionalVisitors.isNotEmpty()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Group, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text("${visit.additionalVisitors.size + 1} visitors total", style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
+                    }
+                }
+
+                // Reason & Notes
+                if (!visit.purpose.isNullOrBlank()) {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Reason for Visit", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(visit.purpose!!, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+
+                if (!visit.notes.isNullOrBlank()) {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Notes", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(visit.notes!!, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Action Buttons
+                ActionButtons(
+                    uiState = uiState,
+                    onCheckIn = { viewModel.checkIn() },
+                    onCheckOut = { viewModel.checkOut() },
+                    onApprove = { viewModel.approveVisit() },
+                    onDeny = { viewModel.showDenyDialog() },
+                    onCancel = { viewModel.showCancelDialog() }
+                )
             }
         }
     }
 
-    // Cancel Dialog
-    if (showCancelDialog) {
-        AlertDialog(
-            onDismissRequest = { showCancelDialog = false },
-            title = { Text("Cancel Visit?") },
-            text = { Text("Are you sure you want to cancel this visit? This action cannot be undone.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showCancelDialog = false
-                        // TODO: Cancel visit
-                    }
-                ) {
-                    Text("Cancel Visit", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCancelDialog = false }) {
-                    Text("Keep Visit")
-                }
-            }
+    // Dialogs
+    if (uiState.showCancelDialog) {
+        CancellationDialog(
+            reason = uiState.cancellationReason,
+            onReasonChange = { viewModel.setCancellationReason(it) },
+            onDismiss = { viewModel.hideCancelDialog() },
+            onConfirm = { viewModel.cancelVisit() },
+            isProcessing = uiState.isProcessing
         )
     }
 
-    // Approve Dialog
-    if (showApproveDialog) {
-        AlertDialog(
-            onDismissRequest = { showApproveDialog = false },
-            title = { Text("Approve Visit?") },
-            text = { Text("This will confirm the visit and notify the visitor.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showApproveDialog = false
-                        // TODO: Approve visit
-                    }
-                ) {
-                    Text("Approve")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showApproveDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+    if (uiState.showDenyDialog) {
+        DenialDialog(
+            reason = uiState.denialReason,
+            onReasonChange = { viewModel.setDenialReason(it) },
+            onDismiss = { viewModel.hideDenyDialog() },
+            onConfirm = { viewModel.denyVisit() },
+            isProcessing = uiState.isProcessing
         )
     }
+}
+
+@Composable
+private fun ActionButtons(
+    uiState: com.markduenas.visischeduler.presentation.viewmodel.scheduling.VisitDetailsUiState,
+    onCheckIn: () -> Unit,
+    onCheckOut: () -> Unit,
+    onApprove: () -> Unit,
+    onDeny: () -> Unit,
+    onCancel: () -> Unit
+) {
+    val visit = uiState.visit ?: return
+    
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (uiState.canCheckIn) {
+            Button(onClick = onCheckIn, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Check In")
+            }
+        }
+
+        if (uiState.canCheckOut) {
+            Button(onClick = onCheckOut, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Default.ExitToApp, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Check Out")
+            }
+        }
+
+        if (uiState.canApprove) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(
+                    onClick = onDeny,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Deny")
+                }
+                Button(onClick = onApprove, modifier = Modifier.weight(1f)) {
+                    Icon(Icons.Default.Check, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Approve")
+                }
+            }
+        }
+
+        if (uiState.canCancel) {
+            OutlinedButton(
+                onClick = onCancel,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                Icon(Icons.Default.Cancel, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Cancel Visit")
+            }
+        }
+    }
+}
+
+@Composable
+private fun CancellationDialog(
+    reason: String,
+    onReasonChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    isProcessing: Boolean
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Cancel Visit") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Are you sure you want to cancel this visit?")
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = onReasonChange,
+                    label = { Text("Reason for cancellation") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isProcessing && reason.isNotBlank()) {
+                Text("Cancel Visit", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Keep Visit") }
+        }
+    )
+}
+
+@Composable
+private fun DenialDialog(
+    reason: String,
+    onReasonChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    isProcessing: Boolean
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Deny Visit Request") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Please provide a reason for denying this request. The visitor will be notified.")
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = onReasonChange,
+                    label = { Text("Reason (min 10 characters)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isProcessing && reason.length >= 10) {
+                Text("Deny Request", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Back") }
+        }
+    )
+}
+
+// Helpers
+private fun formatDate(date: LocalDate): String {
+    // Basic formatting - would use a proper multiplatform date formatter in real app
+    return \"${date.month} ${date.dayOfMonth}, ${date.year}\"
+}
+
+private fun formatTime(time: LocalTime): String {
+    val hour = if (time.hour == 0 || time.hour == 12) 12 else time.hour % 12
+    val ampm = if (time.hour < 12) \"AM\" else \"PM\"
+    return \"$hour:${time.minute.toString().padStart(2, '0')} $ampm\"
 }

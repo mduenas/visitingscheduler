@@ -8,6 +8,7 @@ import com.markduenas.visischeduler.data.repository.RestrictionRepositoryImpl
 import com.markduenas.visischeduler.data.repository.TimeSlotRepositoryImpl
 import com.markduenas.visischeduler.data.repository.UserRepositoryImpl
 import com.markduenas.visischeduler.data.repository.VisitRepositoryImpl
+import com.markduenas.visischeduler.data.sync.SyncManager
 import com.markduenas.visischeduler.domain.repository.AuthRepository
 import com.markduenas.visischeduler.domain.repository.BeneficiaryRepository
 import com.markduenas.visischeduler.domain.repository.CheckInRepository
@@ -25,6 +26,9 @@ import org.koin.dsl.module
  * from the domain layer and providing a clean API for data operations.
  */
 val dataModule = module {
+
+    // ==================== Sync Manager ====================
+    single { SyncManager(get(), get(), get()) }
 
     // ==========================================
     // Authentication Repository
@@ -67,7 +71,8 @@ val dataModule = module {
         VisitRepositoryImpl(
             api = get(),
             database = get(),
-            json = get()
+            json = get(),
+            syncManager = get()
         )
     }
 

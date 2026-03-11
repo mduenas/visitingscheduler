@@ -29,6 +29,8 @@ CREATE TABLE VisitEntity (
     purpose TEXT,
     notes TEXT,
     additionalVisitors TEXT NOT NULL DEFAULT '[]',
+    videoCallLink TEXT,
+    videoCallPlatform TEXT,
     checkInTime TEXT,
     checkOutTime TEXT,
     approvedBy TEXT,
@@ -132,8 +134,8 @@ DELETE FROM UserEntity;
 
 -- Visit queries
 insertVisit:
-INSERT OR REPLACE INTO VisitEntity(id, beneficiaryId, visitorId, scheduledDate, startTime, endTime, status, visitType, purpose, notes, additionalVisitors, checkInTime, checkOutTime, approvedBy, approvedAt, denialReason, cancellationReason, cancelledBy, cancelledAt, createdAt, updatedAt)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO VisitEntity(id, beneficiaryId, visitorId, scheduledDate, startTime, endTime, status, visitType, purpose, notes, additionalVisitors, videoCallLink, videoCallPlatform, checkInTime, checkOutTime, approvedBy, approvedAt, denialReason, cancellationReason, cancelledBy, cancelledAt, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 selectVisitById:
 SELECT * FROM VisitEntity WHERE id = ?;
@@ -442,6 +444,73 @@ DELETE FROM ConversationEntity;
 
 getTotalUnreadCount:
 SELECT SUM(unreadCount) AS total FROM ConversationEntity WHERE archivedAt IS NULL;
+
+-- Notification table
+CREATE TABLE NotificationEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    type TEXT NOT NULL,
+    priority TEXT NOT NULL,
+    isRead INTEGER NOT NULL DEFAULT 0,
+    readAt TEXT,
+    relatedEntityId TEXT,
+    relatedEntityType TEXT,
+    actionUrl TEXT,
+    metadata TEXT,
+    expiresAt TEXT,
+    createdAt TEXT NOT NULL
+);
+
+-- Sync Queue table
+CREATE TABLE SyncQueueEntity (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    operationType TEXT NOT NULL, -- e.g., 'CREATE_VISIT', 'UPDATE_STATUS', 'SEND_MESSAGE'
+    entityType TEXT NOT NULL, -- e.g., 'VISIT', 'MESSAGE'
+    entityId TEXT,
+    payload TEXT NOT NULL, -- JSON serialized object
+    createdAt INTEGER NOT NULL,
+    retryCount INTEGER NOT NULL DEFAULT 0,
+    lastError TEXT
+);
+
+-- Notification queries
+insertNotification:
+INSERT OR REPLACE INTO NotificationEntity(id, userId, title, message, type, priority, isRead, readAt, relatedEntityId, relatedEntityType, actionUrl, metadata, expiresAt, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectNotificationsByUserId:
+SELECT * FROM NotificationEntity WHERE userId = ? ORDER BY createdAt DESC;
+
+selectUnreadNotificationsCount:
+SELECT COUNT(*) FROM NotificationEntity WHERE userId = ? AND isRead = 0;
+
+markNotificationRead:
+UPDATE NotificationEntity SET isRead = 1, readAt = ? WHERE id = ?;
+
+markAllNotificationsRead:
+UPDATE NotificationEntity SET isRead = 1, readAt = ? WHERE userId = ?;
+
+deleteNotification:
+DELETE FROM NotificationEntity WHERE id = ?;
+
+clearAllNotifications:
+DELETE FROM NotificationEntity WHERE userId = ?;
+
+-- Sync Queue queries
+addToSyncQueue:
+INSERT INTO SyncQueueEntity(operationType, entityType, entityId, payload, createdAt)
+VALUES (?, ?, ?, ?, ?);
+
+selectPendingOperations:
+SELECT * FROM SyncQueueEntity ORDER BY createdAt ASC;
+
+deleteFromSyncQueue:
+DELETE FROM SyncQueueEntity WHERE id = ?;
+
+updateRetryCount:
+UPDATE SyncQueueEntity SET retryCount = retryCount + 1, lastError = ? WHERE id = ?;
 
 -- ConversationParticipant queries
 insertConversationParticipant:

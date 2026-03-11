@@ -26,6 +26,9 @@ val iosPlatformModule = module {
 
     // Platform-specific notification handler (APNs)
     single<NotificationHandler> { IosNotificationHandler() }
+
+    // Platform-specific permission manager
+    single<PermissionManager> { IosPermissionManager() }
 }
 
 /**

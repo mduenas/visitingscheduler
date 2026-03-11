@@ -102,6 +102,7 @@ fun CoordinatorDashboardContent(
 fun VisitorDashboardContent(
     nextVisit: Visit?,
     upcomingVisits: List<Visit>,
+    suggestedSlots: List<com.markduenas.visischeduler.domain.entities.TimeSlot> = emptyList(),
     beneficiary: Beneficiary?,
     onVisitClick: (String) -> Unit,
     onViewCalendarClick: () -> Unit,
@@ -118,7 +119,79 @@ fun VisitorDashboardContent(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
+        // Suggested Slots Section
+        if (suggestedSlots.isNotEmpty()) {
+            SectionHeader(
+                title = "Suggested Slots",
+                actionText = "View All",
+                onAction = onViewCalendarClick
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 8.dp)
+            ) {
+                items(suggestedSlots) { slot ->
+                    SuggestedSlotCard(
+                        slot = slot,
+                        onClick = { onViewCalendarClick() } // Or navigate to scheduling with this slot
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         // Upcoming Visits Section
+...
+/**
+ * Compact visit card for lists.
+ */
+@Composable
+private fun CompactVisitCard(
+    visit: Visit,
+    visitorName: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // ... (rest of implementation)
+}
+
+/**
+ * Suggested time slot card.
+ */
+@Composable
+private fun SuggestedSlotCard(
+    slot: com.markduenas.visischeduler.domain.entities.TimeSlot,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = modifier.width(160.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Text(
+                text = "${slot.startTime.hour}:${slot.startTime.minute.toString().padStart(2, '0')}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Today",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "${(slot.availabilityPercentage * 100).toInt()}% likely free",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
         SectionHeader(
             title = "Upcoming Visits",
             actionText = if (upcomingVisits.size > 3) "View Calendar" else null,

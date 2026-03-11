@@ -273,6 +273,7 @@ private fun DashboardContent(
             VisitorDashboardContent(
                 nextVisit = uiState.nextVisit,
                 upcomingVisits = uiState.upcomingVisits,
+                suggestedSlots = uiState.suggestedSlots,
                 beneficiary = uiState.selectedBeneficiary,
                 onVisitClick = onVisitClick,
                 onViewCalendarClick = onViewCalendarClick

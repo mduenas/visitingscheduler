@@ -12,13 +12,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.markduenas.visischeduler.presentation.viewmodel.settings.SettingsViewModel
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(
     onNavigateBack: () -> Unit,
+    viewModel: SettingsViewModel = koinInject(),
     modifier: Modifier = Modifier
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -60,7 +65,7 @@ fun AboutScreen(
 
             item {
                 Text(
-                    text = "Version 1.0.0 (Build 1)",
+                    text = "Version ${uiState.appVersion}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -86,7 +91,7 @@ fun AboutScreen(
                 AboutLinkItem(
                     icon = Icons.Default.Description,
                     title = "Terms of Service",
-                    onClick = { /* Open terms */ }
+                    onClick = { viewModel.navigateToTermsOfService() }
                 )
             }
 
@@ -94,7 +99,7 @@ fun AboutScreen(
                 AboutLinkItem(
                     icon = Icons.Default.PrivacyTip,
                     title = "Privacy Policy",
-                    onClick = { /* Open privacy */ }
+                    onClick = { viewModel.navigateToPrivacyPolicy() }
                 )
             }
 
@@ -102,7 +107,7 @@ fun AboutScreen(
                 AboutLinkItem(
                     icon = Icons.Default.Gavel,
                     title = "Open Source Licenses",
-                    onClick = { /* Open licenses */ }
+                    onClick = { /* TODO: Open licenses */ }
                 )
             }
 
@@ -110,7 +115,7 @@ fun AboutScreen(
                 AboutLinkItem(
                     icon = Icons.Default.Email,
                     title = "Contact Support",
-                    onClick = { /* Open email */ }
+                    onClick = { viewModel.contactSupport() }
                 )
             }
 
@@ -118,7 +123,7 @@ fun AboutScreen(
                 AboutLinkItem(
                     icon = Icons.Default.Star,
                     title = "Rate the App",
-                    onClick = { /* Open store */ }
+                    onClick = { /* TODO: Open store */ }
                 )
             }
 

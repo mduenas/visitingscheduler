@@ -36,12 +36,14 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 
+import com.markduenas.visischeduler.config.AppConfig
+...
 /**
  * API interface for VisiScheduler backend.
  */
 class VisiSchedulerApi(
     private val client: HttpClient,
-    private val baseUrl: String = "https://api.visischeduler.com/v1"
+    private val baseUrl: String = AppConfig.apiBaseUrl
 ) {
     private var authToken: String? = null
 

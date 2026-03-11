@@ -17,7 +17,7 @@ import kotlinx.datetime.toLocalDateTime
  */
 class ScheduleVisitUseCase(
     private val visitRepository: VisitRepository,
-    private val restrictionRepository: RestrictionRepository
+    private val evaluateRulesUseCase: EvaluateRulesUseCase
 ) {
     /**
      * Schedule a new visit.
@@ -31,8 +31,8 @@ class ScheduleVisitUseCase(
             return Result.failure(validationResult)
         }
 
-        // Check for restriction violations
-        val violations = restrictionRepository.checkVisitRestrictions(
+        // Check for restriction violations using the Intelligent Rule Engine
+        val evaluationResult = evaluateRulesUseCase(
             visitorId = request.visitorId,
             beneficiaryId = request.beneficiaryId,
             visitDate = request.scheduledDate,
@@ -41,20 +41,20 @@ class ScheduleVisitUseCase(
             additionalVisitorCount = request.additionalVisitors.size
         )
 
-        if (violations.isFailure) {
+        if (evaluationResult.isFailure) {
             return Result.failure(
                 ScheduleVisitException.RestrictionCheckFailed(
-                    "Failed to check restrictions: ${violations.exceptionOrNull()?.message}"
+                    "Failed to evaluate scheduling rules: ${evaluationResult.exceptionOrNull()?.message}"
                 )
             )
         }
 
-        val restrictionViolations = violations.getOrNull() ?: emptyList()
-        if (restrictionViolations.isNotEmpty()) {
+        val violations = evaluationResult.getOrNull() ?: emptyList()
+        if (violations.isNotEmpty()) {
             return Result.failure(
-                ScheduleVisitException.RestrictionViolation(
+                ScheduleVisitException.DetailedRestrictionViolation(
                     "Visit violates restrictions",
-                    restrictionViolations
+                    violations
                 )
             )
         }
@@ -68,7 +68,9 @@ class ScheduleVisitUseCase(
             visitType = request.visitType,
             purpose = request.purpose,
             notes = request.notes,
-            additionalVisitors = request.additionalVisitors
+            additionalVisitors = request.additionalVisitors,
+            videoCallLink = request.videoCallLink,
+            videoCallPlatform = request.videoCallPlatform
         )
     }
 
@@ -122,7 +124,9 @@ data class ScheduleVisitRequest(
     val visitType: VisitType = VisitType.IN_PERSON,
     val purpose: String? = null,
     val notes: String? = null,
-    val additionalVisitors: List<AdditionalVisitor> = emptyList()
+    val additionalVisitors: List<AdditionalVisitor> = emptyList(),
+    val videoCallLink: String? = null,
+    val videoCallPlatform: String? = null
 )
 
 /**
@@ -137,6 +141,10 @@ sealed class ScheduleVisitException(message: String) : Exception(message) {
     class RestrictionViolation(
         message: String,
         val violations: List<Restriction>
+    ) : ScheduleVisitException(message)
+    class DetailedRestrictionViolation(
+        message: String,
+        val violations: List<com.markduenas.visischeduler.domain.repository.RestrictionViolation>
     ) : ScheduleVisitException(message)
     class RestrictionCheckFailed(message: String) : ScheduleVisitException(message)
     class BeneficiaryNotFound(message: String) : ScheduleVisitException(message)

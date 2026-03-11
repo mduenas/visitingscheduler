@@ -63,7 +63,9 @@ interface VisitRepository {
         visitType: VisitType = VisitType.IN_PERSON,
         purpose: String? = null,
         notes: String? = null,
-        additionalVisitors: List<AdditionalVisitor> = emptyList()
+        additionalVisitors: List<AdditionalVisitor> = emptyList(),
+        videoCallLink: String? = null,
+        videoCallPlatform: String? = null
     ): Result<Visit>
 
     /**

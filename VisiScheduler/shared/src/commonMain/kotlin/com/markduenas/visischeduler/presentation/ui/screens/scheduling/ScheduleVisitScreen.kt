@@ -15,7 +15,10 @@ import com.markduenas.visischeduler.domain.entities.TimeSlot
 import com.markduenas.visischeduler.presentation.ui.components.calendar.CalendarGrid
 import com.markduenas.visischeduler.presentation.ui.components.calendar.TimeSlotPicker
 import com.markduenas.visischeduler.presentation.ui.components.calendar.DurationSelector
+import com.markduenas.visischeduler.presentation.viewmodel.scheduling.ScheduleVisitViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.VisitDuration
+import com.markduenas.visischeduler.domain.usecase.ScheduleVisitException
+import org.koin.compose.koinInject
 import kotlin.time.Clock
 import kotlinx.datetime.*
 
@@ -25,23 +28,21 @@ fun ScheduleVisitScreen(
     beneficiaryId: String,
     onNavigateBack: () -> Unit,
     onVisitScheduled: (String) -> Unit,
+    viewModel: ScheduleVisitViewModel = koinInject(),
     modifier: Modifier = Modifier
 ) {
-    val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    var selectedDate by remember { mutableStateOf(today) }
-    var selectedTimeSlot by remember { mutableStateOf<TimeSlot?>(null) }
-    var selectedDuration by remember { mutableStateOf(VisitDuration.THIRTY_MINUTES) }
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Generate month dates for calendar
-    val monthDates = remember(selectedDate) {
-        generateMonthDates(selectedDate.year, selectedDate.monthNumber)
+    // Initialize ViewModel with beneficiary
+    LaunchedEffect(beneficiaryId) {
+        viewModel.setBeneficiary(beneficiaryId, "Beneficiary") // Name would ideally be fetched
     }
 
-    // Sample time slots - in a real app these would come from a ViewModel
-    val availableSlots = remember { emptyList<TimeSlot>() }
-    var reason by remember { mutableStateOf("") }
-    var guestCount by remember { mutableStateOf(1) }
-    var isLoading by remember { mutableStateOf(false) }
+    // Generate month dates for calendar
+    val monthDates = remember(uiState.selectedDate) {
+        generateMonthDates(uiState.selectedDate.year, uiState.selectedDate.monthNumber)
+    }
+
     var showConfirmation by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -64,6 +65,11 @@ fun ScheduleVisitScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // Loading Indicator for Slots
+            if (uiState.isLoadingSlots) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
             // Date Selection
             Text(
                 text = "Select Date",
@@ -71,35 +77,80 @@ fun ScheduleVisitScreen(
             )
             CalendarGrid(
                 monthDates = monthDates,
-                selectedDate = selectedDate,
-                onDateSelected = { selectedDate = it },
+                selectedDate = uiState.selectedDate,
+                onDateSelected = { viewModel.selectDate(it) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             // Time Slot Selection
             Text(
-                text = "Select Time",
+                text = "Select Time Slot",
                 style = MaterialTheme.typography.titleMedium
             )
             TimeSlotPicker(
-                slots = availableSlots,
-                selectedSlot = selectedTimeSlot,
-                onSlotSelected = { selectedTimeSlot = it },
+                slots = uiState.availableSlots,
+                selectedSlot = uiState.selectedTimeSlot,
+                onSlotSelected = { viewModel.selectTimeSlot(it) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             // Duration Selection
             Text(
-                text = "Duration",
+                text = \"Duration\",
                 style = MaterialTheme.typography.titleMedium
             )
             DurationSelector(
-                selectedDuration = selectedDuration,
-                onDurationSelected = { selectedDuration = it },
+                selectedDuration = uiState.selectedDuration,
+                onDurationSelected = { viewModel.setDuration(it) },
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Visit Type Selection
+            Text(
+                text = \"Visit Type\",
+                style = MaterialTheme.typography.titleMedium
+            )
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                val types = listOf(
+                    com.markduenas.visischeduler.domain.entities.VisitType.IN_PERSON to \"In Person\",
+                    com.markduenas.visischeduler.domain.entities.VisitType.VIDEO_CALL to \"Video Call\"
+                )
+                types.forEachIndexed { index, (type, label) ->
+                    SegmentedButton(
+                        selected = uiState.visitType == type,
+                        onClick = { viewModel.setVisitType(type) },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = types.size)
+                    ) {
+                        Text(label)
+                    }
+                }
+            }
+
+            // Video Call Details (Conditional)
+            if (uiState.visitType == com.markduenas.visischeduler.domain.entities.VisitType.VIDEO_CALL) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(
+                        text = \"Video Call Details\",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    OutlinedTextField(
+                        value = uiState.videoCallLink ?: \"\",
+                        onValueChange = { viewModel.setVideoCallLink(it) },
+                        label = { Text(\"Meeting Link (Optional)\") },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text(\"https://zoom.us/j/...\") }
+                    )
+                    OutlinedTextField(
+                        value = uiState.videoCallPlatform ?: \"\",
+                        onValueChange = { viewModel.setVideoCallPlatform(it) },
+                        label = { Text(\"Platform (e.g. Zoom, Teams)\") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
             // Guest Count
+
             Text(
                 text = "Number of Guests",
                 style = MaterialTheme.typography.titleMedium
@@ -109,42 +160,51 @@ fun ScheduleVisitScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 FilledTonalIconButton(
-                    onClick = { if (guestCount > 1) guestCount-- },
-                    enabled = guestCount > 1
+                    onClick = { viewModel.decrementGuestCount() },
+                    enabled = uiState.additionalVisitors.isNotEmpty()
                 ) {
                     Text("-")
                 }
                 Text(
-                    text = guestCount.toString(),
+                    text = (uiState.additionalVisitors.size + 1).toString(),
                     style = MaterialTheme.typography.headlineMedium
                 )
                 FilledTonalIconButton(
-                    onClick = { if (guestCount < 5) guestCount++ },
-                    enabled = guestCount < 5
+                    onClick = { viewModel.incrementGuestCount() },
+                    enabled = uiState.additionalVisitors.size < 5
                 ) {
                     Text("+")
                 }
             }
 
-            // Reason (Optional)
+            // Reason
             OutlinedTextField(
-                value = reason,
-                onValueChange = { reason = it },
+                value = uiState.reason,
+                onValueChange = { viewModel.setReason(it) },
                 label = { Text("Reason for Visit (Optional)") },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 maxLines = 4
             )
 
+            // Error Display
+            uiState.error?.let { error ->
+                Text(
+                    text = error.message ?: "An error occurred",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Submit Button
             Button(
                 onClick = { showConfirmation = true },
-                enabled = selectedTimeSlot != null && !isLoading,
+                enabled = uiState.canSubmit,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (isLoading) {
+                if (uiState.isSubmitting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = MaterialTheme.colorScheme.onPrimary
@@ -165,22 +225,17 @@ fun ScheduleVisitScreen(
             title = { Text("Confirm Visit Request") },
             text = {
                 Column {
-                    Text("Date: $selectedDate")
-                    Text("Time: ${selectedTimeSlot?.let { "${it.startTime} - ${it.endTime}" } ?: "Not selected"}")
-                    Text("Duration: ${selectedDuration.displayName}")
-                    Text("Guests: $guestCount")
-                    if (reason.isNotBlank()) {
-                        Text("Reason: $reason")
-                    }
+                    Text("Date: ${uiState.selectedDate}")
+                    Text("Time: ${uiState.selectedStartTime} - ${uiState.selectedEndTime}")
+                    Text("Duration: ${uiState.selectedDuration.displayName}")
+                    Text("Total Visitors: ${uiState.additionalVisitors.size + 1}")
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        isLoading = true
                         showConfirmation = false
-                        // TODO: Call ViewModel to schedule visit
-                        onVisitScheduled("visit_id")
+                        viewModel.submitVisitRequest()
                     }
                 ) {
                     Text("Confirm")
@@ -208,7 +263,8 @@ private fun generateMonthDates(year: Int, month: Int): List<LocalDate?> {
         else -> 30
     }
 
-    // Start of week (Sunday = 0)
+    // Start of week (Sunday = 0, Monday = 1... Saturday = 6)
+    // Adjust based on platform/locale if needed
     val startDayOfWeek = firstOfMonth.dayOfWeek.ordinal
 
     val dates = mutableListOf<LocalDate?>()

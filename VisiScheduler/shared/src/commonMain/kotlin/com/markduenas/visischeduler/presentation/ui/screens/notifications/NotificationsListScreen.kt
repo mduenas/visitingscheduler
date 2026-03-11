@@ -13,65 +13,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-
-data class NotificationItem(
-    val id: String,
-    val title: String,
-    val message: String,
-    val timestamp: String,
-    val type: NotificationType,
-    val isRead: Boolean,
-    val actionData: String? = null
-)
-
-enum class NotificationType {
-    VISIT_APPROVED, VISIT_DENIED, VISIT_REMINDER, VISIT_REQUEST,
-    MESSAGE, SYSTEM, CHECK_IN
-}
+import com.markduenas.visischeduler.domain.entities.Notification
+import com.markduenas.visischeduler.domain.entities.NotificationType
+import com.markduenas.visischeduler.presentation.viewmodel.notifications.NotificationsViewModel
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsListScreen(
     onNavigateBack: () -> Unit,
-    onNotificationClick: (NotificationItem) -> Unit,
+    viewModel: NotificationsViewModel = koinInject(),
     modifier: Modifier = Modifier
 ) {
-    val notifications = remember {
-        mutableStateListOf(
-            NotificationItem(
-                "1", "Visit Approved",
-                "Your visit request for Jan 25 at 2:00 PM has been approved.",
-                "2 hours ago", NotificationType.VISIT_APPROVED, false
-            ),
-            NotificationItem(
-                "2", "New Message",
-                "John Smith sent you a message about tomorrow's visit.",
-                "3 hours ago", NotificationType.MESSAGE, false
-            ),
-            NotificationItem(
-                "3", "Visit Reminder",
-                "Reminder: You have a visit scheduled for tomorrow at 3:00 PM.",
-                "5 hours ago", NotificationType.VISIT_REMINDER, true
-            ),
-            NotificationItem(
-                "4", "New Visit Request",
-                "Jane Doe requested to visit on Jan 26 at 10:00 AM.",
-                "Yesterday", NotificationType.VISIT_REQUEST, true
-            ),
-            NotificationItem(
-                "5", "Check-in Confirmed",
-                "John Smith has checked in for their 2:00 PM visit.",
-                "Yesterday", NotificationType.CHECK_IN, true
-            ),
-            NotificationItem(
-                "6", "System Update",
-                "VisiScheduler has been updated with new features.",
-                "2 days ago", NotificationType.SYSTEM, true
-            )
-        )
-    }
-
-    val unreadCount = notifications.count { !it.isRead }
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -83,14 +40,9 @@ fun NotificationsListScreen(
                     }
                 },
                 actions = {
-                    if (unreadCount > 0) {
+                    if (uiState.unreadCount > 0) {
                         TextButton(
-                            onClick = {
-                                // Mark all as read
-                                val updated = notifications.map { it.copy(isRead = true) }
-                                notifications.clear()
-                                notifications.addAll(updated)
-                            }
+                            onClick = { viewModel.markAllAsRead() }
                         ) {
                             Text("Mark all read")
                         }
@@ -99,60 +51,66 @@ fun NotificationsListScreen(
             )
         }
     ) { padding ->
-        if (notifications.isEmpty()) {
-            // Empty State
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+        Box(modifier = modifier.fillMaxSize().padding(padding)) {
+            if (uiState.isLoading && uiState.notifications.isEmpty()) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else if (uiState.notifications.isEmpty()) {
+                // Empty State
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Default.NotificationsOff,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "No notifications",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        text = "You're all caught up!",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.NotificationsOff,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "No notifications",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "You're all caught up!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(
+                        items = uiState.notifications,
+                        key = { it.id }
+                    ) { notification ->
+                        NotificationListItem(
+                            notification = notification,
+                            onClick = { viewModel.onNotificationClick(notification) },
+                            onDismiss = {
+                                // TODO: Add delete functionality to ViewModel if needed
+                            }
+                        )
+                    }
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(vertical = 8.dp)
-            ) {
-                items(
-                    items = notifications,
-                    key = { it.id }
-                ) { notification ->
-                    NotificationListItem(
-                        notification = notification,
-                        onClick = {
-                            // Mark as read
-                            val index = notifications.indexOfFirst { it.id == notification.id }
-                            if (index >= 0) {
-                                notifications[index] = notification.copy(isRead = true)
-                            }
-                            onNotificationClick(notification)
-                        },
-                        onDismiss = {
-                            notifications.remove(notification)
+            
+            if (uiState.error != null) {
+                Snackbar(
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                    action = {
+                        TextButton(onClick = { viewModel.loadNotifications() }) {
+                            Text("Retry")
                         }
-                    )
+                    }
+                ) {
+                    Text(uiState.error ?: "An error occurred")
                 }
             }
         }
@@ -162,7 +120,7 @@ fun NotificationsListScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NotificationListItem(
-    notification: NotificationItem,
+    notification: Notification,
     onClick: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
@@ -194,6 +152,7 @@ private fun NotificationListItem(
                 )
             }
         },
+        enableDismissFromStartToEnd = false,
         modifier = modifier
     ) {
         Card(
@@ -224,11 +183,17 @@ private fun NotificationListItem(
                     val (icon, tint) = when (notification.type) {
                         NotificationType.VISIT_APPROVED -> Icons.Default.CheckCircle to MaterialTheme.colorScheme.primary
                         NotificationType.VISIT_DENIED -> Icons.Default.Cancel to MaterialTheme.colorScheme.error
+                        NotificationType.VISIT_CANCELLED -> Icons.Default.Block to MaterialTheme.colorScheme.error
                         NotificationType.VISIT_REMINDER -> Icons.Default.Alarm to MaterialTheme.colorScheme.tertiary
-                        NotificationType.VISIT_REQUEST -> Icons.Default.Schedule to MaterialTheme.colorScheme.secondary
-                        NotificationType.MESSAGE -> Icons.Default.Message to MaterialTheme.colorScheme.primary
-                        NotificationType.CHECK_IN -> Icons.Default.Login to MaterialTheme.colorScheme.primary
-                        NotificationType.SYSTEM -> Icons.Default.Info to MaterialTheme.colorScheme.onSurfaceVariant
+                        NotificationType.VISIT_REQUESTED -> Icons.Default.Schedule to MaterialTheme.colorScheme.secondary
+                        NotificationType.VISIT_CHECKED_IN -> Icons.Default.Login to MaterialTheme.colorScheme.primary
+                        NotificationType.VISIT_COMPLETED -> Icons.Default.DoneAll to MaterialTheme.colorScheme.primary
+                        NotificationType.SCHEDULE_CHANGE -> Icons.Default.Update to MaterialTheme.colorScheme.secondary
+                        NotificationType.RESTRICTION_APPLIED -> Icons.Default.Gavel to MaterialTheme.colorScheme.error
+                        NotificationType.ACCOUNT_STATUS -> Icons.Default.AccountCircle to MaterialTheme.colorScheme.primary
+                        NotificationType.SYSTEM_ANNOUNCEMENT -> Icons.Default.Announcement to MaterialTheme.colorScheme.onSurfaceVariant
+                        NotificationType.APPROVAL_REQUEST -> Icons.Default.Pending to MaterialTheme.colorScheme.secondary
+                        NotificationType.INFO -> Icons.Default.Info to MaterialTheme.colorScheme.onSurfaceVariant
                     }
                     Icon(
                         icon,
@@ -254,7 +219,7 @@ private fun NotificationListItem(
                             fontWeight = if (notification.isRead) FontWeight.Normal else FontWeight.Bold
                         )
                         Text(
-                            text = notification.timestamp,
+                            text = formatTimestamp(notification.createdAt),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -283,6 +248,23 @@ private fun NotificationListItem(
                     }
                 }
             }
+        }
+    }
+}
+
+private fun formatTimestamp(timestamp: Instant): String {
+    // Simplified timestamp formatting
+    val now = kotlinx.datetime.Clock.System.now()
+    val diff = now - timestamp
+    
+    return when {
+        diff.inWholeMinutes < 1 -> "Just now"
+        diff.inWholeHours < 1 -> "${diff.inWholeMinutes}m ago"
+        diff.inWholeDays < 1 -> "${diff.inWholeHours}h ago"
+        diff.inWholeDays < 7 -> "${diff.inWholeDays}d ago"
+        else -> {
+            val date = timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
+            "${date.month.name.take(3)} ${date.dayOfMonth}"
         }
     }
 }

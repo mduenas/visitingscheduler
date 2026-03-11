@@ -34,6 +34,7 @@ data class DashboardUiState(
     val todayVisits: List<Visit> = emptyList(),
     val upcomingVisits: List<Visit> = emptyList(),
     val pendingRequests: List<Visit> = emptyList(),
+    val suggestedSlots: List<com.markduenas.visischeduler.domain.entities.TimeSlot> = emptyList(),
     val statistics: DashboardStatistics = DashboardStatistics(),
     val beneficiaries: List<Beneficiary> = emptyList(),
     val selectedBeneficiaryId: String? = null,
@@ -77,7 +78,8 @@ data class DashboardStatistics(
 class DashboardViewModel(
     private val visitRepository: VisitRepository,
     private val userRepository: UserRepository,
-    private val beneficiaryRepository: BeneficiaryRepository
+    private val beneficiaryRepository: BeneficiaryRepository,
+    private val getSuggestedSlotsUseCase: com.markduenas.visischeduler.domain.usecase.GetSuggestedSlotsUseCase
 ) : BaseViewModel<DashboardUiState>(DashboardUiState()) {
 
     private val _todayDate = MutableStateFlow(getTodayDate())
@@ -213,7 +215,25 @@ class DashboardViewModel(
      * Loads visitor-specific data.
      */
     private fun loadVisitorData() {
-        // Visitor-specific data is handled by the general observeVisits()
+        loadSuggestedSlots()
+    }
+
+    private var suggestedSlotsJob: kotlinx.coroutines.Job? = null
+
+    /**
+     * Loads suggested slots for the selected beneficiary.
+     */
+    private fun loadSuggestedSlots() {
+        val user = currentState.currentUser ?: return
+        val beneficiaryId = currentState.selectedBeneficiaryId ?: return
+
+        suggestedSlotsJob?.cancel()
+        suggestedSlotsJob = getSuggestedSlotsUseCase(beneficiaryId, user.id)
+            .onEach { slots ->
+                updateState { copy(suggestedSlots = slots) }
+            }
+            .catch { /* Handle error or ignore */ }
+            .launchIn(viewModelScope)
     }
 
     /**
@@ -243,6 +263,7 @@ class DashboardViewModel(
      */
     fun selectBeneficiary(beneficiaryId: String) {
         updateState { copy(selectedBeneficiaryId = beneficiaryId) }
+        loadSuggestedSlots()
     }
 
     /**

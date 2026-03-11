@@ -13,13 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.domain.entities.Restriction
-import com.markduenas.visischeduler.domain.entities.RestrictionScope
 import com.markduenas.visischeduler.domain.entities.RestrictionType
 import com.markduenas.visischeduler.presentation.ui.components.visitors.RestrictionCard
-import kotlin.time.Clock
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
+import com.markduenas.visischeduler.presentation.viewmodel.visitors.RestrictionsViewModel
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,95 +24,10 @@ fun RestrictionsScreen(
     onNavigateBack: () -> Unit,
     onAddRestriction: () -> Unit,
     onEditRestriction: (String) -> Unit,
+    viewModel: RestrictionsViewModel = koinInject(),
     modifier: Modifier = Modifier
 ) {
-    val now = Clock.System.now()
-    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-
-    // Mock data using domain Restriction entity
-    val restrictions = remember {
-        mutableStateListOf(
-            Restriction(
-                id = "1",
-                name = "Visiting Hours",
-                description = "Visits allowed 9:00 AM - 8:00 PM daily",
-                type = RestrictionType.TIME_BASED,
-                scope = RestrictionScope.FACILITY_WIDE,
-                isActive = true,
-                effectiveFrom = today,
-                createdBy = "system",
-                createdAt = now,
-                updatedAt = now
-            ),
-            Restriction(
-                id = "2",
-                name = "Meal Times",
-                description = "No visits during 12:00 PM - 1:00 PM and 6:00 PM - 7:00 PM",
-                type = RestrictionType.TIME_BASED,
-                scope = RestrictionScope.FACILITY_WIDE,
-                isActive = true,
-                effectiveFrom = today,
-                createdBy = "system",
-                createdAt = now,
-                updatedAt = now
-            ),
-            Restriction(
-                id = "3",
-                name = "Rest Period",
-                description = "No visits 2:00 PM - 3:00 PM (afternoon rest)",
-                type = RestrictionType.TIME_BASED,
-                scope = RestrictionScope.FACILITY_WIDE,
-                isActive = true,
-                effectiveFrom = today,
-                createdBy = "system",
-                createdAt = now,
-                updatedAt = now
-            ),
-            Restriction(
-                id = "4",
-                name = "Maximum Visitors",
-                description = "Maximum 3 visitors at the same time",
-                type = RestrictionType.CAPACITY_BASED,
-                scope = RestrictionScope.FACILITY_WIDE,
-                isActive = true,
-                effectiveFrom = today,
-                createdBy = "system",
-                createdAt = now,
-                updatedAt = now
-            ),
-            Restriction(
-                id = "5",
-                name = "Daily Limit",
-                description = "Maximum 6 visits per day",
-                type = RestrictionType.CAPACITY_BASED,
-                scope = RestrictionScope.FACILITY_WIDE,
-                isActive = true,
-                effectiveFrom = today,
-                createdBy = "system",
-                createdAt = now,
-                updatedAt = now
-            ),
-            Restriction(
-                id = "6",
-                name = "No Children",
-                description = "Visitors must be 12 years or older",
-                type = RestrictionType.VISITOR_BASED,
-                scope = RestrictionScope.FACILITY_WIDE,
-                isActive = false,
-                effectiveFrom = today,
-                createdBy = "system",
-                createdAt = now,
-                updatedAt = now
-            )
-        )
-    }
-
-    fun toggleRestriction(id: String, enabled: Boolean) {
-        val index = restrictions.indexOfFirst { it.id == id }
-        if (index >= 0) {
-            restrictions[index] = restrictions[index].copy(isActive = enabled)
-        }
-    }
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -124,6 +36,11 @@ fun RestrictionsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                 }
             )
@@ -134,69 +51,142 @@ fun RestrictionsScreen(
             }
         }
     ) { padding ->
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Time-based restrictions
-            item {
-                Text(
-                    text = "Time-Based",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+        if (uiState.isLoading && !uiState.hasRestrictions) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-            items(restrictions.filter { it.type == RestrictionType.TIME_BASED }) { restriction ->
-                RestrictionCard(
-                    restriction = restriction,
-                    onToggle = { enabled -> toggleRestriction(restriction.id, enabled) },
-                    onClick = { onEditRestriction(restriction.id) }
-                )
-            }
+        } else {
+            LazyColumn(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Filters
+                item {
+                    ScrollableTabRow(
+                        selectedTabIndex = if (uiState.selectedType == null) 0 else RestrictionType.entries.indexOf(uiState.selectedType) + 1,
+                        edgePadding = 0.dp,
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        divider = {}
+                    ) {
+                        Tab(
+                            selected = uiState.selectedType == null,
+                            onClick = { viewModel.onFilterChange(null) },
+                            text = { Text("All") }
+                        )
+                        RestrictionType.entries.forEach { type ->
+                            Tab(
+                                selected = uiState.selectedType == type,
+                                onClick = { viewModel.onFilterChange(type) },
+                                text = { Text(viewModel.getRestrictionTypeDisplayName(type)) }
+                            )
+                        }
+                    }
+                }
 
-            // Capacity restrictions
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Capacity",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            items(restrictions.filter { it.type == RestrictionType.CAPACITY_BASED }) { restriction ->
-                RestrictionCard(
-                    restriction = restriction,
-                    onToggle = { enabled -> toggleRestriction(restriction.id, enabled) },
-                    onClick = { onEditRestriction(restriction.id) }
-                )
-            }
+                if (!uiState.hasRestrictions) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillParentMaxHeight(0.7f).fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(Icons.Default.Block, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("No restrictions found", style = MaterialTheme.typography.titleMedium)
+                                Text("Create one to start managing visits", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
 
-            // Visitor restrictions
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Visitor-Based",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            items(restrictions.filter { it.type == RestrictionType.VISITOR_BASED }) { restriction ->
-                RestrictionCard(
-                    restriction = restriction,
-                    onToggle = { enabled -> toggleRestriction(restriction.id, enabled) },
-                    onClick = { onEditRestriction(restriction.id) }
-                )
-            }
+                // Grouped display if no specific filter
+                if (uiState.selectedType == null) {
+                    renderGroup(
+                        title = "Time-Based",
+                        items = uiState.restrictions.timeBasedRestrictions,
+                        viewModel = viewModel,
+                        onEdit = onEditRestriction
+                    )
+                    renderGroup(
+                        title = "Capacity",
+                        items = uiState.restrictions.capacityBasedRestrictions,
+                        viewModel = viewModel,
+                        onEdit = onEditRestriction
+                    )
+                    renderGroup(
+                        title = "Visitor-Based",
+                        items = uiState.restrictions.visitorBasedRestrictions,
+                        viewModel = viewModel,
+                        onEdit = onEditRestriction
+                    )
+                    renderGroup(
+                        title = "Beneficiary-Specific",
+                        items = uiState.restrictions.beneficiaryBasedRestrictions,
+                        viewModel = viewModel,
+                        onEdit = onEditRestriction
+                    )
+                } else {
+                    // Filtered list
+                    items(uiState.filteredRestrictions) { restriction ->
+                        RestrictionCard(
+                            restriction = restriction,
+                            onToggle = { viewModel.toggleRestriction(restriction) },
+                            onClick = { onEditRestriction(restriction.id) }
+                        )
+                    }
+                }
 
-            item {
-                Spacer(modifier = Modifier.height(80.dp))
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
+                }
             }
+        }
+    }
+
+    // Delete Confirmation
+    if (uiState.showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideDeleteDialog() },
+            title = { Text("Delete Restriction") },
+            text = { Text("Are you sure you want to delete '${uiState.restrictionToDelete?.name}'? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.deleteRestriction() }) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hideDeleteDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.renderGroup(
+    title: String,
+    items: List<Restriction>,
+    viewModel: RestrictionsViewModel,
+    onEdit: (String) -> Unit
+) {
+    if (items.isNotEmpty()) {
+        item {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+        items(items) { restriction ->
+            RestrictionCard(
+                restriction = restriction,
+                onToggle = { viewModel.toggleRestriction(restriction) },
+                onClick = { onEdit(restriction.id) }
+            )
         }
     }
 }

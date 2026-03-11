@@ -4,6 +4,8 @@ import com.markduenas.visischeduler.data.local.VisiSchedulerDatabase
 import com.markduenas.visischeduler.data.remote.api.VisiSchedulerApi
 import com.markduenas.visischeduler.data.remote.dto.AdditionalVisitorDto
 import com.markduenas.visischeduler.data.remote.dto.VisitRequestDto
+import com.markduenas.visischeduler.data.sync.SyncManager
+import com.markduenas.visischeduler.data.sync.SyncOperationType
 import com.markduenas.visischeduler.domain.entities.AdditionalVisitor
 import com.markduenas.visischeduler.domain.entities.Visit
 import com.markduenas.visischeduler.domain.entities.VisitStatus
@@ -21,12 +23,13 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 /**
- * Implementation of VisitRepository.
+ * Implementation of VisitRepository with offline support.
  */
 class VisitRepositoryImpl(
     private val api: VisiSchedulerApi,
     private val database: VisiSchedulerDatabase,
-    private val json: Json
+    private val json: Json,
+    private val syncManager: SyncManager
 ) : VisitRepository {
 
     override fun getMyVisits(): Flow<List<Visit>> = flow {
@@ -162,8 +165,34 @@ class VisitRepositoryImpl(
         visitType: VisitType,
         purpose: String?,
         notes: String?,
-        additionalVisitors: List<AdditionalVisitor>
+        additionalVisitors: List<AdditionalVisitor>,
+        videoCallLink: String?,
+        videoCallPlatform: String?
     ): Result<Visit> {
+        val now = Clock.System.now()
+        val tempId = "temp_${now.toEpochMilliseconds()}"
+        
+        // Create local optimistic visit
+        val visit = Visit(
+            id = tempId,
+            beneficiaryId = beneficiaryId,
+            visitorId = "", // Current user ID would go here
+            scheduledDate = scheduledDate,
+            startTime = startTime,
+            endTime = endTime,
+            status = VisitStatus.PENDING,
+            visitType = visitType,
+            purpose = purpose,
+            notes = notes,
+            additionalVisitors = additionalVisitors,
+            videoCallLink = videoCallLink,
+            videoCallPlatform = videoCallPlatform,
+            createdAt = now,
+            updatedAt = now
+        )
+        
+        cacheVisit(visit)
+
         return try {
             val request = VisitRequestDto(
                 beneficiaryId = beneficiaryId,
@@ -175,11 +204,22 @@ class VisitRepositoryImpl(
                 notes = notes,
                 additionalVisitors = additionalVisitors.map { AdditionalVisitorDto.fromDomain(it) }
             )
-            val visit = api.scheduleVisit(request).toDomain()
-            cacheVisit(visit)
-            Result.success(visit)
+            val remoteVisit = api.scheduleVisit(request).toDomain()
+            
+            // Remove temp visit and cache actual
+            database.visiSchedulerQueries.deleteVisit(tempId)
+            cacheVisit(remoteVisit)
+            
+            Result.success(remoteVisit)
         } catch (e: Exception) {
-            Result.failure(e)
+            // Offline: Enqueue sync operation
+            syncManager.enqueueOperation(
+                operationType = SyncOperationType.CREATE_VISIT,
+                entityType = "VISIT",
+                entityId = tempId,
+                payload = json.encodeToString(visit)
+            )
+            Result.success(visit)
         }
     }
 
@@ -199,7 +239,15 @@ class VisitRepositoryImpl(
             cacheVisit(updated)
             Result.success(updated)
         } catch (e: Exception) {
-            Result.failure(e)
+            // Optimistically update local
+            cacheVisit(visit)
+            syncManager.enqueueOperation(
+                operationType = SyncOperationType.UPDATE_VISIT_STATUS,
+                entityType = "VISIT",
+                entityId = visit.id,
+                payload = json.encodeToString(visit)
+            )
+            Result.success(visit)
         }
     }
 
@@ -209,7 +257,24 @@ class VisitRepositoryImpl(
             cacheVisit(visit)
             Result.success(visit)
         } catch (e: Exception) {
-            Result.failure(e)
+            // Try to find in cache first
+            val cached = database.visiSchedulerQueries.selectVisitById(visitId).executeAsOneOrNull()
+            if (cached != null) {
+                val updated = mapEntityToVisit(cached).copy(
+                    status = VisitStatus.CANCELLED,
+                    cancellationReason = reason
+                )
+                cacheVisit(updated)
+                syncManager.enqueueOperation(
+                    operationType = SyncOperationType.CANCEL_VISIT,
+                    entityType = "VISIT",
+                    entityId = visitId,
+                    payload = json.encodeToString(mapOf("reason" to reason))
+                )
+                Result.success(updated)
+            } else {
+                Result.failure(e)
+            }
         }
     }
 
@@ -299,7 +364,7 @@ class VisitRepositoryImpl(
 
     override suspend fun getVisitStatistics(): Result<VisitStatistics> {
         return try {
-            val visits = getCachedVisits()
+            val visits = database.visiSchedulerQueries.selectAllVisits().executeAsList().map { mapEntityToVisit(it) }
             val stats = VisitStatistics(
                 totalVisits = visits.size,
                 completedVisits = visits.count { it.status == VisitStatus.COMPLETED },
@@ -326,8 +391,10 @@ class VisitRepositoryImpl(
     }
 
     private fun getCachedVisits(): List<Visit> {
-        // Note: This would need a proper query in production
-        return emptyList()
+        return database.visiSchedulerQueries
+            .selectAllVisits()
+            .executeAsList()
+            .map { mapEntityToVisit(it) }
     }
 
     private fun getCachedVisitsByStatus(status: VisitStatus): List<Visit> {
@@ -350,6 +417,8 @@ class VisitRepositoryImpl(
             purpose = visit.purpose,
             notes = visit.notes,
             additionalVisitors = json.encodeToString(visit.additionalVisitors),
+            videoCallLink = visit.videoCallLink,
+            videoCallPlatform = visit.videoCallPlatform,
             checkInTime = visit.checkInTime?.toString(),
             checkOutTime = visit.checkOutTime?.toString(),
             approvedBy = visit.approvedBy,
@@ -376,6 +445,8 @@ class VisitRepositoryImpl(
             purpose = entity.purpose,
             notes = entity.notes,
             additionalVisitors = json.decodeFromString(entity.additionalVisitors),
+            videoCallLink = entity.videoCallLink,
+            videoCallPlatform = entity.videoCallPlatform,
             checkInTime = entity.checkInTime?.let { kotlin.time.Instant.parse(it) },
             checkOutTime = entity.checkOutTime?.let { kotlin.time.Instant.parse(it) },
             approvedBy = entity.approvedBy,

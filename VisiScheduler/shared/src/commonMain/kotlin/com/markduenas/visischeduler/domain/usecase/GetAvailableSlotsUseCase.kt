@@ -13,14 +13,14 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 
 /**
- * Use case for getting available time slots.
+ * Use case for getting available time slots with intelligent restriction filtering.
  */
 class GetAvailableSlotsUseCase(
     private val timeSlotRepository: TimeSlotRepository,
-    private val restrictionRepository: RestrictionRepository
+    private val evaluateRulesUseCase: EvaluateRulesUseCase
 ) {
     /**
-     * Get available time slots for a specific date and beneficiary.
+     * Get available time slots for a specific date and beneficiary, optionally filtered for a visitor.
      * @param beneficiaryId The beneficiary to visit
      * @param date The date to check
      * @param visitorId Optional visitor ID to check restrictions
@@ -33,8 +33,23 @@ class GetAvailableSlotsUseCase(
     ): Flow<List<TimeSlot>> {
         return timeSlotRepository.getAvailableSlotsForDate(beneficiaryId, date)
             .map { slots ->
-                slots.filter { slot ->
-                    slot.isAvailable && !slot.isFull
+                val baseAvailableSlots = slots.filter { it.isAvailable && !it.isFull }
+                
+                if (visitorId == null) {
+                    baseAvailableSlots
+                } else {
+                    // Smart filtering: check each slot against rules for this specific visitor
+                    baseAvailableSlots.filter { slot ->
+                        val evaluation = evaluateRulesUseCase(
+                            visitorId = visitorId,
+                            beneficiaryId = beneficiaryId,
+                            visitDate = date,
+                            startTime = slot.startTime,
+                            endTime = slot.endTime
+                        ).getOrNull()
+                        
+                        evaluation?.isEmpty() ?: true
+                    }
                 }
             }
     }

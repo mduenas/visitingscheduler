@@ -1,5 +1,6 @@
 package com.markduenas.visischeduler.di
 
+import com.markduenas.visischeduler.config.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.auth.Auth
@@ -57,7 +58,7 @@ val networkModule = module {
     // HTTP Client
     single {
         val config = getOrNull<NetworkConfig>() ?: NetworkConfig(
-            baseUrl = "https://api.visischeduler.com/v1"
+            baseUrl = AppConfig.apiBaseUrl
         )
         val json = get<Json>()
         val tokenProvider = getOrNull<TokenProvider>()

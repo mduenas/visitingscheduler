@@ -43,6 +43,8 @@ data class Visit(
     val purpose: String? = null,
     val notes: String? = null,
     val additionalVisitors: List<AdditionalVisitor> = emptyList(),
+    val videoCallLink: String? = null,
+    val videoCallPlatform: String? = null,
     @Contextual val checkInTime: Instant? = null,
     @Contextual val checkOutTime: Instant? = null,
     val approvedBy: String? = null,

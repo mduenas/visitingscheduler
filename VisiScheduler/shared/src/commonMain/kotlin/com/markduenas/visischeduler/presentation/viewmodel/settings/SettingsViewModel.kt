@@ -55,7 +55,8 @@ data class SettingsUiState(
  */
 class SettingsViewModel(
     private val secureStorage: SecureStorage,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val authRepository: com.markduenas.visischeduler.domain.repository.AuthRepository
 ) : BaseViewModel<SettingsUiState>(SettingsUiState()) {
 
     companion object {
@@ -165,50 +166,51 @@ class SettingsViewModel(
      * Navigate to security settings screen.
      */
     fun navigateToSecuritySettings() {
-        navigate("settings/security")
+        navigate(\"security_settings\")
     }
 
     /**
      * Navigate to notification settings screen.
      */
     fun navigateToNotificationSettings() {
-        navigate("settings/notifications")
+        navigate(\"notification_settings\")
     }
 
     /**
      * Navigate to appearance settings screen.
      */
     fun navigateToAppearanceSettings() {
-        navigate("settings/appearance")
+        navigate(\"appearance_settings\")
     }
 
     /**
      * Navigate to beneficiary settings screen.
      */
     fun navigateToBeneficiarySettings() {
-        navigate("settings/beneficiary")
+        navigate(\"beneficiary_settings\")
     }
 
     /**
      * Navigate to about screen.
      */
     fun navigateToAbout() {
-        navigate("settings/about")
+        navigate(\"about\")
     }
 
     /**
      * Navigate to terms of service.
      */
     fun navigateToTermsOfService() {
-        navigate("settings/terms")
+        navigate(\"terms\")
     }
 
     /**
      * Navigate to privacy policy.
      */
     fun navigateToPrivacyPolicy() {
-        navigate("settings/privacy")
+        navigate(\"privacy\")
     }
+
 
     /**
      * Open external link for support.
@@ -216,6 +218,23 @@ class SettingsViewModel(
     fun contactSupport() {
         // TODO: Implement external link handling
         showSnackbar("Opening support...")
+    }
+
+    /**
+     * Logout the current user.
+     */
+    fun logout() {
+        launchSafe {
+            updateState { copy(isLoading = true) }
+            authRepository.logout().fold(
+                onSuccess = {
+                    navigate("login")
+                },
+                onFailure = {
+                    navigate("login")
+                }
+            )
+        }
     }
 
     /**
