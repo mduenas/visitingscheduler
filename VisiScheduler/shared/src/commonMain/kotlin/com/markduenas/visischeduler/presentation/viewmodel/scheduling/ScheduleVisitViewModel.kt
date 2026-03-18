@@ -46,7 +46,7 @@ data class ScheduleVisitUiState(
     val selectedDuration: VisitDuration = VisitDuration.ONE_HOUR,
     val visitType: VisitType = VisitType.IN_PERSON,
     val reason: String = "",
-    val notes: String = \"\",
+    val notes: String = "",
     val additionalVisitors: List<AdditionalVisitor> = emptyList(),
     val videoCallLink: String? = null,
     val videoCallPlatform: String? = null,
@@ -229,7 +229,14 @@ class ScheduleVisitViewModel(
     fun incrementGuestCount() {
         if (currentState.additionalVisitors.size < 5) {
             val nextId = (currentState.additionalVisitors.size + 1).toString()
-            addAdditionalVisitor(AdditionalVisitor(nextId, "Guest $nextId", ""))
+            addAdditionalVisitor(
+                AdditionalVisitor(
+                    id = nextId,
+                    firstName = "Guest",
+                    lastName = nextId,
+                    relationship = "Friend"
+                )
+            )
         }
     }
 
@@ -298,7 +305,7 @@ class ScheduleVisitViewModel(
 
         launchSafe {
             val request = ScheduleVisitRequest(
-                visitorId = \"\", // Will be populated by use case from current user
+                visitorId = "", // Will be populated by use case from current user
                 beneficiaryId = state.beneficiaryId!!,
                 scheduledDate = state.selectedDate,
                 startTime = startTime,
@@ -310,7 +317,6 @@ class ScheduleVisitViewModel(
                 videoCallLink = state.videoCallLink,
                 videoCallPlatform = state.videoCallPlatform
             )
-
 
             val result = scheduleVisitUseCase(request)
 

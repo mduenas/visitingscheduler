@@ -28,6 +28,16 @@ interface BeneficiaryRepository {
     suspend fun searchBeneficiaries(query: String): Result<List<Beneficiary>>
 
     /**
+     * Create a new beneficiary.
+     */
+    suspend fun createBeneficiary(beneficiary: Beneficiary): Result<Beneficiary>
+
+    /**
+     * Update an existing beneficiary.
+     */
+    suspend fun updateBeneficiary(beneficiary: Beneficiary): Result<Beneficiary>
+
+    /**
      * Sync beneficiaries from remote server.
      */
     suspend fun syncBeneficiaries(): Result<Unit>

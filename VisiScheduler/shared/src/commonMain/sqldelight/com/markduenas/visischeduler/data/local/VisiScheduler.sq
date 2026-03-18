@@ -21,6 +21,7 @@ CREATE TABLE VisitEntity (
     id TEXT NOT NULL PRIMARY KEY,
     beneficiaryId TEXT NOT NULL,
     visitorId TEXT NOT NULL,
+    visitorName TEXT NOT NULL DEFAULT '',
     scheduledDate TEXT NOT NULL,
     startTime TEXT NOT NULL,
     endTime TEXT NOT NULL,
@@ -134,11 +135,14 @@ DELETE FROM UserEntity;
 
 -- Visit queries
 insertVisit:
-INSERT OR REPLACE INTO VisitEntity(id, beneficiaryId, visitorId, scheduledDate, startTime, endTime, status, visitType, purpose, notes, additionalVisitors, videoCallLink, videoCallPlatform, checkInTime, checkOutTime, approvedBy, approvedAt, denialReason, cancellationReason, cancelledBy, cancelledAt, createdAt, updatedAt)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO VisitEntity(id, beneficiaryId, visitorId, visitorName, scheduledDate, startTime, endTime, status, visitType, purpose, notes, additionalVisitors, videoCallLink, videoCallPlatform, checkInTime, checkOutTime, approvedBy, approvedAt, denialReason, cancellationReason, cancelledBy, cancelledAt, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 selectVisitById:
 SELECT * FROM VisitEntity WHERE id = ?;
+
+selectAllVisits:
+SELECT * FROM VisitEntity;
 
 selectVisitsByVisitorId:
 SELECT * FROM VisitEntity WHERE visitorId = ? ORDER BY scheduledDate DESC, startTime ASC;

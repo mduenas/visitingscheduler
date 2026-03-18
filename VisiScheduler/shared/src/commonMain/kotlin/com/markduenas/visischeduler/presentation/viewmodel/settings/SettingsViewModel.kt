@@ -166,49 +166,49 @@ class SettingsViewModel(
      * Navigate to security settings screen.
      */
     fun navigateToSecuritySettings() {
-        navigate(\"security_settings\")
+        navigate("security_settings")
     }
 
     /**
      * Navigate to notification settings screen.
      */
     fun navigateToNotificationSettings() {
-        navigate(\"notification_settings\")
+        navigate("notification_settings")
     }
 
     /**
      * Navigate to appearance settings screen.
      */
     fun navigateToAppearanceSettings() {
-        navigate(\"appearance_settings\")
+        navigate("appearance_settings")
     }
 
     /**
      * Navigate to beneficiary settings screen.
      */
     fun navigateToBeneficiarySettings() {
-        navigate(\"beneficiary_settings\")
+        navigate("beneficiary_settings")
     }
 
     /**
      * Navigate to about screen.
      */
     fun navigateToAbout() {
-        navigate(\"about\")
+        navigate("about")
     }
 
     /**
      * Navigate to terms of service.
      */
     fun navigateToTermsOfService() {
-        navigate(\"terms\")
+        navigate("terms")
     }
 
     /**
      * Navigate to privacy policy.
      */
     fun navigateToPrivacyPolicy() {
-        navigate(\"privacy\")
+        navigate("privacy")
     }
 
 

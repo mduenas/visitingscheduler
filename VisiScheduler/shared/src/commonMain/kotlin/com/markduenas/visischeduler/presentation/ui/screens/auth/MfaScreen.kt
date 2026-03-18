@@ -79,7 +79,7 @@ fun MfaScreen(
             val methodText = when (uiState.mfaMethod) {
                 MfaMethod.SMS -> "We've sent a text message with a code to your registered phone number."
                 MfaMethod.EMAIL -> "We've sent an email with a code to your registered email address."
-                MfaMethod.AUTHENTICATOR -> "Please enter the code from your authenticator app."
+                MfaMethod.TOTP -> "Please enter the code from your authenticator app."
             }
 
             Text(

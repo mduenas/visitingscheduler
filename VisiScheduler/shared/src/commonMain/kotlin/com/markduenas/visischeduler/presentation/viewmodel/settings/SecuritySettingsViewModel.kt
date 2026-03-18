@@ -195,7 +195,7 @@ class SecuritySettingsViewModel(
         if (enabled) {
             // Start MFA setup flow
             updateState { copy(mfaSetupInProgress = true) }
-            navigate("settings/security/mfa-setup")
+            navigate("mfa_setup")
         } else {
             // Disable MFA
             secureStorage.putBoolean(KEY_MFA_ENABLED, false)

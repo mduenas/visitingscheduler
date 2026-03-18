@@ -18,6 +18,7 @@ import com.markduenas.visischeduler.presentation.ui.components.calendar.VisitSta
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.VisitDetailsViewModel
 import org.koin.compose.koinInject
 import kotlinx.datetime.*
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -161,7 +162,6 @@ fun VisitDetailsScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(visit.visitorName, style = MaterialTheme.typography.bodyLarge)
-                                // relationship could be added to Visit entity if available
                             }
                         }
 
@@ -361,12 +361,11 @@ private fun DenialDialog(
 
 // Helpers
 private fun formatDate(date: LocalDate): String {
-    // Basic formatting - would use a proper multiplatform date formatter in real app
-    return \"${date.month} ${date.dayOfMonth}, ${date.year}\"
+    return "${date.month} ${date.dayOfMonth}, ${date.year}"
 }
 
 private fun formatTime(time: LocalTime): String {
     val hour = if (time.hour == 0 || time.hour == 12) 12 else time.hour % 12
-    val ampm = if (time.hour < 12) \"AM\" else \"PM\"
-    return \"$hour:${time.minute.toString().padStart(2, '0')} $ampm\"
+    val ampm = if (time.hour < 12) "AM" else "PM"
+    return "$hour:${time.minute.toString().padStart(2, '0')} $ampm"
 }

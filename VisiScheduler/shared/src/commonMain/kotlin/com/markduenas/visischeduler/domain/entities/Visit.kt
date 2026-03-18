@@ -35,6 +35,7 @@ data class Visit(
     val id: String,
     val beneficiaryId: String,
     val visitorId: String,
+    val visitorName: String = "",
     val scheduledDate: LocalDate,
     val startTime: LocalTime,
     val endTime: LocalTime,

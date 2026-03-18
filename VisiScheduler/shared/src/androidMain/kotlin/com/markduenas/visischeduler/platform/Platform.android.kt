@@ -9,6 +9,14 @@ import android.os.Build
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 
+class AndroidPlatform : Platform {
+    override val name: String = "Android"
+    override val version: String = Build.VERSION.RELEASE
+    override val isDebug: Boolean = false
+}
+
+actual fun getPlatform(): Platform = AndroidPlatform()
+
 class AndroidPermissionManager(private val context: Context) : PermissionManager {
     
     override suspend fun checkPermission(permission: Permission): PermissionStatus {

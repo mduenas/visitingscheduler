@@ -116,4 +116,20 @@ interface AuthRepository {
      * @return Result indicating success or failure
      */
     suspend fun resendMfaCode(challengeId: String): Result<Unit>
+
+    /**
+     * Start MFA setup flow.
+     * @param method The MFA method to set up
+     * @param destination The destination for codes (phone number or email)
+     * @return Result containing the MFA challenge ID or an error
+     */
+    suspend fun setupMfa(method: com.markduenas.visischeduler.presentation.viewmodel.auth.MfaMethod, destination: String): Result<String>
+
+    /**
+     * Confirm MFA setup with verification code.
+     * @param challengeId The MFA challenge ID
+     * @param code The verification code entered by the user
+     * @return Result indicating success or failure
+     */
+    suspend fun confirmMfaSetup(challengeId: String, code: String): Result<Unit>
 }

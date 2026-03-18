@@ -38,7 +38,8 @@ data class VisitStats(
  */
 class ProfileViewModel(
     private val userRepository: UserRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val visitRepository: com.markduenas.visischeduler.domain.repository.VisitRepository
 ) : BaseViewModel<ProfileUiState>(ProfileUiState()) {
 
     init {
@@ -59,7 +60,7 @@ class ProfileViewModel(
                         isLoading = false
                     )
                 }
-                user?.let { loadVisitStats(it) }
+                user?.let { loadVisitStats() }
             }
         }
     }
@@ -67,17 +68,24 @@ class ProfileViewModel(
     /**
      * Load visit statistics for the user.
      */
-    private fun loadVisitStats(user: User) {
-        // TODO: Implement when visit statistics repository is available
-        // For now, we'll use placeholder stats
-        updateState {
-            copy(
-                visitStats = VisitStats(
-                    totalVisitsCoordinated = if (user.canApproveVisits()) 42 else 0,
-                    totalVisitsMade = 15,
-                    upcomingVisits = 3,
-                    pendingApprovals = if (user.canApproveVisits()) 5 else 0
-                )
+    private fun loadVisitStats() {
+        launchSafe {
+            visitRepository.getVisitStatistics().fold(
+                onSuccess = { stats ->
+                    updateState {
+                        copy(
+                            visitStats = VisitStats(
+                                totalVisitsCoordinated = stats.totalVisits, // Simplified mapping
+                                totalVisitsMade = stats.completedVisits,
+                                upcomingVisits = stats.upcomingVisits,
+                                pendingApprovals = stats.pendingVisits
+                            )
+                        )
+                    }
+                },
+                onFailure = {
+                    // Keep placeholder or empty stats on failure
+                }
             )
         }
     }
@@ -204,7 +212,7 @@ class ProfileViewModel(
                             isLoading = false
                         )
                     }
-                    user?.let { loadVisitStats(it) }
+                    user?.let { loadVisitStats() }
                 },
                 onFailure = { error ->
                     val exception = AppException.UnknownException(
@@ -235,6 +243,13 @@ class ProfileViewModel(
      */
     fun navigateToNotifications() {
         navigate("notifications")
+    }
+
+    /**
+     * Navigate to add beneficiary screen.
+     */
+    fun navigateToAddBeneficiary() {
+        navigate("add_beneficiary")
     }
 
     /**

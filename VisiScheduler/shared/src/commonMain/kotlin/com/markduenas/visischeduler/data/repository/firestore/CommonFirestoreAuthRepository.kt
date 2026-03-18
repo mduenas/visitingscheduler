@@ -164,6 +164,17 @@ class CommonFirestoreAuthRepository(
         throw UnsupportedOperationException("MFA not yet implemented")
     }
 
+    override suspend fun setupMfa(
+        method: com.markduenas.visischeduler.presentation.viewmodel.auth.MfaMethod,
+        destination: String
+    ): Result<String> = runCatching {
+        throw UnsupportedOperationException("MFA setup not yet implemented")
+    }
+
+    override suspend fun confirmMfaSetup(challengeId: String, code: String): Result<Unit> = runCatching {
+        throw UnsupportedOperationException("MFA setup not yet implemented")
+    }
+
     // ==================== Mapping Functions ====================
 
     @Suppress("UNCHECKED_CAST")

@@ -1,18 +1,6 @@
 package com.markduenas.visischeduler.di
 
-import com.markduenas.visischeduler.domain.usecase.ApproveVisitUseCase
-import com.markduenas.visischeduler.domain.usecase.CheckInUseCase
-import com.markduenas.visischeduler.domain.usecase.CheckOutUseCase
-import com.markduenas.visischeduler.domain.usecase.EvaluateRulesUseCase
-import com.markduenas.visischeduler.domain.usecase.GenerateQrCodeUseCase
-import com.markduenas.visischeduler.domain.usecase.GetAvailableSlotsUseCase
-import com.markduenas.visischeduler.domain.usecase.GetConversationsUseCase
-import com.markduenas.visischeduler.domain.usecase.GetNotificationsUseCase
-import com.markduenas.visischeduler.domain.usecase.GetSuggestedSlotsUseCase
-import com.markduenas.visischeduler.domain.usecase.LoginUseCase
-import com.markduenas.visischeduler.domain.usecase.MarkNotificationReadUseCase
-import com.markduenas.visischeduler.domain.usecase.ScheduleVisitUseCase
-import com.markduenas.visischeduler.domain.usecase.SendMessageUseCase
+import com.markduenas.visischeduler.domain.usecase.*
 import org.koin.dsl.module
 
 /**
@@ -37,8 +25,8 @@ val useCaseModule = module {
     // ==========================================
     // Check-in/Check-out Use Cases
     // ==========================================
-    factory { CheckInUseCase(get(), get(), get()) }
-    factory { CheckOutUseCase(get(), get()) }
+    factory { CheckInUseCase(get(), get()) }
+    factory { CheckOutUseCase(get()) }
 
     // ==========================================
     // Messaging Use Cases
@@ -51,4 +39,5 @@ val useCaseModule = module {
     // ==========================================
     factory { GetNotificationsUseCase(get()) }
     factory { MarkNotificationReadUseCase(get()) }
+    factory { DeleteNotificationUseCase(get()) }
 }

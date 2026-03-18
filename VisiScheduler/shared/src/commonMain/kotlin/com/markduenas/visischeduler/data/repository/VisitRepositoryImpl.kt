@@ -177,6 +177,7 @@ class VisitRepositoryImpl(
             id = tempId,
             beneficiaryId = beneficiaryId,
             visitorId = "", // Current user ID would go here
+            visitorName = "Me",
             scheduledDate = scheduledDate,
             startTime = startTime,
             endTime = endTime,
@@ -409,6 +410,7 @@ class VisitRepositoryImpl(
             id = visit.id,
             beneficiaryId = visit.beneficiaryId,
             visitorId = visit.visitorId,
+            visitorName = visit.visitorName,
             scheduledDate = visit.scheduledDate.toString(),
             startTime = visit.startTime.toString(),
             endTime = visit.endTime.toString(),
@@ -437,6 +439,7 @@ class VisitRepositoryImpl(
             id = entity.id,
             beneficiaryId = entity.beneficiaryId,
             visitorId = entity.visitorId,
+            visitorName = entity.visitorName,
             scheduledDate = LocalDate.parse(entity.scheduledDate),
             startTime = LocalTime.parse(entity.startTime),
             endTime = LocalTime.parse(entity.endTime),

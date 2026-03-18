@@ -15,10 +15,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.domain.entities.Notification
 import com.markduenas.visischeduler.domain.entities.NotificationType
+import com.markduenas.visischeduler.presentation.state.NotificationFilter
 import com.markduenas.visischeduler.presentation.viewmodel.notifications.NotificationsViewModel
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Duration
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,72 +50,117 @@ fun NotificationsListScreen(
                             Text("Mark all read")
                         }
                     }
+                    if (uiState.notifications.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.clearAllNotifications() }) {
+                            Icon(Icons.Default.ClearAll, contentDescription = "Clear all")
+                        }
+                    }
                 }
             )
         }
     ) { padding ->
-        Box(modifier = modifier.fillMaxSize().padding(padding)) {
-            if (uiState.isLoading && uiState.notifications.isEmpty()) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (uiState.notifications.isEmpty()) {
-                // Empty State
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+        Column(modifier = modifier.fillMaxSize().padding(padding)) {
+            // Filter Chips
+            NotificationFilters(
+                selectedFilter = uiState.currentFilter,
+                onFilterSelected = { viewModel.setFilter(it) },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            Box(modifier = Modifier.weight(1f)) {
+                if (uiState.isLoading && uiState.notifications.isEmpty()) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else if (uiState.filteredNotifications.isEmpty()) {
+                    // Empty State
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Default.NotificationsOff,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "No notifications",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "You're all caught up!",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    items(
-                        items = uiState.notifications,
-                        key = { it.id }
-                    ) { notification ->
-                        NotificationListItem(
-                            notification = notification,
-                            onClick = { viewModel.onNotificationClick(notification) },
-                            onDismiss = {
-                                // TODO: Add delete functionality to ViewModel if needed
-                            }
-                        )
-                    }
-                }
-            }
-            
-            if (uiState.error != null) {
-                Snackbar(
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
-                    action = {
-                        TextButton(onClick = { viewModel.loadNotifications() }) {
-                            Text("Retry")
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.NotificationsOff,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = if (uiState.currentFilter == NotificationFilter.ALL) "No notifications" else "No matching notifications",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = "You're all caught up!",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
-                ) {
-                    Text(uiState.error ?: "An error occurred")
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(
+                            items = uiState.filteredNotifications,
+                            key = { it.id }
+                        ) { notification ->
+                            NotificationListItem(
+                                notification = notification,
+                                onClick = { viewModel.onNotificationClick(notification) },
+                                onDismiss = {
+                                    viewModel.deleteNotification(notification.id)
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                if (uiState.error != null) {
+                    Snackbar(
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                        action = {
+                            TextButton(onClick = { viewModel.loadNotifications() }) {
+                                Text("Retry")
+                            }
+                        }
+                    ) {
+                        Text(uiState.error ?: "An error occurred")
+                    }
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NotificationFilters(
+    selectedFilter: NotificationFilter,
+    onFilterSelected: (NotificationFilter) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        NotificationFilter.entries.forEach { filter ->
+            FilterChip(
+                selected = selectedFilter == filter,
+                onClick = { onFilterSelected(filter) },
+                label = { 
+                    Text(
+                        when (filter) {
+                            NotificationFilter.ALL -> "All"
+                            NotificationFilter.UNREAD -> "Unread"
+                            NotificationFilter.VISITS -> "Visits"
+                            NotificationFilter.APPROVALS -> "Approvals"
+                            NotificationFilter.SYSTEM -> "System"
+                        }
+                    )
+                }
+            )
         }
     }
 }
@@ -253,14 +301,13 @@ private fun NotificationListItem(
 }
 
 private fun formatTimestamp(timestamp: Instant): String {
-    // Simplified timestamp formatting
-    val now = kotlinx.datetime.Clock.System.now()
+    val now = Clock.System.now()
     val diff = now - timestamp
     
     return when {
-        diff.inWholeMinutes < 1 -> "Just now"
-        diff.inWholeHours < 1 -> "${diff.inWholeMinutes}m ago"
-        diff.inWholeDays < 1 -> "${diff.inWholeHours}h ago"
+        diff.inWholeSeconds < 60 -> "Just now"
+        diff.inWholeMinutes < 60 -> "${diff.inWholeMinutes}m ago"
+        diff.inWholeHours < 24 -> "${diff.inWholeHours}h ago"
         diff.inWholeDays < 7 -> "${diff.inWholeDays}d ago"
         else -> {
             val date = timestamp.toLocalDateTime(TimeZone.currentSystemDefault())

@@ -1,31 +1,11 @@
 package com.markduenas.visischeduler.di
 
-import com.markduenas.visischeduler.data.repository.AuthRepositoryImpl
-import com.markduenas.visischeduler.data.repository.BeneficiaryRepositoryImpl
-import com.markduenas.visischeduler.data.repository.CheckInRepositoryImpl
-import com.markduenas.visischeduler.data.repository.MessageRepositoryImpl
-import com.markduenas.visischeduler.data.repository.RestrictionRepositoryImpl
-import com.markduenas.visischeduler.data.repository.TimeSlotRepositoryImpl
-import com.markduenas.visischeduler.data.repository.UserRepositoryImpl
-import com.markduenas.visischeduler.data.repository.VisitRepositoryImpl
-import com.markduenas.visischeduler.domain.repository.AuthRepository
-import com.markduenas.visischeduler.domain.repository.BeneficiaryRepository
-import com.markduenas.visischeduler.domain.repository.CheckInRepository
-import com.markduenas.visischeduler.domain.repository.MessageRepository
-import com.markduenas.visischeduler.domain.repository.RestrictionRepository
-import com.markduenas.visischeduler.domain.repository.TimeSlotRepository
-import com.markduenas.visischeduler.domain.repository.UserRepository
-import com.markduenas.visischeduler.domain.repository.VisitRepository
+import com.markduenas.visischeduler.data.repository.*
+import com.markduenas.visischeduler.domain.repository.*
 import org.koin.dsl.module
 
 /**
  * Repository module providing all repository implementations.
- *
- * Each repository follows the Repository pattern, abstracting data sources
- * from the domain layer and providing a clean API for data operations.
- *
- * Note: This module is used by AppModule for iOS builds.
- * Android builds use DataModule which provides equivalent functionality.
  */
 val repositoryModule = module {
 
@@ -62,7 +42,8 @@ val repositoryModule = module {
         VisitRepositoryImpl(
             api = get(),
             database = get(),
-            json = get()
+            json = get(),
+            syncManager = get()
         )
     }
 
@@ -78,7 +59,6 @@ val repositoryModule = module {
     // Time Slot Repository
     single<TimeSlotRepository> {
         TimeSlotRepositoryImpl(
-            api = get(),
             database = get()
         )
     }

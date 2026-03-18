@@ -135,7 +135,7 @@ fun VisitorDetailsScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                RelationshipChip(relationship = visitor.metadata["relationship"] ?: "Visitor")
+                                RelationshipChip(relationship = "Visitor")
                                 Badge(
                                     containerColor = when {
                                         uiState.isBlocked -> MaterialTheme.colorScheme.errorContainer
@@ -393,11 +393,10 @@ fun VisitorDetailsScreen(
 
 // Helpers
 private fun formatDate(date: LocalDate): String {
-    return \"${date.month} ${date.dayOfMonth}, ${date.year}\"
+    return "${date.month} ${date.dayOfMonth}, ${date.year}"
 }
 
 private fun formatDate(instant: Instant): String {
-    // simplified
     return instant.toString().take(10)
 }
 

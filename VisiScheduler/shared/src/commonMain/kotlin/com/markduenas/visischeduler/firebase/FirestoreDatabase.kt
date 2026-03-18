@@ -207,6 +207,10 @@ class FirestoreDatabase {
         return getById(COLLECTION_BENEFICIARIES, beneficiaryId)
     }
 
+    suspend fun updateBeneficiary(beneficiaryId: String, updates: Map<String, Any?>) {
+        updateFromMap(COLLECTION_BENEFICIARIES, beneficiaryId, updates)
+    }
+
     suspend fun getBeneficiariesForCoordinator(coordinatorId: String): List<DocumentSnapshot> {
         return query(COLLECTION_BENEFICIARIES, "coordinatorIds", coordinatorId, QueryOperator.ARRAY_CONTAINS)
     }
@@ -319,6 +323,10 @@ class FirestoreDatabase {
 
     suspend fun markNotificationRead(notificationId: String) {
         update(COLLECTION_NOTIFICATIONS, notificationId, mapOf("isRead" to true))
+    }
+
+    suspend fun deleteNotification(notificationId: String) {
+        delete(COLLECTION_NOTIFICATIONS, notificationId)
     }
 
     fun listenToNotifications(userId: String): Flow<List<DocumentSnapshot>> {

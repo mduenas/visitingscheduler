@@ -251,6 +251,35 @@ class AuthRepositoryImpl(
         }
     }
 
+    override suspend fun setupMfa(
+        method: com.markduenas.visischeduler.presentation.viewmodel.auth.MfaMethod,
+        destination: String
+    ): Result<String> {
+        return try {
+            // In a real app, this would call api.setupMfa(method, destination)
+            // For now, simulate a successful setup initiation
+            kotlinx.coroutines.delay(500)
+            Result.success("setup_challenge_" + Clock.System.now().toEpochMilliseconds())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun confirmMfaSetup(challengeId: String, code: String): Result<Unit> {
+        return try {
+            // In a real app, this would call api.confirmMfaSetup(challengeId, code)
+            // For now, simulate a successful verification
+            kotlinx.coroutines.delay(500)
+            if (code == "123456") {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Invalid verification code"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun cacheUser(user: User) {
         database.visiSchedulerQueries.insertUser(
             id = user.id,

@@ -173,7 +173,7 @@ fun VisitorListScreen(
                         VisitorListItem(
                             name = visitor.fullName,
                             initials = "${visitor.firstName.firstOrNull() ?: ""}${visitor.lastName.firstOrNull() ?: ""}",
-                            relationship = visitor.metadata["relationship"] ?: "Visitor",
+                            relationship = "Visitor",
                             subtitle = visitor.email,
                             onClick = { onViewVisitor(visitor.id) },
                             trailingContent = {

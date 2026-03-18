@@ -63,3 +63,11 @@ class IosPermissionManager : PermissionManager {
  * Actual implementation of the factory function for iOS.
  */
 actual fun getPermissionManager(): PermissionManager = throw IllegalStateException("Use Koin to inject PermissionManager")
+
+class IosPlatform : Platform {
+    override val name: String = "iOS"
+    override val version: String = platform.UIKit.UIDevice.currentDevice.systemVersion
+    override val isDebug: Boolean = false
+}
+
+actual fun getPlatform(): Platform = IosPlatform()

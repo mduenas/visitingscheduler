@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 
@@ -56,7 +57,7 @@ class SyncManager(
                 entityType = entityType,
                 entityId = entityId,
                 payload = payload,
-                createdAt = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+                createdAt = Clock.System.now().toEpochMilliseconds()
             )
             processSyncQueue()
         }
@@ -115,7 +116,6 @@ class SyncManager(
                 // Update local ID if it was temporary
                 if (visit.id.startsWith("temp_")) {
                     database.visiSchedulerQueries.deleteVisit(visit.id)
-                    // The visit is cached by the caller or will be on next sync
                 }
             }
             SyncOperationType.UPDATE_VISIT_STATUS -> {
@@ -140,7 +140,7 @@ class SyncManager(
             }
             SyncOperationType.SEND_MESSAGE -> {
                 val message: Message = json.decodeFromString(op.payload)
-                val request = SendMessageRequestDto(
+                val request = com.markduenas.visischeduler.data.remote.dto.SendMessageRequestDto(
                     content = message.content,
                     replyToMessageId = message.replyToMessageId
                 )

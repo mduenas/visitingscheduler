@@ -92,7 +92,6 @@ val dataModule = module {
     // ==========================================
     single<TimeSlotRepository> {
         TimeSlotRepositoryImpl(
-            api = get(),
             database = get()
         )
     }

@@ -70,6 +70,7 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToAddBeneficiary: () -> Unit = { viewModel.navigateToAddBeneficiary() },
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -116,6 +117,7 @@ fun ProfileScreen(
                 },
                 onNavigateToSettings = onNavigateToSettings,
                 onNavigateToNotifications = onNavigateToNotifications,
+                onNavigateToAddBeneficiary = onNavigateToAddBeneficiary,
                 onLogout = { viewModel.logout() }
             )
         }
@@ -129,6 +131,7 @@ private fun ProfileContent(
     onAvatarSourceSelected: (AvatarSource) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToAddBeneficiary: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -216,7 +219,8 @@ private fun ProfileContent(
         // Quick actions
         QuickActionsSection(
             onNavigateToSettings = onNavigateToSettings,
-            onNavigateToNotifications = onNavigateToNotifications
+            onNavigateToNotifications = onNavigateToNotifications,
+            onNavigateToAddBeneficiary = if (user.canApproveVisits()) onNavigateToAddBeneficiary else null
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -443,6 +447,7 @@ private fun StatItem(
 private fun QuickActionsSection(
     onNavigateToSettings: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToAddBeneficiary: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -471,6 +476,15 @@ private fun QuickActionsSection(
                 onClick = onNavigateToNotifications,
                 modifier = Modifier.weight(1f)
             )
+
+            if (onNavigateToAddBeneficiary != null) {
+                QuickActionCard(
+                    icon = Icons.Default.Schedule,
+                    label = "Beneficiary",
+                    onClick = onNavigateToAddBeneficiary,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }

@@ -61,13 +61,24 @@ class NotificationRepositoryImpl(
     }
 
     override suspend fun deleteNotification(notificationId: String): Result<Unit> {
-        // Implementation for deleting from Firestore/Local
-        return Result.success(Unit)
+        return try {
+            firestoreRepository.deleteNotification(notificationId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun clearAllNotifications(): Result<Unit> {
-        // Implementation for clearing all
-        return Result.success(Unit)
+        return try {
+            val user = authRepository.currentUser.first()
+            if (user != null) {
+                firestoreRepository.clearAllNotifications(user.id)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun getNotificationPreferences(): Result<NotificationPreferences> {

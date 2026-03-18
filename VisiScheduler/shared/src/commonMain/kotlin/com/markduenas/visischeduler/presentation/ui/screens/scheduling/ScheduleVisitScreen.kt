@@ -12,14 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.domain.entities.TimeSlot
+import com.markduenas.visischeduler.domain.entities.VisitType
 import com.markduenas.visischeduler.presentation.ui.components.calendar.CalendarGrid
 import com.markduenas.visischeduler.presentation.ui.components.calendar.TimeSlotPicker
 import com.markduenas.visischeduler.presentation.ui.components.calendar.DurationSelector
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.ScheduleVisitViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.VisitDuration
-import com.markduenas.visischeduler.domain.usecase.ScheduleVisitException
 import org.koin.compose.koinInject
-import kotlin.time.Clock
 import kotlinx.datetime.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,7 +34,7 @@ fun ScheduleVisitScreen(
 
     // Initialize ViewModel with beneficiary
     LaunchedEffect(beneficiaryId) {
-        viewModel.setBeneficiary(beneficiaryId, "Beneficiary") // Name would ideally be fetched
+        viewModel.setBeneficiary(beneficiaryId, "Beneficiary")
     }
 
     // Generate month dates for calendar
@@ -96,7 +95,7 @@ fun ScheduleVisitScreen(
 
             // Duration Selection
             Text(
-                text = \"Duration\",
+                text = "Duration",
                 style = MaterialTheme.typography.titleMedium
             )
             DurationSelector(
@@ -107,13 +106,13 @@ fun ScheduleVisitScreen(
 
             // Visit Type Selection
             Text(
-                text = \"Visit Type\",
+                text = "Visit Type",
                 style = MaterialTheme.typography.titleMedium
             )
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 val types = listOf(
-                    com.markduenas.visischeduler.domain.entities.VisitType.IN_PERSON to \"In Person\",
-                    com.markduenas.visischeduler.domain.entities.VisitType.VIDEO_CALL to \"Video Call\"
+                    VisitType.IN_PERSON to "In Person",
+                    VisitType.VIDEO_CALL to "Video Call"
                 )
                 types.forEachIndexed { index, (type, label) ->
                     SegmentedButton(
@@ -127,30 +126,29 @@ fun ScheduleVisitScreen(
             }
 
             // Video Call Details (Conditional)
-            if (uiState.visitType == com.markduenas.visischeduler.domain.entities.VisitType.VIDEO_CALL) {
+            if (uiState.visitType == VisitType.VIDEO_CALL) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text(
-                        text = \"Video Call Details\",
+                        text = "Video Call Details",
                         style = MaterialTheme.typography.titleMedium
                     )
                     OutlinedTextField(
-                        value = uiState.videoCallLink ?: \"\",
+                        value = uiState.videoCallLink ?: "",
                         onValueChange = { viewModel.setVideoCallLink(it) },
-                        label = { Text(\"Meeting Link (Optional)\") },
+                        label = { Text("Meeting Link (Optional)") },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text(\"https://zoom.us/j/...\") }
+                        placeholder = { Text("https://zoom.us/j/...") }
                     )
                     OutlinedTextField(
-                        value = uiState.videoCallPlatform ?: \"\",
+                        value = uiState.videoCallPlatform ?: "",
                         onValueChange = { viewModel.setVideoCallPlatform(it) },
-                        label = { Text(\"Platform (e.g. Zoom, Teams)\") },
+                        label = { Text("Platform (e.g. Zoom, Teams)") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
 
             // Guest Count
-
             Text(
                 text = "Number of Guests",
                 style = MaterialTheme.typography.titleMedium
@@ -264,7 +262,6 @@ private fun generateMonthDates(year: Int, month: Int): List<LocalDate?> {
     }
 
     // Start of week (Sunday = 0, Monday = 1... Saturday = 6)
-    // Adjust based on platform/locale if needed
     val startDayOfWeek = firstOfMonth.dayOfWeek.ordinal
 
     val dates = mutableListOf<LocalDate?>()

@@ -9,7 +9,6 @@ import com.markduenas.visischeduler.domain.repository.VisitStatistics
 import com.markduenas.visischeduler.firebase.FirestoreDatabase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.DocumentSnapshot
-import dev.gitlive.firebase.firestore.FieldValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -22,7 +21,6 @@ import kotlin.time.Clock
 
 /**
  * Cross-platform Firestore implementation of VisitRepository.
- * Uses GitLive Firebase KMP SDK for both Android and iOS.
  */
 class CommonFirestoreVisitRepository(
     private val firestore: FirestoreDatabase,
@@ -104,7 +102,9 @@ class CommonFirestoreVisitRepository(
         visitType: VisitType,
         purpose: String?,
         notes: String?,
-        additionalVisitors: List<AdditionalVisitor>
+        additionalVisitors: List<AdditionalVisitor>,
+        videoCallLink: String?,
+        videoCallPlatform: String?
     ): Result<Visit> = runCatching {
         val userId = currentUserId ?: throw Exception("User not authenticated")
 
@@ -128,6 +128,8 @@ class CommonFirestoreVisitRepository(
                     "age" to av.age
                 )
             },
+            "videoCallLink" to videoCallLink,
+            "videoCallPlatform" to videoCallPlatform,
             "createdAt" to firestore.serverTimestamp(),
             "updatedAt" to firestore.serverTimestamp()
         )
@@ -147,6 +149,8 @@ class CommonFirestoreVisitRepository(
             purpose = purpose,
             notes = notes,
             additionalVisitors = additionalVisitors,
+            videoCallLink = videoCallLink,
+            videoCallPlatform = videoCallPlatform,
             createdAt = now,
             updatedAt = now
         )
@@ -170,6 +174,8 @@ class CommonFirestoreVisitRepository(
                     "age" to av.age
                 )
             },
+            "videoCallLink" to visit.videoCallLink,
+            "videoCallPlatform" to visit.videoCallPlatform,
             "updatedAt" to firestore.serverTimestamp()
         )
 
@@ -343,10 +349,12 @@ class CommonFirestoreVisitRepository(
                 startTime = LocalTime.parse(get("startTime") ?: return null),
                 endTime = LocalTime.parse(get("endTime") ?: return null),
                 status = VisitStatus.valueOf(get("status") ?: "PENDING"),
-                visitType = VisitType.valueOf(get("visitType") ?: "IN_PERSON"),
+                visitType = try { VisitType.valueOf(get<String>("visitType") ?: "IN_PERSON") } catch(e: Exception) { VisitType.IN_PERSON },
                 purpose = get("purpose"),
                 notes = get("notes"),
                 additionalVisitors = parseAdditionalVisitors(get("additionalVisitors")),
+                videoCallLink = get("videoCallLink"),
+                videoCallPlatform = get("videoCallPlatform"),
                 checkInTime = get<Long?>("checkInTime")?.let { Instant.fromEpochMilliseconds(it) },
                 checkOutTime = get<Long?>("checkOutTime")?.let { Instant.fromEpochMilliseconds(it) },
                 approvedBy = get("approvedBy"),
