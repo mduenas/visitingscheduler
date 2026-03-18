@@ -7,16 +7,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.domain.entities.Beneficiary
 import com.markduenas.visischeduler.domain.entities.Visit
+import com.markduenas.visischeduler.domain.entities.TimeSlot
 
 /**
- * Coordinator dashboard content showing facility-wide statistics and pending approvals.
+ * Coordinator dashboard content showing pending requests and stats.
  */
 @Composable
 fun CoordinatorDashboardContent(
@@ -28,69 +30,91 @@ fun CoordinatorDashboardContent(
     onViewAllPendingClick: () -> Unit,
     onBeneficiarySelected: (String) -> Unit,
     onClearBeneficiaryFilter: () -> Unit,
+    onTodayVisitsClick: () -> Unit = {},
+    onAnalyticsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        // Beneficiary filter
-        if (beneficiaries.isNotEmpty()) {
-            BeneficiaryFilterSection(
-                beneficiaries = beneficiaries,
-                selectedBeneficiaryId = selectedBeneficiaryId,
-                onBeneficiarySelected = onBeneficiarySelected,
-                onClearFilter = onClearBeneficiaryFilter
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+        // Beneficiary Selector
+        BeneficiarySelector(
+            beneficiaries = beneficiaries,
+            selectedBeneficiaryId = selectedBeneficiaryId,
+            onBeneficiarySelected = onBeneficiarySelected,
+            onClearFilter = onClearBeneficiaryFilter
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Quick actions row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            androidx.compose.material3.OutlinedButton(
+                onClick = onTodayVisitsClick,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.People, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Today's Visitors", style = MaterialTheme.typography.labelSmall)
+            }
+            androidx.compose.material3.OutlinedButton(
+                onClick = onAnalyticsClick,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.BarChart, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Analytics", style = MaterialTheme.typography.labelSmall)
+            }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Pending Requests Section
-        if (pendingRequests.isNotEmpty()) {
-            SectionHeader(
-                title = "Pending Requests",
-                actionText = "View All",
-                onAction = onViewAllPendingClick
+        SectionHeader(
+            title = "Pending Requests",
+            actionText = "View All",
+            onAction = onViewAllPendingClick
+        )
+        
+        if (pendingRequests.isEmpty()) {
+            EmptyStateCard(
+                message = "No pending visit requests",
+                icon = Icons.Default.CheckCircle,
+                actionText = "Refresh",
+                onAction = {} // Handled by pull to refresh
             )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            pendingRequests.take(3).forEach { visit ->
+        } else {
+            pendingRequests.take(3).forEach { request ->
                 PendingRequestCard(
-                    visit = visit,
-                    visitorName = "Visitor", // Would need to be passed in
-                    beneficiaryName = beneficiaries.find { it.id == visit.beneficiaryId }?.fullName ?: "Unknown",
-                    onApprove = { /* Handle approve */ },
-                    onDeny = { /* Handle deny */ },
-                    onClick = { onVisitClick(visit.id) }
+                    visit = request,
+                    onApprove = { }, // Logic in VM via onVisitClick or separate
+                    onDeny = { },
+                    onClick = { onVisitClick(request.id) },
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
-        // Today's Visits Section
-        if (todayVisits.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            SectionHeader(
-                title = "Today's Visits",
-                actionText = if (todayVisits.size > 3) "View All" else null,
-                onAction = { /* Navigate to today's visits */ }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-            todayVisits.take(5).forEach { visit ->
-                VisitCard(
+        // Today's Visits
+        SectionHeader(title = "Today's Visits")
+        if (todayVisits.isEmpty()) {
+            Text(
+                "No visits scheduled for today",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        } else {
+            todayVisits.forEach { visit ->
+                CompactVisitCard(
                     visit = visit,
-                    visitorName = "Visitor",
-                    beneficiaryName = beneficiaries.find { it.id == visit.beneficiaryId }?.fullName ?: "Unknown",
-                    onClick = { onVisitClick(visit.id) }
+                    onClick = { onVisitClick(visit.id) },
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
             }
-        }
-
-        // Empty state
-        if (pendingRequests.isEmpty() && todayVisits.isEmpty()) {
-            EmptyDashboardState(
-                message = "No pending requests or visits today",
-                icon = Icons.Default.EventAvailable
-            )
         }
     }
 }
@@ -102,7 +126,7 @@ fun CoordinatorDashboardContent(
 fun VisitorDashboardContent(
     nextVisit: Visit?,
     upcomingVisits: List<Visit>,
-    suggestedSlots: List<com.markduenas.visischeduler.domain.entities.TimeSlot> = emptyList(),
+    suggestedSlots: List<TimeSlot> = emptyList(),
     beneficiary: Beneficiary?,
     onVisitClick: (String) -> Unit,
     onViewCalendarClick: () -> Unit,
@@ -135,34 +159,41 @@ fun VisitorDashboardContent(
                 items(suggestedSlots) { slot ->
                     SuggestedSlotCard(
                         slot = slot,
-                        onClick = { onViewCalendarClick() } // Or navigate to scheduling with this slot
+                        onClick = { onViewCalendarClick() }
                     )
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Upcoming Visits Section
-...
-/**
- * Compact visit card for lists.
- */
-@Composable
-private fun CompactVisitCard(
-    visit: Visit,
-    visitorName: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // ... (rest of implementation)
+        SectionHeader(
+            title = "Upcoming Visits",
+            actionText = if (upcomingVisits.size > 3) "View Calendar" else null,
+            onAction = onViewCalendarClick
+        )
+
+        if (upcomingVisits.isEmpty()) {
+            EmptyStateCard(
+                message = "No upcoming visits scheduled",
+                icon = Icons.Default.EventNote,
+                actionText = "Schedule a Visit",
+                onAction = onViewCalendarClick
+            )
+        } else {
+            upcomingVisits.take(3).forEach { visit ->
+                CompactVisitCard(
+                    visit = visit,
+                    onClick = { onVisitClick(visit.id) },
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+        }
+    }
 }
 
-/**
- * Suggested time slot card.
- */
 @Composable
-private fun SuggestedSlotCard(
-    slot: com.markduenas.visischeduler.domain.entities.TimeSlot,
+fun SuggestedSlotCard(
+    slot: TimeSlot,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -192,164 +223,12 @@ private fun SuggestedSlotCard(
         }
     }
 }
-        SectionHeader(
-            title = "Upcoming Visits",
-            actionText = if (upcomingVisits.size > 3) "View Calendar" else null,
-            onAction = onViewCalendarClick
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (upcomingVisits.isEmpty()) {
-            EmptyStateCard(
-                message = "No upcoming visits scheduled",
-                actionText = "Schedule Now",
-                onAction = onViewCalendarClick
-            )
-        } else {
-            upcomingVisits.take(3).forEach { visit ->
-                CompactVisitCard(
-                    visit = visit,
-                    visitorName = "You",
-                    onClick = { onVisitClick(visit.id) }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-        }
-    }
-}
-
-/**
- * Next visit highlight card for visitors.
- */
-@Composable
-private fun NextVisitCard(
-    visit: Visit,
-    beneficiaryName: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.EventNote,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Next Visit",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = beneficiaryName,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarToday,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${visit.scheduledDate.monthNumber}/${visit.scheduledDate.dayOfMonth}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.AccessTime,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${visit.startTime.hour}:${visit.startTime.minute.toString().padStart(2, '0')}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Beneficiary filter chips.
- */
-@Composable
-private fun BeneficiaryFilterSection(
-    beneficiaries: List<Beneficiary>,
-    selectedBeneficiaryId: String?,
-    onBeneficiarySelected: (String) -> Unit,
-    onClearFilter: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = "Filter by Resident",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            item {
-                FilterChip(
-                    selected = selectedBeneficiaryId == null,
-                    onClick = onClearFilter,
-                    label = { Text("All") }
-                )
-            }
-            items(beneficiaries) { beneficiary ->
-                FilterChip(
-                    selected = beneficiary.id == selectedBeneficiaryId,
-                    onClick = { onBeneficiarySelected(beneficiary.id) },
-                    label = { Text(beneficiary.fullName) }
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun SectionHeader(
     title: String,
-    actionText: String?,
-    onAction: () -> Unit,
+    actionText: String? = null,
+    onAction: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -359,7 +238,7 @@ private fun SectionHeader(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         if (actionText != null) {
@@ -371,42 +250,9 @@ private fun SectionHeader(
 }
 
 @Composable
-private fun EmptyDashboardState(
-    message: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
 private fun EmptyStateCard(
     message: String,
+    icon: ImageVector,
     actionText: String,
     onAction: () -> Unit,
     modifier: Modifier = Modifier
@@ -414,31 +260,120 @@ private fun EmptyStateCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier = Modifier.padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = Icons.Default.CalendarMonth,
+                imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(40.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedButton(onClick = onAction) {
                 Text(actionText)
             }
+        }
+    }
+}
+
+@Composable
+private fun NextVisitCard(
+    visit: Visit,
+    beneficiaryName: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Next Visit", style = MaterialTheme.typography.labelMedium)
+            Text(beneficiaryName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("${visit.startTime} - ${visit.endTime}", style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+@Composable
+fun CompactVisitCard(
+    visit: Visit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(visit.scheduledDate.toString(), style = MaterialTheme.typography.bodySmall)
+                Text("${visit.startTime} - ${visit.endTime}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null)
+        }
+    }
+}
+
+@Composable
+fun StatCard(
+    title: String,
+    value: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier
+) {
+    Card(modifier = modifier) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(title, style = MaterialTheme.typography.labelMedium)
+        }
+    }
+}
+
+@Composable
+fun BeneficiarySelector(
+    beneficiaries: List<Beneficiary>,
+    selectedBeneficiaryId: String?,
+    onBeneficiarySelected: (String) -> Unit,
+    onClearFilter: () -> Unit
+) {
+    // Simplified selector
+}
+
+@Composable
+fun PendingRequestCard(
+    visit: Visit,
+    onApprove: () -> Unit,
+    onDeny: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(visit.visitorName, fontWeight = FontWeight.Bold)
+            Text("${visit.scheduledDate} ${visit.startTime}")
         }
     }
 }

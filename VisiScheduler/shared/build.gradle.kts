@@ -144,6 +144,13 @@ kotlin {
 
             // Google Ads (AdMob)
             implementation("com.google.android.gms:play-services-ads:23.6.0")
+
+            // Camera (QR scanning)
+            implementation(libs.androidx.camera.core)
+            implementation(libs.androidx.camera.camera2)
+            implementation(libs.androidx.camera.lifecycle)
+            implementation(libs.androidx.camera.view)
+            implementation(libs.mlkit.barcode.scanning)
         }
 
         val androidUnitTest by getting {

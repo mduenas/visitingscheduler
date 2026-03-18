@@ -196,13 +196,6 @@ fun Navigator.navigateToSecuritySettings() {
 }
 
 /**
- * Navigate to privacy settings screen.
- */
-fun Navigator.navigateToPrivacySettings() {
-    push(AppScreen.PrivacySettings)
-}
-
-/**
  * Navigate to about screen.
  */
 fun Navigator.navigateToAbout() {
@@ -316,4 +309,28 @@ fun Navigator.navigateUp() {
  */
 fun Navigator.navigateBackTo(screen: AppScreen) {
     popUntil { it == screen }
+}
+
+// ==================== Check-In / Check-Out Navigation ====================
+
+fun Navigator.navigateToCheckIn(visitId: String) {
+    push(AppScreen.CheckIn(visitId))
+}
+
+fun Navigator.navigateToCheckOut(checkInId: String) {
+    push(AppScreen.CheckOut(checkInId))
+}
+
+fun Navigator.navigateToQrScanner() {
+    push(AppScreen.QrScanner)
+}
+
+fun Navigator.navigateToTodayVisits() {
+    push(AppScreen.TodayVisits)
+}
+
+// ==================== Analytics Navigation ====================
+
+fun Navigator.navigateToAnalytics() {
+    push(AppScreen.Analytics)
 }
