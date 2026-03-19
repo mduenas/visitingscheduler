@@ -33,6 +33,7 @@ import com.markduenas.visischeduler.presentation.ui.screens.messaging.ChatScreen
 import com.markduenas.visischeduler.presentation.ui.screens.messaging.ConversationsScreen
 import com.markduenas.visischeduler.presentation.ui.screens.messaging.NewMessageScreen
 import com.markduenas.visischeduler.presentation.ui.screens.notifications.NotificationsListScreen
+import com.markduenas.visischeduler.presentation.ui.screens.profile.ChangePasswordScreen
 import com.markduenas.visischeduler.presentation.ui.screens.profile.ProfileScreen
 import com.markduenas.visischeduler.presentation.ui.screens.profile.EditProfileScreen
 import com.markduenas.visischeduler.presentation.ui.screens.restrictions.AddRestrictionScreen
@@ -58,7 +59,9 @@ import com.markduenas.visischeduler.presentation.viewmodel.dashboard.DashboardVi
 import com.markduenas.visischeduler.presentation.viewmodel.messaging.ChatViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.messaging.ConversationsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.messaging.NewMessageViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.notifications.NotificationsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.CalendarViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.scheduling.ScheduleVisitViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.VisitDetailsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.settings.ProfileViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.settings.SettingsViewModel
@@ -251,6 +254,8 @@ sealed class AppScreen : Screen {
         override val key: ScreenKey = "schedule_visit_$beneficiaryId"
         @Composable override fun Content() {
             val navigator = LocalNavigator.currentOrThrow
+            val viewModel: ScheduleVisitViewModel = koinInject()
+            HandleEvents(viewModel, navigator)
             ScheduleVisitScreen(
                 beneficiaryId = beneficiaryId,
                 onNavigateBack = { navigator.pop() },
@@ -428,6 +433,18 @@ sealed class AppScreen : Screen {
         }
     }
 
+    data object ChangePassword : AppScreen() {
+        override val key: ScreenKey = "change_password"
+        @Composable override fun Content() {
+            val navigator = LocalNavigator.currentOrThrow
+            val viewModel: SecuritySettingsViewModel = koinInject()
+            ChangePasswordScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navigator.pop() }
+            )
+        }
+    }
+
     data object MfaSetup : AppScreen() {
         override val key: ScreenKey = "mfa_setup"
         @Composable override fun Content() {
@@ -497,6 +514,8 @@ sealed class AppScreen : Screen {
         override val key: ScreenKey = "notifications"
         @Composable override fun Content() {
             val navigator = LocalNavigator.currentOrThrow
+            val viewModel: NotificationsViewModel = koinInject()
+            HandleEvents(viewModel, navigator)
             NotificationsListScreen(onNavigateBack = { navigator.pop() })
         }
     }
@@ -614,6 +633,7 @@ private fun HandleEvents(viewModel: BaseViewModel<*>, navigator: Navigator) {
                         route == "notification_settings" -> navigator.push(AppScreen.NotificationSettings)
                         route == "security_settings" -> navigator.push(AppScreen.SecuritySettings)
                         route == "mfa_setup" -> navigator.push(AppScreen.MfaSetup)
+                        route == "change_password" || route == "settings/security/change-password" -> navigator.push(AppScreen.ChangePassword)
                         route == "add_beneficiary" -> navigator.push(AppScreen.AddBeneficiary())
                         route.startsWith("edit_beneficiary/") -> navigator.push(AppScreen.AddBeneficiary(route.substringAfter("edit_beneficiary/")))
                         route == "about" -> navigator.push(AppScreen.About)
@@ -622,6 +642,7 @@ private fun HandleEvents(viewModel: BaseViewModel<*>, navigator: Navigator) {
                         route == "visitor_list" -> navigator.push(AppScreen.VisitorList)
                         route == "restrictions" -> navigator.push(AppScreen.Restrictions)
                         route.startsWith("visit/") -> navigator.push(AppScreen.VisitDetails(route.substringAfter("visit/")))
+                        route.startsWith("visitDetails/") -> navigator.push(AppScreen.VisitDetails(route.substringAfter("visitDetails/")))
                         route.startsWith("checkin/") -> navigator.push(AppScreen.CheckIn(route.substringAfter("checkin/")))
                         route.startsWith("checkout/") -> navigator.push(AppScreen.CheckOut(route.substringAfter("checkout/")))
                         route == "scanner" -> navigator.push(AppScreen.QrScanner)

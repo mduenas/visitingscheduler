@@ -334,3 +334,21 @@ fun Navigator.navigateToTodayVisits() {
 fun Navigator.navigateToAnalytics() {
     push(AppScreen.Analytics)
 }
+
+// ==================== Settings Navigation (additional) ====================
+
+fun Navigator.navigateToChangePassword() {
+    push(AppScreen.ChangePassword)
+}
+
+fun Navigator.navigateToMfaSetup() {
+    push(AppScreen.MfaSetup)
+}
+
+fun Navigator.navigateToAddBeneficiary(beneficiaryId: String? = null) {
+    push(AppScreen.AddBeneficiary(beneficiaryId))
+}
+
+fun Navigator.navigateToBeneficiarySettings(beneficiaryId: String? = null) {
+    push(AppScreen.BeneficiarySettings(beneficiaryId))
+}
