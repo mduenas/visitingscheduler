@@ -107,7 +107,7 @@ fun AboutScreen(
                 AboutLinkItem(
                     icon = Icons.Default.Gavel,
                     title = "Open Source Licenses",
-                    onClick = { /* TODO: Open licenses */ }
+                    onClick = { viewModel.openLicenses() }
                 )
             }
 
@@ -123,7 +123,7 @@ fun AboutScreen(
                 AboutLinkItem(
                     icon = Icons.Default.Star,
                     title = "Rate the App",
-                    onClick = { /* TODO: Open store */ }
+                    onClick = { viewModel.rateApp() }
                 )
             }
 

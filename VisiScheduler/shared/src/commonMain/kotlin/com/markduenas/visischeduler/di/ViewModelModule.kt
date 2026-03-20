@@ -49,7 +49,7 @@ val viewModelModule = module {
 
     // Profile/Settings ViewModels
     factory { ProfileViewModel(get(), get(), get()) }
-    factory { SettingsViewModel(get(), get(), get()) }
+    factory { SettingsViewModel(get(), get(), get(), get()) }
     factory { NotificationSettingsViewModel(get(), get()) }
     factory { SecuritySettingsViewModel(get(), get(), get()) }
     factory { MfaSetupViewModel(get()) }

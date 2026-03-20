@@ -4,6 +4,7 @@ import com.markduenas.visischeduler.domain.entities.Role
 import com.markduenas.visischeduler.domain.entities.User
 import com.markduenas.visischeduler.domain.repository.UserRepository
 import com.markduenas.visischeduler.platform.SecureStorage
+import com.markduenas.visischeduler.platform.UrlOpener
 import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -56,7 +57,8 @@ data class SettingsUiState(
 class SettingsViewModel(
     private val secureStorage: SecureStorage,
     private val userRepository: UserRepository,
-    private val authRepository: com.markduenas.visischeduler.domain.repository.AuthRepository
+    private val authRepository: com.markduenas.visischeduler.domain.repository.AuthRepository,
+    private val urlOpener: UrlOpener
 ) : BaseViewModel<SettingsUiState>(SettingsUiState()) {
 
     companion object {
@@ -216,8 +218,15 @@ class SettingsViewModel(
      * Open external link for support.
      */
     fun contactSupport() {
-        // TODO: Implement external link handling
-        showSnackbar("Opening support...")
+        urlOpener.openUrl("mailto:support@visischeduler.com?subject=VisiScheduler Support")
+    }
+
+    fun openLicenses() {
+        urlOpener.openUrl("https://visischeduler.com/licenses")
+    }
+
+    fun rateApp() {
+        urlOpener.openUrl("https://play.google.com/store/apps/details?id=com.markduenas.visischeduler")
     }
 
     /**

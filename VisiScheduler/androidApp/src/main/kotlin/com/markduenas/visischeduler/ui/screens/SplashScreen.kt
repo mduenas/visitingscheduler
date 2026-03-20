@@ -26,26 +26,28 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.markduenas.visischeduler.presentation.navigation.AppScreen
+import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
+import org.koin.compose.koinInject
 
 /**
  * Splash screen displayed on app launch.
  *
- * Shows the app logo and name with fade-in animation,
- * then navigates to the appropriate screen based on authentication state.
+ * Shows the app logo with animation, checks authentication state via Firebase,
+ * then navigates to Dashboard (authenticated) or Login (unauthenticated).
  */
 class SplashScreen : Screen {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val auth: FirebaseAuth = koinInject()
 
-        // Animation values
         val alphaAnim = remember { Animatable(0f) }
         val scaleAnim = remember { Animatable(0.8f) }
 
         LaunchedEffect(key1 = true) {
-            // Start animations
             alphaAnim.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(durationMillis = 500)
@@ -55,12 +57,14 @@ class SplashScreen : Screen {
                 animationSpec = tween(durationMillis = 500)
             )
 
-            // Wait before navigating
-            delay(1500)
+            delay(1000)
 
-            // TODO: Check authentication state and navigate accordingly
-            // For now, navigate to a placeholder home screen
-            // navigator.replace(HomeScreen())
+            val destination = if (auth.currentUser != null) {
+                AppScreen.Dashboard
+            } else {
+                AppScreen.Login
+            }
+            navigator.replace(destination)
         }
 
         Box(
@@ -76,7 +80,6 @@ class SplashScreen : Screen {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // App Logo
                 Icon(
                     imageVector = Icons.Default.CalendarMonth,
                     contentDescription = "VisiScheduler Logo",
@@ -84,7 +87,6 @@ class SplashScreen : Screen {
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
 
-                // App Name
                 Text(
                     text = "VisiScheduler",
                     style = MaterialTheme.typography.headlineLarge,
@@ -93,7 +95,6 @@ class SplashScreen : Screen {
                     modifier = Modifier.padding(top = 16.dp)
                 )
 
-                // Tagline
                 Text(
                     text = "Simplified Care Coordination",
                     style = MaterialTheme.typography.bodyLarge,
@@ -102,7 +103,6 @@ class SplashScreen : Screen {
                 )
             }
 
-            // Version info at bottom
             Text(
                 text = "Version 1.0.0",
                 style = MaterialTheme.typography.labelSmall,
