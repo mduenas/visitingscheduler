@@ -21,6 +21,7 @@ val useCaseModule = module {
     factory { GetAvailableSlotsUseCase(get(), get()) }
     factory { GetSuggestedSlotsUseCase(get(), get()) }
     factory { ApproveVisitUseCase(get(), get()) }
+    factory { GetBeneficiaryFatigueUseCase(get()) }
 
     // ==========================================
     // Check-in/Check-out Use Cases

@@ -30,7 +30,7 @@ interface CheckInRepository {
      * @param rating Optional rating (1-5) for the visit experience
      * @return Result containing the updated CheckIn record or an error
      */
-    suspend fun checkOut(checkInId: String, notes: String?, rating: Int?): Result<CheckIn>
+    suspend fun checkOut(checkInId: String, notes: String?, rating: Int?, moodLevel: Int? = null, energyLevel: Int? = null): Result<CheckIn>
 
     /**
      * Generate a QR code for a visit.

@@ -1,15 +1,19 @@
 package com.markduenas.visischeduler.presentation.ui.screens.scheduling
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.domain.entities.TimeSlot
 import com.markduenas.visischeduler.domain.entities.VisitType
@@ -67,6 +71,15 @@ fun ScheduleVisitScreen(
             // Loading Indicator for Slots
             if (uiState.isLoadingSlots) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            // Suggested Times
+            if (uiState.suggestedSlots.isNotEmpty()) {
+                SuggestedTimesCard(
+                    slots = uiState.suggestedSlots,
+                    onSlotSelected = { viewModel.applySuggestedSlot(it) },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             // Date Selection
@@ -277,4 +290,56 @@ private fun generateMonthDates(year: Int, month: Int): List<LocalDate?> {
     }
 
     return dates
+}
+
+@Composable
+private fun SuggestedTimesCard(
+    slots: List<TimeSlot>,
+    onSlotSelected: (TimeSlot) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Lightbulb, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Suggested Times",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+            Text(
+                "Best slots based on availability and preference",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(slots) { slot ->
+                    SuggestedSlotChip(slot = slot, onClick = { onSlotSelected(slot) })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SuggestedSlotChip(slot: TimeSlot, onClick: () -> Unit) {
+    val startHour = slot.startTime.hour
+    val startMinute = slot.startTime.minute.toString().padStart(2, '0')
+    val amPm = if (startHour < 12) "AM" else "PM"
+    val displayHour = if (startHour % 12 == 0) 12 else startHour % 12
+    ElevatedButton(
+        onClick = onClick,
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("$displayHour:$startMinute $amPm", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text("${(slot.availabilityPercentage * 100).toInt()}% open", style = MaterialTheme.typography.labelSmall)
+        }
+    }
 }

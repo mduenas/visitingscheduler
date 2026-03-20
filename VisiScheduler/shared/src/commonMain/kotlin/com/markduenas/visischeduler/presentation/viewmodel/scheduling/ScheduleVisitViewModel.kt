@@ -5,12 +5,15 @@ import com.markduenas.visischeduler.domain.entities.AdditionalVisitor
 import com.markduenas.visischeduler.domain.entities.TimeSlot
 import com.markduenas.visischeduler.domain.entities.Visit
 import com.markduenas.visischeduler.domain.entities.VisitType
+import com.markduenas.visischeduler.domain.repository.UserRepository
 import com.markduenas.visischeduler.domain.usecase.GetAvailableSlotsUseCase
+import com.markduenas.visischeduler.domain.usecase.GetSuggestedSlotsUseCase
 import com.markduenas.visischeduler.domain.usecase.ScheduleVisitRequest
 import com.markduenas.visischeduler.domain.usecase.ScheduleVisitUseCase
 import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlin.time.Clock
@@ -43,6 +46,7 @@ data class ScheduleVisitUiState(
     val selectedTimeSlot: TimeSlot? = null,
     val selectedStartTime: LocalTime? = null,
     val availableSlots: List<TimeSlot> = emptyList(),
+    val suggestedSlots: List<TimeSlot> = emptyList(),
     val selectedDuration: VisitDuration = VisitDuration.ONE_HOUR,
     val visitType: VisitType = VisitType.IN_PERSON,
     val reason: String = "",
@@ -84,7 +88,9 @@ data class ScheduleVisitUiState(
  */
 class ScheduleVisitViewModel(
     private val scheduleVisitUseCase: ScheduleVisitUseCase,
-    private val getAvailableSlotsUseCase: GetAvailableSlotsUseCase
+    private val getAvailableSlotsUseCase: GetAvailableSlotsUseCase,
+    private val getSuggestedSlotsUseCase: GetSuggestedSlotsUseCase,
+    private val userRepository: UserRepository
 ) : BaseViewModel<ScheduleVisitUiState>(ScheduleVisitUiState()) {
 
     private var slotsJob: Job? = null
@@ -100,6 +106,7 @@ class ScheduleVisitViewModel(
             )
         }
         loadAvailableSlots()
+        loadSuggestedSlots(beneficiaryId)
     }
 
     /**
@@ -403,6 +410,26 @@ class ScheduleVisitViewModel(
 
     private fun onVisitScheduled(visit: Visit) {
         navigate("visitDetails/${visit.id}")
+    }
+
+    private fun loadSuggestedSlots(beneficiaryId: String) {
+        launchSafe {
+            val currentUser = userRepository.currentUser.first() ?: return@launchSafe
+            getSuggestedSlotsUseCase(beneficiaryId, currentUser.id)
+                .collect { slots ->
+                    updateState { copy(suggestedSlots = slots) }
+                }
+        }
+    }
+
+    fun applySuggestedSlot(slot: TimeSlot) {
+        updateState {
+            copy(
+                selectedDate = slot.date,
+                selectedTimeSlot = slot
+            )
+        }
+        loadAvailableSlots()
     }
 
     override fun onCleared() {

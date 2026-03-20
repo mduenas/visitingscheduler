@@ -28,8 +28,8 @@ val viewModelModule = module {
 
     // Schedule ViewModels
     factory { CalendarViewModel(get()) }
-    factory { ScheduleVisitViewModel(get(), get()) }
-    factory { VisitDetailsViewModel(get(), get(), get()) }
+    factory { ScheduleVisitViewModel(get(), get(), get(), get()) }
+    factory { VisitDetailsViewModel(get(), get(), get(), get()) }
     factory { PendingRequestsViewModel(get(), get()) }
 
 

@@ -20,7 +20,9 @@ data class CheckInDto(
     val checkOutTime: String?,
     val method: String,
     val notes: String?,
-    val rating: Int?
+    val rating: Int?,
+    val moodLevel: Int? = null,
+    val energyLevel: Int? = null
 ) {
     fun toDomain(): CheckIn {
         return CheckIn(
@@ -30,7 +32,9 @@ data class CheckInDto(
             checkOutTime = checkOutTime?.let { Instant.parse(it) },
             method = CheckInMethod.valueOf(method),
             notes = notes,
-            rating = rating
+            rating = rating,
+            moodLevel = moodLevel,
+            energyLevel = energyLevel
         )
     }
 
@@ -43,7 +47,9 @@ data class CheckInDto(
                 checkOutTime = checkIn.checkOutTime?.toString(),
                 method = checkIn.method.name,
                 notes = checkIn.notes,
-                rating = checkIn.rating
+                rating = checkIn.rating,
+                moodLevel = checkIn.moodLevel,
+                energyLevel = checkIn.energyLevel
             )
         }
     }
@@ -97,7 +103,9 @@ data class CheckInRequestDto(
 @Serializable
 data class CheckOutRequestDto(
     val notes: String?,
-    val rating: Int?
+    val rating: Int?,
+    val moodLevel: Int? = null,
+    val energyLevel: Int? = null
 )
 
 /**

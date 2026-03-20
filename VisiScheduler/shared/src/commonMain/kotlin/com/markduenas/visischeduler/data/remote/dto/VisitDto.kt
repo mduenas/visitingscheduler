@@ -22,6 +22,8 @@ data class VisitDto(
     val purpose: String? = null,
     val notes: String? = null,
     val additionalVisitors: List<AdditionalVisitorDto> = emptyList(),
+    val videoCallLink: String? = null,
+    val videoCallPlatform: String? = null,
     val checkInTime: String? = null,
     val checkOutTime: String? = null,
     val approvedBy: String? = null,
@@ -46,6 +48,8 @@ data class VisitDto(
             purpose = purpose,
             notes = notes,
             additionalVisitors = additionalVisitors.map { it.toDomain() },
+            videoCallLink = videoCallLink,
+            videoCallPlatform = videoCallPlatform,
             checkInTime = checkInTime?.let { Instant.parse(it) },
             checkOutTime = checkOutTime?.let { Instant.parse(it) },
             approvedBy = approvedBy,
@@ -73,6 +77,8 @@ data class VisitDto(
                 purpose = visit.purpose,
                 notes = visit.notes,
                 additionalVisitors = visit.additionalVisitors.map { AdditionalVisitorDto.fromDomain(it) },
+                videoCallLink = visit.videoCallLink,
+                videoCallPlatform = visit.videoCallPlatform,
                 checkInTime = visit.checkInTime?.toString(),
                 checkOutTime = visit.checkOutTime?.toString(),
                 approvedBy = visit.approvedBy,
@@ -131,5 +137,7 @@ data class VisitRequestDto(
     val visitType: String = "IN_PERSON",
     val purpose: String? = null,
     val notes: String? = null,
-    val additionalVisitors: List<AdditionalVisitorDto> = emptyList()
+    val additionalVisitors: List<AdditionalVisitorDto> = emptyList(),
+    val videoCallLink: String? = null,
+    val videoCallPlatform: String? = null
 )

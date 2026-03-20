@@ -24,6 +24,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -121,11 +122,15 @@ fun CheckOutScreen(
                         visitDurationText = state.visitDurationText ?: "0m",
                         notes = state.notes,
                         rating = state.rating,
+                        moodLevel = state.moodLevel,
+                        energyLevel = state.energyLevel,
                         isCheckingOut = state.isCheckingOut,
                         notesCharacterCount = state.notesCharacterCount,
                         notesMaxLength = state.notesMaxLength,
                         onNotesChange = { viewModel.updateNotes(it) },
                         onRatingChange = { viewModel.updateRating(it) },
+                        onMoodChange = { viewModel.updateMoodLevel(it) },
+                        onEnergyChange = { viewModel.updateEnergyLevel(it) },
                         onCheckOut = { viewModel.checkOut() }
                     )
                 }
@@ -139,11 +144,15 @@ private fun CheckOutContent(
     visitDurationText: String,
     notes: String,
     rating: Int?,
+    moodLevel: Int?,
+    energyLevel: Int?,
     isCheckingOut: Boolean,
     notesCharacterCount: Int,
     notesMaxLength: Int,
     onNotesChange: (String) -> Unit,
     onRatingChange: (Int) -> Unit,
+    onMoodChange: (Int) -> Unit,
+    onEnergyChange: (Int) -> Unit,
     onCheckOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -213,6 +222,62 @@ private fun CheckOutContent(
                     onRatingChange = onRatingChange,
                     modifier = Modifier.padding(8.dp)
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Mood Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Beneficiary Mood (Optional)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("How did the beneficiary seem?", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("😔", "😐", "🙂", "😊", "😄").forEachIndexed { index, emoji ->
+                        val level = index + 1
+                        FilterChip(
+                            selected = moodLevel == level,
+                            onClick = { onMoodChange(level) },
+                            label = { Text(emoji, style = MaterialTheme.typography.titleLarge) }
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Energy Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Beneficiary Energy (Optional)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("How was the beneficiary's energy level?", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("🪫", "😴", "😌", "⚡", "🔥").forEachIndexed { index, emoji ->
+                        val level = index + 1
+                        FilterChip(
+                            selected = energyLevel == level,
+                            onClick = { onEnergyChange(level) },
+                            label = { Text(emoji, style = MaterialTheme.typography.titleLarge) }
+                        )
+                    }
+                }
             }
         }
 

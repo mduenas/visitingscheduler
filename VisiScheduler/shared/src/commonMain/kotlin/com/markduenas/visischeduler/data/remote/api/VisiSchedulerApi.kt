@@ -194,6 +194,171 @@ class VisiSchedulerApi(
         }.body()
     }
 
+    // ==================== MESSAGING (extended) ====================
+
+    suspend fun getConversationById(conversationId: String): ConversationDto {
+        return client.get("$baseUrl/messages/conversations/$conversationId") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+    }
+
+    suspend fun createConversation(request: CreateConversationRequestDto): ConversationDto {
+        return client.post("$baseUrl/messages/conversations") {
+            header("Authorization", "Bearer $authToken")
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun updateConversation(conversationId: String, request: UpdateConversationRequestDto): ConversationDto {
+        return client.patch("$baseUrl/messages/conversations/$conversationId") {
+            header("Authorization", "Bearer $authToken")
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun addParticipants(conversationId: String, participantIds: List<String>): ConversationDto {
+        return client.post("$baseUrl/messages/conversations/$conversationId/participants") {
+            header("Authorization", "Bearer $authToken")
+            setBody(mapOf("participantIds" to participantIds))
+        }.body()
+    }
+
+    suspend fun removeParticipant(conversationId: String, participantId: String): ConversationDto {
+        return client.delete("$baseUrl/messages/conversations/$conversationId/participants/$participantId") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+    }
+
+    suspend fun getMessageById(messageId: String): MessageDto {
+        return client.get("$baseUrl/messages/$messageId") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+    }
+
+    suspend fun editMessage(messageId: String, request: EditMessageRequestDto): MessageDto {
+        return client.patch("$baseUrl/messages/$messageId") {
+            header("Authorization", "Bearer $authToken")
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun sendMessageWithAttachment(conversationId: String, request: SendMessageRequestDto): MessageDto {
+        return client.post("$baseUrl/messages/conversations/$conversationId/attachments") {
+            header("Authorization", "Bearer $authToken")
+            setBody(request)
+        }.body()
+    }
+
+    // ==================== RESTRICTIONS ====================
+
+    suspend fun getRestrictions(): List<RestrictionDto> {
+        return client.get("$baseUrl/restrictions") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+    }
+
+    suspend fun getRestrictionById(restrictionId: String): RestrictionDto {
+        return client.get("$baseUrl/restrictions/$restrictionId") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+    }
+
+    suspend fun createRestriction(request: RestrictionDto): RestrictionDto {
+        return client.post("$baseUrl/restrictions") {
+            header("Authorization", "Bearer $authToken")
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun updateRestriction(restrictionId: String, request: RestrictionDto): RestrictionDto {
+        return client.put("$baseUrl/restrictions/$restrictionId") {
+            header("Authorization", "Bearer $authToken")
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun deactivateRestriction(restrictionId: String): RestrictionDto {
+        return client.post("$baseUrl/restrictions/$restrictionId/deactivate") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+    }
+
+    suspend fun reactivateRestriction(restrictionId: String): RestrictionDto {
+        return client.post("$baseUrl/restrictions/$restrictionId/reactivate") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+    }
+
+    suspend fun deleteRestriction(restrictionId: String) {
+        client.delete("$baseUrl/restrictions/$restrictionId") {
+            header("Authorization", "Bearer $authToken")
+        }
+    }
+
+    suspend fun getRestrictionsForVisitor(visitorId: String): List<RestrictionDto> {
+        return client.get("$baseUrl/restrictions") {
+            header("Authorization", "Bearer $authToken")
+            parameter("visitorId", visitorId)
+        }.body()
+    }
+
+    suspend fun getRestrictionsForBeneficiary(beneficiaryId: String): List<RestrictionDto> {
+        return client.get("$baseUrl/restrictions") {
+            header("Authorization", "Bearer $authToken")
+            parameter("beneficiaryId", beneficiaryId)
+        }.body()
+    }
+
+    suspend fun checkVisitRestrictions(
+        visitorId: String,
+        beneficiaryId: String,
+        visitDate: String,
+        startTime: String,
+        endTime: String,
+        additionalVisitorCount: Int
+    ): List<RestrictionDto> {
+        return client.post("$baseUrl/restrictions/check") {
+            header("Authorization", "Bearer $authToken")
+            setBody(mapOf(
+                "visitorId" to visitorId,
+                "beneficiaryId" to beneficiaryId,
+                "visitDate" to visitDate,
+                "startTime" to startTime,
+                "endTime" to endTime,
+                "additionalVisitorCount" to additionalVisitorCount.toString()
+            ))
+        }.body()
+    }
+
+    // ==================== CHECK-IN (extended) ====================
+
+    suspend fun generateQrCode(visitId: String): QrCodeDataDto {
+        return client.post("$baseUrl/visits/$visitId/qr-code") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+    }
+
+    suspend fun generateVisitorBadge(checkInId: String): VisitorBadgeDto {
+        return client.post("$baseUrl/check-ins/$checkInId/badge") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+    }
+
+    suspend fun verifyBadge(badgeQrData: String): VisitorBadgeDto {
+        return client.post("$baseUrl/check-ins/verify-badge") {
+            header("Authorization", "Bearer $authToken")
+            setBody(mapOf("badgeQrData" to badgeQrData))
+        }.body()
+    }
+
+    suspend fun getCheckInStatistics(startDate: String, endDate: String): CheckInStatisticsDto {
+        return client.get("$baseUrl/check-ins/statistics") {
+            header("Authorization", "Bearer $authToken")
+            parameter("startDate", startDate)
+            parameter("endDate", endDate)
+        }.body()
+    }
+
     // ==================== NOTIFICATIONS ====================
 
     suspend fun registerPushToken(token: String) {

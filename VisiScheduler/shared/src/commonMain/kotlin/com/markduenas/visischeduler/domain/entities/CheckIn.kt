@@ -15,7 +15,9 @@ data class CheckIn(
     @Contextual val checkOutTime: Instant?,
     val method: CheckInMethod,
     val notes: String?,
-    val rating: Int? // 1-5 post-visit rating
+    val rating: Int?, // 1-5 post-visit rating
+    val moodLevel: Int? = null, // 1-5: 1=very sad, 5=very happy
+    val energyLevel: Int? = null // 1-5: 1=exhausted, 5=very energetic
 ) {
     /**
      * Returns true if the visitor has checked out.

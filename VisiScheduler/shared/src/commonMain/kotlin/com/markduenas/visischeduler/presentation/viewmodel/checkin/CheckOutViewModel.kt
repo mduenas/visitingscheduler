@@ -84,6 +84,18 @@ class CheckOutViewModel(
         updateState { copy(rating = null) }
     }
 
+    fun updateMoodLevel(level: Int) {
+        if (level in 1..5) updateState { copy(moodLevel = level) }
+    }
+
+    fun clearMoodLevel() {
+        updateState { copy(moodLevel = null) }
+    }
+
+    fun updateEnergyLevel(level: Int) {
+        if (level in 1..5) updateState { copy(energyLevel = level) }
+    }
+
     /**
      * Perform check-out.
      */
@@ -96,7 +108,9 @@ class CheckOutViewModel(
             val request = CheckOutRequest(
                 checkInId = checkInId,
                 notes = currentState.notes.takeIf { it.isNotBlank() },
-                rating = currentState.rating
+                rating = currentState.rating,
+                moodLevel = currentState.moodLevel,
+                energyLevel = currentState.energyLevel
             )
 
             val result = checkOutUseCase(request)
@@ -151,6 +165,8 @@ data class CheckOutViewState(
     val visit: Visit? = null,
     val notes: String = "",
     val rating: Int? = null,
+    val moodLevel: Int? = null,
+    val energyLevel: Int? = null,
     val isLoading: Boolean = false,
     val isCheckingOut: Boolean = false,
     val isCheckedOut: Boolean = false,

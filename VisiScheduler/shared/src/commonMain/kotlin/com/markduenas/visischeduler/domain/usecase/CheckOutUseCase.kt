@@ -54,7 +54,9 @@ class CheckOutUseCase(
         return checkInRepository.checkOut(
             checkInId = request.checkInId,
             notes = request.notes,
-            rating = request.rating
+            rating = request.rating,
+            moodLevel = request.moodLevel,
+            energyLevel = request.energyLevel
         )
     }
 
@@ -69,7 +71,9 @@ class CheckOutUseCase(
 data class CheckOutRequest(
     val checkInId: String,
     val notes: String? = null,
-    val rating: Int? = null // 1-5
+    val rating: Int? = null, // 1-5
+    val moodLevel: Int? = null, // 1-5: 1=very sad, 5=very happy
+    val energyLevel: Int? = null // 1-5: 1=exhausted, 5=very energetic
 )
 
 /**

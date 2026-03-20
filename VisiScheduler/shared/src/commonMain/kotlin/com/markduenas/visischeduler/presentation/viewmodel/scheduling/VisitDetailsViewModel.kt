@@ -7,6 +7,8 @@ import com.markduenas.visischeduler.domain.entities.VisitStatus
 import com.markduenas.visischeduler.domain.repository.UserRepository
 import com.markduenas.visischeduler.domain.repository.VisitRepository
 import com.markduenas.visischeduler.domain.usecase.ApproveVisitUseCase
+import com.markduenas.visischeduler.domain.usecase.FatigueAssessment
+import com.markduenas.visischeduler.domain.usecase.GetBeneficiaryFatigueUseCase
 import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 data class VisitDetailsUiState(
     val visit: Visit? = null,
     val currentUser: User? = null,
+    val fatigueAssessment: FatigueAssessment? = null,
     val isLoading: Boolean = true,
     val isProcessing: Boolean = false,
     val error: AppException? = null,
@@ -70,7 +73,8 @@ data class VisitDetailsUiState(
 class VisitDetailsViewModel(
     private val visitRepository: VisitRepository,
     private val userRepository: UserRepository,
-    private val approveVisitUseCase: ApproveVisitUseCase
+    private val approveVisitUseCase: ApproveVisitUseCase,
+    private val getFatigueUseCase: GetBeneficiaryFatigueUseCase
 ) : BaseViewModel<VisitDetailsUiState>(VisitDetailsUiState()) {
 
     private var visitId: String? = null
@@ -98,6 +102,13 @@ class VisitDetailsViewModel(
                                 currentUser = currentUser,
                                 isLoading = false
                             )
+                        }
+                        // Load fatigue assessment for the beneficiary
+                        launch {
+                            runCatching { getFatigueUseCase(visit.beneficiaryId) }
+                                .onSuccess { assessment ->
+                                    updateState { copy(fatigueAssessment = assessment) }
+                                }
                         }
                     },
                     onFailure = { error ->

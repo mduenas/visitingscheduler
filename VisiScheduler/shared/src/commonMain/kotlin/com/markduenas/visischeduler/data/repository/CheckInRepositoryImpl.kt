@@ -36,7 +36,7 @@ class CheckInRepositoryImpl(
         )
     }
 
-    override suspend fun checkOut(checkInId: String, notes: String?, rating: Int?): Result<CheckIn> = runCatching {
+    override suspend fun checkOut(checkInId: String, notes: String?, rating: Int?, moodLevel: Int?, energyLevel: Int?): Result<CheckIn> = runCatching {
         val visitId = checkInId.removePrefix("ci_")
         val remoteVisit = api.checkOutVisit(visitId).toDomain()
         CheckIn(
@@ -46,19 +46,14 @@ class CheckInRepositoryImpl(
             checkOutTime = remoteVisit.checkOutTime ?: Clock.System.now(),
             method = CheckInMethod.MANUAL,
             notes = notes,
-            rating = rating
+            rating = rating,
+            moodLevel = moodLevel,
+            energyLevel = energyLevel
         )
     }
 
     override suspend fun generateQrCode(visitId: String): Result<QrCodeData> = runCatching {
-        val now = Clock.System.now()
-        QrCodeData(
-            visitId = visitId,
-            visitorId = "",
-            validFrom = now,
-            validUntil = now,
-            signature = "sig"
-        )
+        api.generateQrCode(visitId).toDomain()
     }
 
     override suspend fun validateQrCode(qrData: String): Result<QrValidationResult> = runCatching {
@@ -181,15 +176,26 @@ class CheckInRepositoryImpl(
     }
 
     override suspend fun generateVisitorBadge(checkInId: String): Result<VisitorBadge> = runCatching {
-        throw Exception("Not implemented")
+        api.generateVisitorBadge(checkInId).toDomain()
     }
 
     override suspend fun verifyBadge(badgeQrData: String): Result<VisitorBadge> = runCatching {
-        throw Exception("Not implemented")
+        api.verifyBadge(badgeQrData).toDomain()
     }
 
     override suspend fun getCheckInStatistics(startDate: LocalDate, endDate: LocalDate): Result<CheckInStatistics> = runCatching {
-        CheckInStatistics(0, 0, 0, 0, 0, 0f, 0f, 0f, 0)
+        val dto = api.getCheckInStatistics(startDate.toString(), endDate.toString())
+        CheckInStatistics(
+            totalCheckIns = dto.totalCheckIns,
+            qrCodeCheckIns = dto.qrCodeCheckIns,
+            manualCheckIns = dto.manualCheckIns,
+            automaticCheckIns = dto.automaticCheckIns,
+            averageVisitDurationMinutes = dto.averageVisitDurationMinutes,
+            averageRating = dto.averageRating,
+            onTimePercentage = dto.onTimePercentage,
+            latePercentage = dto.latePercentage,
+            noShowCount = dto.noShowCount
+        )
     }
 
     override suspend fun syncCheckIns(): Result<Unit> = runCatching {

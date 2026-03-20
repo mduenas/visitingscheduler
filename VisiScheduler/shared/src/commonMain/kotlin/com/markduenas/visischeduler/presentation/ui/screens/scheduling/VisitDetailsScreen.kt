@@ -14,7 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.domain.entities.VisitStatus
 import com.markduenas.visischeduler.domain.entities.VisitType
+import com.markduenas.visischeduler.platform.UrlOpener
 import com.markduenas.visischeduler.presentation.ui.components.calendar.VisitStatusBadge
+import com.markduenas.visischeduler.presentation.ui.components.common.FatigueWarningBanner
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.VisitDetailsViewModel
 import org.koin.compose.koinInject
 import kotlinx.datetime.*
@@ -27,6 +29,7 @@ fun VisitDetailsScreen(
     onNavigateBack: () -> Unit,
     onEditVisit: (String) -> Unit,
     viewModel: VisitDetailsViewModel = koinInject(),
+    urlOpener: UrlOpener = koinInject(),
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -87,6 +90,13 @@ fun VisitDetailsScreen(
                     VisitStatusBadge(status = visit.status)
                 }
 
+                // Fatigue Warning (for coordinators)
+                uiState.fatigueAssessment?.let { assessment ->
+                    if (assessment.level.isWarning) {
+                        FatigueWarningBanner(assessment = assessment)
+                    }
+                }
+
                 HorizontalDivider()
 
                 // Date & Time Section
@@ -136,7 +146,7 @@ fun VisitDetailsScreen(
                             
                             visit.videoCallLink?.let { link ->
                                 Button(
-                                    onClick = { /* Handle opening link */ },
+                                    onClick = { urlOpener.open(link) },
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
