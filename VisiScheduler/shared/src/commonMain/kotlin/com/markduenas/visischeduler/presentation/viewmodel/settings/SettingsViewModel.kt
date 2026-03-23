@@ -200,17 +200,17 @@ class SettingsViewModel(
     }
 
     /**
-     * Navigate to terms of service.
+     * Open terms of service URL.
      */
     fun navigateToTermsOfService() {
-        navigate("terms")
+        urlOpener.openUrl("https://visischeduler.com/terms")
     }
 
     /**
-     * Navigate to privacy policy.
+     * Open privacy policy URL.
      */
     fun navigateToPrivacyPolicy() {
-        navigate("privacy")
+        urlOpener.openUrl("https://visischeduler.com/privacy")
     }
 
 

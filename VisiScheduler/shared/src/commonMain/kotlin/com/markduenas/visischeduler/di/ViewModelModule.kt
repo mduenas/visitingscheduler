@@ -31,6 +31,9 @@ val viewModelModule = module {
     factory { ScheduleVisitViewModel(get(), get(), get(), get()) }
     factory { VisitDetailsViewModel(get(), get(), get(), get()) }
     factory { PendingRequestsViewModel(get(), get()) }
+    factory { (visitId: String) ->
+        EditVisitViewModel(get(), visitId)
+    }
 
 
     // Visitor Management ViewModels
@@ -45,6 +48,9 @@ val viewModelModule = module {
     }
     factory { (inviteCode: String) ->
         AcceptInvitationViewModel(get(), inviteCode)
+    }
+    factory { (visitorId: String) ->
+        EditVisitorViewModel(get(), visitorId)
     }
 
     // Profile/Settings ViewModels

@@ -40,6 +40,7 @@ import com.markduenas.visischeduler.presentation.ui.screens.restrictions.AddRest
 import com.markduenas.visischeduler.presentation.ui.screens.restrictions.RestrictionsScreen
 import com.markduenas.visischeduler.presentation.ui.screens.scheduling.PendingRequestsScreen
 import com.markduenas.visischeduler.presentation.ui.screens.scheduling.ScheduleVisitScreen
+import com.markduenas.visischeduler.presentation.ui.screens.scheduling.EditVisitScreen
 import com.markduenas.visischeduler.presentation.ui.screens.scheduling.VisitDetailsScreen
 import com.markduenas.visischeduler.presentation.ui.screens.settings.AboutScreen
 import com.markduenas.visischeduler.presentation.ui.screens.settings.NotificationSettingsScreen
@@ -47,6 +48,7 @@ import com.markduenas.visischeduler.presentation.ui.screens.settings.SecuritySet
 import com.markduenas.visischeduler.presentation.ui.screens.settings.SettingsScreen
 import com.markduenas.visischeduler.presentation.ui.screens.settings.BeneficiarySettingsScreen
 import com.markduenas.visischeduler.presentation.ui.screens.visitors.AddVisitorScreen
+import com.markduenas.visischeduler.presentation.ui.screens.visitors.EditVisitorScreen
 import com.markduenas.visischeduler.presentation.ui.screens.visitors.VisitorDetailsScreen
 import com.markduenas.visischeduler.presentation.ui.screens.visitors.VisitorListScreen
 import com.markduenas.visischeduler.presentation.ui.screens.visitors.AcceptInvitationScreen
@@ -61,6 +63,7 @@ import com.markduenas.visischeduler.presentation.viewmodel.messaging.Conversatio
 import com.markduenas.visischeduler.presentation.viewmodel.messaging.NewMessageViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.notifications.NotificationsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.CalendarViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.scheduling.EditVisitViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.ScheduleVisitViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.scheduling.VisitDetailsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.settings.ProfileViewModel
@@ -68,6 +71,7 @@ import com.markduenas.visischeduler.presentation.viewmodel.settings.SettingsView
 import com.markduenas.visischeduler.presentation.viewmodel.settings.NotificationSettingsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.settings.SecuritySettingsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.settings.BeneficiarySettingsViewModel
+import com.markduenas.visischeduler.presentation.viewmodel.visitors.EditVisitorViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.visitors.VisitorListViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.visitors.VisitorDetailsViewModel
 import com.markduenas.visischeduler.presentation.viewmodel.visitors.AddVisitorViewModel
@@ -285,7 +289,13 @@ sealed class AppScreen : Screen {
         override val key: ScreenKey = "edit_visit_$visitId"
         @Composable override fun Content() {
             val navigator = LocalNavigator.currentOrThrow
-            PlaceholderScreen(title = "Edit Visit", onNavigateBack = { navigator.pop() })
+            val viewModel: EditVisitViewModel = koinInject(parameters = { parametersOf(visitId) })
+            HandleEvents(viewModel, navigator)
+            EditVisitScreen(
+                visitId = visitId,
+                onNavigateBack = { navigator.pop() },
+                viewModel = viewModel
+            )
         }
     }
 
@@ -342,7 +352,13 @@ sealed class AppScreen : Screen {
         override val key: ScreenKey = "edit_visitor_$visitorId"
         @Composable override fun Content() {
             val navigator = LocalNavigator.currentOrThrow
-            PlaceholderScreen(title = "Edit Visitor", onNavigateBack = { navigator.pop() })
+            val viewModel: EditVisitorViewModel = koinInject(parameters = { parametersOf(visitorId) })
+            HandleEvents(viewModel, navigator)
+            EditVisitorScreen(
+                visitorId = visitorId,
+                onNavigateBack = { navigator.pop() },
+                viewModel = viewModel
+            )
         }
     }
 
