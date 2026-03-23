@@ -203,14 +203,14 @@ class SettingsViewModel(
      * Open terms of service URL.
      */
     fun navigateToTermsOfService() {
-        urlOpener.openUrl("https://visischeduler.com/terms")
+        urlOpener.open("https://visischeduler.com/terms")
     }
 
     /**
      * Open privacy policy URL.
      */
     fun navigateToPrivacyPolicy() {
-        urlOpener.openUrl("https://visischeduler.com/privacy")
+        urlOpener.open("https://visischeduler.com/privacy")
     }
 
 
@@ -218,15 +218,15 @@ class SettingsViewModel(
      * Open external link for support.
      */
     fun contactSupport() {
-        urlOpener.openUrl("mailto:support@visischeduler.com?subject=VisiScheduler Support")
+        urlOpener.open("mailto:support@visischeduler.com?subject=VisiScheduler Support")
     }
 
     fun openLicenses() {
-        urlOpener.openUrl("https://visischeduler.com/licenses")
+        urlOpener.open("https://visischeduler.com/licenses")
     }
 
     fun rateApp() {
-        urlOpener.openUrl("https://play.google.com/store/apps/details?id=com.markduenas.visischeduler")
+        urlOpener.open("https://play.google.com/store/apps/details?id=com.markduenas.visischeduler")
     }
 
     /**

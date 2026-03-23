@@ -58,7 +58,7 @@ class CommonFirestoreCheckInRepository(
         )
     }
 
-    override suspend fun checkOut(checkInId: String, notes: String?, rating: Int?): Result<CheckIn> = runCatching {
+    override suspend fun checkOut(checkInId: String, notes: String?, rating: Int?, moodLevel: Int?, energyLevel: Int?): Result<CheckIn> = runCatching {
         val updates = mutableMapOf<String, Any?>(
             "checkOutTime" to firestore.serverTimestamp()
         )

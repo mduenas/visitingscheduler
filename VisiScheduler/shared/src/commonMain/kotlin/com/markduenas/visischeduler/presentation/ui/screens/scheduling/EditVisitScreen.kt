@@ -279,3 +279,24 @@ fun EditVisitScreen(
         )
     }
 }
+
+/**
+ * Generates a list of dates for a month calendar grid.
+ * Includes padding nulls for alignment.
+ */
+private fun generateMonthDates(year: Int, month: Int): List<LocalDate?> {
+    val firstOfMonth = LocalDate(year, month, 1)
+    val daysInMonth = when (month) {
+        1, 3, 5, 7, 8, 10, 12 -> 31
+        4, 6, 9, 11 -> 30
+        2 -> if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) 29 else 28
+        else -> 30
+    }
+    val startDayOfWeek = firstOfMonth.dayOfWeek.ordinal
+    val dates = mutableListOf<LocalDate?>()
+    repeat(startDayOfWeek) { dates.add(null) }
+    for (day in 1..daysInMonth) {
+        dates.add(LocalDate(year, month, day))
+    }
+    return dates
+}

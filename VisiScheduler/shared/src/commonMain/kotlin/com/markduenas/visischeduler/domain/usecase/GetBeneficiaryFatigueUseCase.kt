@@ -6,6 +6,7 @@ import com.markduenas.visischeduler.domain.repository.VisitRepository
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 
@@ -27,11 +28,11 @@ class GetBeneficiaryFatigueUseCase(
         val tz = TimeZone.currentSystemDefault()
 
         val visitsLast7Days = completedOrActive.count { visit ->
-            val visitInstant = visit.scheduledDate.atTime(visit.startTime).toInstant(tz)
+            val visitInstant = LocalDateTime(visit.scheduledDate, visit.startTime).toInstant(tz)
             visitInstant >= sevenDaysAgo
         }
         val visitsLast30Days = completedOrActive.count { visit ->
-            val visitInstant = visit.scheduledDate.atTime(visit.startTime).toInstant(tz)
+            val visitInstant = LocalDateTime(visit.scheduledDate, visit.startTime).toInstant(tz)
             visitInstant >= thirtyDaysAgo
         }
 

@@ -78,9 +78,17 @@ class UserRepositoryImpl(
         profileImageUrl: String?
     ): Result<User> {
         return try {
-            val user = api.getCurrentUser().toDomain()
-            // Map updates to DTO and call API
-            Result.success(user)
+            val current = api.getCurrentUser()
+            val updated = current.copy(
+                firstName = firstName ?: current.firstName,
+                lastName = lastName ?: current.lastName,
+                phoneNumber = phoneNumber ?: current.phoneNumber,
+                profileImageUrl = profileImageUrl ?: current.profileImageUrl
+            )
+            val result = api.updateProfile(updated).toDomain()
+            cacheUser(result)
+            _currentUser.value = result
+            Result.success(result)
         } catch (e: Exception) {
             Result.failure(e)
         }
