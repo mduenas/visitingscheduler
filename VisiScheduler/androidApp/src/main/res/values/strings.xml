@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">VisiScheduler</string>
-    <string name="app_description">Schedule and manage visits with ease</string>
+    <string name="app_name">KindVisit</string>
+    <string name="app_description">Caring visits, made simple</string>
 
     <!-- Common -->
     <string name="ok">OK</string>

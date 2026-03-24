@@ -92,7 +92,7 @@ fun LoginScreen(
         ) {
             // App Logo/Title
             Text(
-                text = "VisiScheduler",
+                text = "KindVisit",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -101,7 +101,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Visit Scheduling Made Easy",
+                text = "Caring visits, made simple",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

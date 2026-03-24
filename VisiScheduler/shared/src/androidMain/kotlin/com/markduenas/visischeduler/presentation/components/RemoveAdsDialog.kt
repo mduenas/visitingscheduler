@@ -92,7 +92,7 @@ fun RemoveAdsDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Enjoy VisiScheduler without ads!",
+                    text = "Enjoy KindVisit without ads!",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
                 )
@@ -239,7 +239,7 @@ fun AdsRemovedSuccessDialog(
         },
         text = {
             Text(
-                text = "Ads have been successfully removed. Thank you for supporting VisiScheduler!",
+                text = "Ads have been successfully removed. Thank you for supporting KindVisit!",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center
             )

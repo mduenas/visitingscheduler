@@ -25,6 +25,9 @@
 -dontwarn io.netty.**
 -dontwarn com.typesafe.**
 -dontwarn org.slf4j.**
+# Ktor references desktop-JVM classes not present on Android
+-dontwarn java.lang.management.ManagementFactory
+-dontwarn java.lang.management.RuntimeMXBean
 
 # SQLDelight
 -keep class app.cash.sqldelight.** { *; }

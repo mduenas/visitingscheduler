@@ -142,6 +142,13 @@ kotlin {
             // Security - EncryptedSharedPreferences
             implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
+            // Biometric authentication
+            implementation("androidx.biometric:biometric:1.1.0")
+            implementation("androidx.fragment:fragment-ktx:1.8.6")
+
+            // Activity Compose (rememberLauncherForActivityResult)
+            implementation("androidx.activity:activity-compose:1.9.3")
+
             // Google Ads (AdMob)
             implementation("com.google.android.gms:play-services-ads:23.6.0")
 

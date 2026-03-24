@@ -42,6 +42,8 @@ import com.markduenas.visischeduler.presentation.ui.screens.scheduling.PendingRe
 import com.markduenas.visischeduler.presentation.ui.screens.scheduling.ScheduleVisitScreen
 import com.markduenas.visischeduler.presentation.ui.screens.scheduling.EditVisitScreen
 import com.markduenas.visischeduler.presentation.ui.screens.scheduling.VisitDetailsScreen
+import com.markduenas.visischeduler.presentation.ui.screens.debug.ScreenshotDemoContent
+import com.markduenas.visischeduler.presentation.ui.screens.debug.ScreenshotHelperScreen
 import com.markduenas.visischeduler.presentation.ui.screens.settings.AboutScreen
 import com.markduenas.visischeduler.presentation.ui.screens.settings.NotificationSettingsScreen
 import com.markduenas.visischeduler.presentation.ui.screens.settings.SecuritySettingsScreen
@@ -500,6 +502,28 @@ sealed class AppScreen : Screen {
         }
     }
 
+    data object ScreenshotHelper : AppScreen() {
+        override val key: ScreenKey = "screenshot_helper"
+        @Composable override fun Content() {
+            val navigator = LocalNavigator.currentOrThrow
+            ScreenshotHelperScreen(
+                onNavigateBack = { navigator.pop() },
+                onScenarioSelected = { scenarioId -> navigator.push(ScreenshotDemo(scenarioId)) }
+            )
+        }
+    }
+
+    data class ScreenshotDemo(val scenarioId: String) : AppScreen() {
+        override val key: ScreenKey = "screenshot_demo_$scenarioId"
+        @Composable override fun Content() {
+            val navigator = LocalNavigator.currentOrThrow
+            ScreenshotDemoContent(
+                scenarioId = scenarioId,
+                onNavigateBack = { navigator.pop() }
+            )
+        }
+    }
+
     // ==================== Message Detail Screens ====================
 
     data class MessageThread(val conversationId: String) : AppScreen() {
@@ -653,6 +677,7 @@ private fun HandleEvents(viewModel: BaseViewModel<*>, navigator: Navigator) {
                         route == "add_beneficiary" -> navigator.push(AppScreen.AddBeneficiary())
                         route.startsWith("edit_beneficiary/") -> navigator.push(AppScreen.AddBeneficiary(route.substringAfter("edit_beneficiary/")))
                         route == "about" -> navigator.push(AppScreen.About)
+                        route == "screenshot_helper" -> navigator.push(AppScreen.ScreenshotHelper)
                         route == "beneficiary_settings" -> navigator.push(AppScreen.BeneficiarySettings())
                         route.startsWith("beneficiary_settings/") -> navigator.push(AppScreen.BeneficiarySettings(route.substringAfter("beneficiary_settings/")))
                         route == "visitor_list" -> navigator.push(AppScreen.VisitorList)

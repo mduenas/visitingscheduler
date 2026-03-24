@@ -128,20 +128,24 @@ class MfaViewModel(
         _mfaState.value = currentState.copy(isLoading = true)
 
         viewModelScope.launch {
-            // In a real implementation, this would call the auth repository
-            // val result = authRepository.resendMfaCode(currentState.challengeId)
-
-            // Simulate resend
-            kotlinx.coroutines.delay(500)
-
-            _mfaState.value = _mfaState.value.copy(
-                isLoading = false,
-                code = "",
-                attemptsRemaining = 3 // Reset attempts on new code
+            val result = authRepository.resendMfaCode(currentState.challengeId)
+            result.fold(
+                onSuccess = {
+                    _mfaState.value = _mfaState.value.copy(
+                        isLoading = false,
+                        code = "",
+                        attemptsRemaining = 3
+                    )
+                    startResendCooldown()
+                    showSnackbar("A new verification code has been sent.")
+                },
+                onFailure = { exception ->
+                    _mfaState.value = _mfaState.value.copy(
+                        isLoading = false,
+                        generalError = exception.message ?: "Failed to resend code"
+                    )
+                }
             )
-
-            startResendCooldown()
-            showSnackbar("A new verification code has been sent.")
         }
     }
 

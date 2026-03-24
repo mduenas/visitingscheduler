@@ -1,54 +1,40 @@
 package com.markduenas.visischeduler.platform
 
+import kotlin.coroutines.resume
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.AVFoundation.AVAuthorizationStatusAuthorized
 import platform.AVFoundation.AVAuthorizationStatusDenied
 import platform.AVFoundation.AVAuthorizationStatusNotDetermined
 import platform.AVFoundation.AVAuthorizationStatusRestricted
+import platform.AVFoundation.AVCaptureDevice
 import platform.AVFoundation.AVMediaTypeVideo
 import platform.AVFoundation.authorizationStatusForMediaType
 import platform.AVFoundation.requestAccessForMediaType
+import platform.Foundation.NSURL
+import platform.UIKit.UIApplication
+import platform.UIKit.UIApplicationOpenSettingsURLString
+import platform.UserNotifications.UNAuthorizationOptionAlert
+import platform.UserNotifications.UNAuthorizationOptionBadge
+import platform.UserNotifications.UNAuthorizationOptionSound
 import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNAuthorizationStatusDenied
 import platform.UserNotifications.UNAuthorizationStatusNotDetermined
 import platform.UserNotifications.UNAuthorizationStatusProvisional
 import platform.UserNotifications.UNUserNotificationCenter
-import platform.UIKit.UIApplication
-import platform.Foundation.NSURL
-import platform.UIKit.UIApplicationOpenSettingsURLString
 
 class IosPermissionManager : PermissionManager {
-    
-    override suspend fun checkPermission(permission: Permission): PermissionStatus {
-        return when (permission) {
-            Permission.CAMERA -> {
-                val status = authorizationStatusForMediaType(AVMediaTypeVideo)
-                when (status) {
-                    AVAuthorizationStatusAuthorized -> PermissionStatus.GRANTED
-                    AVAuthorizationStatusDenied, AVAuthorizationStatusRestricted -> PermissionStatus.DENIED
-                    AVAuthorizationStatusNotDetermined -> PermissionStatus.NOT_DETERMINED
-                    else -> PermissionStatus.DENIED
-                }
-            }
-            Permission.NOTIFICATIONS -> {
-                // Since this is async on iOS, we'd ideally await the status
-                // Simplified for now
-                PermissionStatus.NOT_DETERMINED
-            }
-            Permission.LOCATION -> PermissionStatus.NOT_DETERMINED
-        }
+
+    override suspend fun checkPermission(permission: Permission): PermissionStatus = when (permission) {
+        Permission.CAMERA -> checkCameraPermission()
+        Permission.NOTIFICATIONS -> checkNotificationPermission()
+        Permission.LOCATION -> PermissionStatus.NOT_DETERMINED
     }
 
-    override suspend fun requestPermission(permission: Permission): PermissionStatus {
-        return when (permission) {
-            Permission.CAMERA -> {
-                // Trigger native iOS dialog
-                PermissionStatus.GRANTED // Simplified
-            }
-            Permission.NOTIFICATIONS -> {
-                PermissionStatus.GRANTED // Simplified
-            }
-            Permission.LOCATION -> PermissionStatus.GRANTED // Simplified
-        }
+    override suspend fun requestPermission(permission: Permission): PermissionStatus = when (permission) {
+        Permission.CAMERA -> requestCameraPermission()
+        Permission.NOTIFICATIONS -> requestNotificationPermission()
+        Permission.LOCATION -> PermissionStatus.NOT_DETERMINED
     }
 
     override fun openAppSettings() {
@@ -57,6 +43,48 @@ class IosPermissionManager : PermissionManager {
             UIApplication.sharedApplication.openURL(settingsUrl)
         }
     }
+
+    @OptIn(ExperimentalForeignApi::class)
+    private fun checkCameraPermission(): PermissionStatus =
+        when (AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo)) {
+            AVAuthorizationStatusAuthorized -> PermissionStatus.GRANTED
+            AVAuthorizationStatusDenied, AVAuthorizationStatusRestricted -> PermissionStatus.DENIED
+            AVAuthorizationStatusNotDetermined -> PermissionStatus.NOT_DETERMINED
+            else -> PermissionStatus.NOT_DETERMINED
+        }
+
+    private suspend fun checkNotificationPermission(): PermissionStatus =
+        suspendCancellableCoroutine { cont ->
+            UNUserNotificationCenter.currentNotificationCenter()
+                .getNotificationSettingsWithCompletionHandler { settings ->
+                    val status = when (settings?.authorizationStatus) {
+                        UNAuthorizationStatusAuthorized,
+                        UNAuthorizationStatusProvisional -> PermissionStatus.GRANTED
+                        UNAuthorizationStatusDenied -> PermissionStatus.DENIED
+                        UNAuthorizationStatusNotDetermined -> PermissionStatus.NOT_DETERMINED
+                        else -> PermissionStatus.NOT_DETERMINED
+                    }
+                    cont.resume(status)
+                }
+        }
+
+    @OptIn(ExperimentalForeignApi::class)
+    private suspend fun requestCameraPermission(): PermissionStatus =
+        suspendCancellableCoroutine { cont ->
+            AVCaptureDevice.requestAccessForMediaType(AVMediaTypeVideo) { granted ->
+                cont.resume(if (granted) PermissionStatus.GRANTED else PermissionStatus.DENIED)
+            }
+        }
+
+    private suspend fun requestNotificationPermission(): PermissionStatus =
+        suspendCancellableCoroutine { cont ->
+            UNUserNotificationCenter.currentNotificationCenter()
+                .requestAuthorizationWithOptions(
+                    UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
+                ) { granted, _ ->
+                    cont.resume(if (granted) PermissionStatus.GRANTED else PermissionStatus.DENIED)
+                }
+        }
 }
 
 /**

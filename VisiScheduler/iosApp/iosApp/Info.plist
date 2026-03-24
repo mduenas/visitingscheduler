@@ -9,7 +9,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>VisiScheduler</string>
+	<string>KindVisit</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -53,6 +53,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>KindVisit uses the camera to scan QR codes for visitor check-in and check-out.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>KindVisit uses Face ID to securely authenticate your account.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>KindVisit sends notifications to remind you of upcoming visits and approval requests.</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-7540731406850248~5119379861</string>
 	<key>SKAdNetworkItems</key>

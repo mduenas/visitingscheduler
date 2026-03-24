@@ -64,7 +64,7 @@ fun SplashScreen(
             // App Icon
             Icon(
                 imageVector = Icons.Default.CalendarMonth,
-                contentDescription = "VisiScheduler Logo",
+                contentDescription = "KindVisit Logo",
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(120.dp)
             )
@@ -73,7 +73,7 @@ fun SplashScreen(
 
             // App Name
             Text(
-                text = "VisiScheduler",
+                text = "KindVisit",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -83,7 +83,7 @@ fun SplashScreen(
 
             // Tagline
             Text(
-                text = "Visit Scheduling Made Easy",
+                text = "Caring visits, made simple",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

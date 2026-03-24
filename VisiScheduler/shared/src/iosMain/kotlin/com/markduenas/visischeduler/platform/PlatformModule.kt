@@ -3,7 +3,21 @@ package com.markduenas.visischeduler.platform
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.native.NativeSqliteDriver
 import com.markduenas.visischeduler.data.local.VisiSchedulerDatabase
+import kotlin.coroutines.resume
+import kotlin.random.Random
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.cinterop.ExperimentalForeignApi
 import org.koin.dsl.module
+import platform.LocalAuthentication.LAContext
+import platform.LocalAuthentication.LAErrorUserCancel
+import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthenticationWithBiometrics
+import platform.UserNotifications.UNAuthorizationOptionAlert
+import platform.UserNotifications.UNAuthorizationOptionBadge
+import platform.UserNotifications.UNAuthorizationOptionSound
+import platform.UserNotifications.UNMutableNotificationContent
+import platform.UserNotifications.UNNotificationRequest
+import platform.UserNotifications.UNNotificationSound
+import platform.UserNotifications.UNUserNotificationCenter
 
 /**
  * iOS-specific platform module providing platform implementations.
@@ -69,47 +83,87 @@ interface NotificationHandler {
 }
 
 /**
- * iOS implementation of BiometricHandler using LocalAuthentication.
+ * iOS implementation of BiometricHandler using LocalAuthentication (Face ID / Touch ID).
  */
 class IosBiometricHandler : BiometricHandler {
-    // Note: Actual implementation would use LAContext from LocalAuthentication
-    // This is a placeholder that should be properly implemented
 
-    override fun isAvailable(): Boolean = false
+    @OptIn(ExperimentalForeignApi::class)
+    override fun isAvailable(): Boolean {
+        val context = LAContext()
+        return context.canEvaluatePolicy(LAPolicyDeviceOwnerAuthenticationWithBiometrics, error = null)
+    }
 
-    override fun canAuthenticate(): Boolean = false
+    override fun canAuthenticate(): Boolean = isAvailable()
 
     override suspend fun authenticate(
         title: String,
         subtitle: String?,
         negativeButtonText: String
     ): BiometricResult {
-        return BiometricResult.NotAvailable
+        if (!isAvailable()) return BiometricResult.NotAvailable
+
+        return suspendCancellableCoroutine { continuation ->
+            LAContext().evaluatePolicy(
+                LAPolicyDeviceOwnerAuthenticationWithBiometrics,
+                localizedReason = title
+            ) { success, error ->
+                if (success) {
+                    continuation.resume(BiometricResult.Success)
+                } else {
+                    val code = error?.code?.toInt() ?: -1
+                    val result = if (code == LAErrorUserCancel.toInt()) {
+                        BiometricResult.Cancelled
+                    } else {
+                        BiometricResult.Error(code, error?.localizedDescription ?: "Authentication failed")
+                    }
+                    continuation.resume(result)
+                }
+            }
+        }
     }
 }
 
 /**
- * iOS implementation of NotificationHandler using APNs.
+ * iOS implementation of NotificationHandler using UNUserNotificationCenter.
  */
 class IosNotificationHandler : NotificationHandler {
-    // Note: Actual implementation would use UNUserNotificationCenter
-    // This is a placeholder that should be properly implemented
 
-    override suspend fun requestPermission(): Boolean = false
+    override suspend fun requestPermission(): Boolean = suspendCancellableCoroutine { cont ->
+        UNUserNotificationCenter.currentNotificationCenter()
+            .requestAuthorizationWithOptions(
+                UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
+            ) { granted, _ -> cont.resume(granted) }
+    }
 
     override suspend fun showNotification(
         title: String,
         body: String,
         data: Map<String, String>?
     ) {
-        // Implementation using UNUserNotificationCenter
+        val content = UNMutableNotificationContent().apply {
+            setTitle(title)
+            setBody(body)
+            setSound(UNNotificationSound.defaultSound())
+        }
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = Random.nextLong().toString(),
+            content = content,
+            trigger = null
+        )
+        suspendCancellableCoroutine<Unit> { cont ->
+            UNUserNotificationCenter.currentNotificationCenter()
+                .addNotificationRequest(request) { _ -> cont.resume(Unit) }
+        }
     }
 
     override suspend fun cancelNotification(id: Int) {
-        // Implementation using UNUserNotificationCenter
+        UNUserNotificationCenter.currentNotificationCenter()
+            .removePendingNotificationRequestsWithIdentifiers(listOf(id.toString()))
     }
 
     override suspend fun cancelAllNotifications() {
-        // Implementation using UNUserNotificationCenter
+        UNUserNotificationCenter.currentNotificationCenter()
+            .removeAllPendingNotificationRequests()
     }
 }
+

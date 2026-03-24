@@ -118,7 +118,7 @@ fun SettingsScreen(
                 item {
                     SettingsNavItem(
                         icon = Icons.Default.Info,
-                        title = "About VisiScheduler",
+                        title = "About KindVisit",
                         subtitle = "Version ${uiState.appVersion}, terms, and privacy",
                         onClick = { viewModel.navigateToAbout() }
                     )
@@ -161,7 +161,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = { Text("Log Out?") },
-            text = { Text("Are you sure you want to log out of VisiScheduler?") },
+            text = { Text("Are you sure you want to log out of KindVisit?") },
             confirmButton = {
                 TextButton(
                     onClick = {

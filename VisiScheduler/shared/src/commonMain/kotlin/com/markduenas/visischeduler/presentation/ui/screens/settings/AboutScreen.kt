@@ -1,5 +1,6 @@
 package com.markduenas.visischeduler.presentation.ui.screens.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -57,23 +58,41 @@ fun AboutScreen(
 
             item {
                 Text(
-                    text = "VisiScheduler",
+                    text = "KindVisit",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
             }
 
             item {
+                var tapCount by remember { mutableStateOf(0) }
+                var lastTapTime by remember { mutableStateOf(0L) }
+
+                LaunchedEffect(tapCount) {
+                    if (tapCount in 1..6) {
+                        kotlinx.coroutines.delay(2000)
+                        tapCount = 0
+                    }
+                }
+
                 Text(
-                    text = "Version ${uiState.appVersion}",
+                    text = if (tapCount in 1..6) "Version ${uiState.appVersion} (${7 - tapCount} more taps)"
+                           else "Version ${uiState.appVersion}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clickable {
+                        tapCount++
+                        if (tapCount >= 7) {
+                            tapCount = 0
+                            viewModel.openScreenshotHelper()
+                        }
+                    }
                 )
             }
 
             item {
                 Text(
-                    text = "Compassionate visit scheduling for caregivers",
+                    text = "Caring visits, made simple",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -131,7 +150,7 @@ fun AboutScreen(
             item {
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
-                    text = "© 2026 VisiScheduler",
+                    text = "© 2026 KindVisit",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

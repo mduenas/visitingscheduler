@@ -14,8 +14,9 @@ import platform.AVFoundation.AVCaptureSession
 import platform.AVFoundation.AVCaptureVideoPreviewLayer
 import platform.AVFoundation.AVMediaTypeVideo
 import platform.AVFoundation.AVMetadataMachineReadableCodeObject
+import platform.AVFoundation.AVCaptureTorchModeOff
+import platform.AVFoundation.AVCaptureTorchModeOn
 import platform.AVFoundation.AVMetadataObjectTypeQRCode
-import platform.AVFoundation.TorchMode
 import platform.AVFoundation.hasTorch
 import platform.AVFoundation.torchMode
 import platform.CoreGraphics.CGRectMake
@@ -46,9 +47,9 @@ actual fun CameraScanner(
                 try {
                     device.lockForConfiguration(null)
                     device.torchMode = if (isFlashEnabled) {
-                        TorchMode.AVCaptureTorchModeOn
+                        AVCaptureTorchModeOn
                     } else {
-                        TorchMode.AVCaptureTorchModeOff
+                        AVCaptureTorchModeOff
                     }
                     device.unlockForConfiguration()
                 } catch (_: Exception) {}

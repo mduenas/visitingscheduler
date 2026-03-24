@@ -38,7 +38,7 @@ fun DashboardScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("VisiScheduler", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("KindVisit", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(formatTodayDate(), style = MaterialTheme.typography.bodySmall)
                     }
                 },

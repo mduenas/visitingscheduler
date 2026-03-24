@@ -1,6 +1,5 @@
 package com.markduenas.visischeduler.platform
 
-import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Types of permissions required by the app.

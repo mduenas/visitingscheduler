@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinMultiplatform)
@@ -63,12 +65,29 @@ android {
     namespace = "com.markduenas.visischeduler"
     compileSdk = 35
 
+    // Load local signing config (gitignored). CI/CD uses env vars instead.
+    val localProps = Properties().also { props ->
+        val f = rootProject.file("local.properties")
+        if (f.exists()) props.load(f.inputStream())
+    }
+    fun signingProp(envKey: String, localKey: String, fallback: String = "") =
+        System.getenv(envKey) ?: localProps.getProperty(localKey) ?: fallback
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(signingProp("KEYSTORE_PATH", "signing.storeFile", "../keystore/upload_keystore.jks"))
+            storePassword = signingProp("KEYSTORE_PASSWORD", "signing.storePassword")
+            keyAlias = signingProp("KEY_ALIAS", "signing.keyAlias")
+            keyPassword = signingProp("KEY_PASSWORD", "signing.keyPassword")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.markduenas.visischeduler"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -91,6 +110,7 @@ android {
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

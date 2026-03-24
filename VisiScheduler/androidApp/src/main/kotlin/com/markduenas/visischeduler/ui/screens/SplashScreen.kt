@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.markduenas.visischeduler.domain.repository.AuthRepository
 import com.markduenas.visischeduler.presentation.navigation.AppScreen
-import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
@@ -42,7 +42,7 @@ class SplashScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val auth: FirebaseAuth = koinInject()
+        val auth: AuthRepository = koinInject()
 
         val alphaAnim = remember { Animatable(0f) }
         val scaleAnim = remember { Animatable(0.8f) }
@@ -59,7 +59,7 @@ class SplashScreen : Screen {
 
             delay(1000)
 
-            val destination = if (auth.currentUser != null) {
+            val destination = if (auth.isAuthenticated()) {
                 AppScreen.Dashboard
             } else {
                 AppScreen.Login
@@ -82,13 +82,13 @@ class SplashScreen : Screen {
             ) {
                 Icon(
                     imageVector = Icons.Default.CalendarMonth,
-                    contentDescription = "VisiScheduler Logo",
+                    contentDescription = "KindVisit Logo",
                     modifier = Modifier.size(120.dp),
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
 
                 Text(
-                    text = "VisiScheduler",
+                    text = "KindVisit",
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -96,7 +96,7 @@ class SplashScreen : Screen {
                 )
 
                 Text(
-                    text = "Simplified Care Coordination",
+                    text = "Caring visits, made simple",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
                     modifier = Modifier.padding(top = 8.dp)

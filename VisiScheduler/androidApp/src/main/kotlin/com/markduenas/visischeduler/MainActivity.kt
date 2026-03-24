@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.FragmentActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,9 +18,13 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.SlideTransition
 import com.markduenas.visischeduler.data.repository.AdRepositoryImpl
+import com.markduenas.visischeduler.domain.repository.AdRepository
+import com.markduenas.visischeduler.platform.AndroidBiometricHandler
+import com.markduenas.visischeduler.platform.AndroidPermissionManager
 import com.markduenas.visischeduler.presentation.components.AdMobBanner
 import com.markduenas.visischeduler.ui.screens.SplashScreen
 import com.markduenas.visischeduler.ui.theme.VisiSchedulerTheme
+import java.lang.ref.WeakReference
 import org.koin.android.ext.android.inject
 
 /**
@@ -29,13 +35,19 @@ import org.koin.android.ext.android.inject
  */
 class MainActivity : ComponentActivity() {
 
-    private val adRepository: AdRepositoryImpl by inject()
+    private val adRepository: AdRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Register permission launcher for AndroidPermissionManager
+        val permissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { granted -> AndroidPermissionManager.onPermissionsResult(granted) }
+        AndroidPermissionManager.permissionLauncher = permissionLauncher
+
         // Set activity for ad repository (needed for purchase flow)
-        adRepository.setActivity(this)
+        (adRepository as? AdRepositoryImpl)?.setActivity(this)
 
         // Enable edge-to-edge display
         enableEdgeToEdge()
@@ -43,6 +55,19 @@ class MainActivity : ComponentActivity() {
         setContent {
             VisiSchedulerAppWithAds()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val ref = WeakReference(this as FragmentActivity)
+        AndroidBiometricHandler.currentActivity = ref
+        AndroidPermissionManager.currentActivity = ref
+    }
+
+    override fun onPause() {
+        super.onPause()
+        AndroidBiometricHandler.currentActivity = null
+        AndroidPermissionManager.currentActivity = null
     }
 }
 

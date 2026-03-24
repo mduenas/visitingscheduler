@@ -200,17 +200,24 @@ class SettingsViewModel(
     }
 
     /**
+     * Navigate to screenshot helper screen (debug, accessed via 7-tap easter egg).
+     */
+    fun openScreenshotHelper() {
+        navigate("screenshot_helper")
+    }
+
+    /**
      * Open terms of service URL.
      */
     fun navigateToTermsOfService() {
-        urlOpener.open("https://visischeduler.com/terms")
+        urlOpener.open("https://www.markduenas.com/projects/visitingscheduler/")
     }
 
     /**
      * Open privacy policy URL.
      */
     fun navigateToPrivacyPolicy() {
-        urlOpener.open("https://visischeduler.com/privacy")
+        urlOpener.open("https://www.markduenas.com/privacy/")
     }
 
 
@@ -218,11 +225,11 @@ class SettingsViewModel(
      * Open external link for support.
      */
     fun contactSupport() {
-        urlOpener.open("mailto:support@visischeduler.com?subject=VisiScheduler Support")
+        urlOpener.open("mailto:markduenas@gmail.com?subject=KindVisit Support")
     }
 
     fun openLicenses() {
-        urlOpener.open("https://visischeduler.com/licenses")
+        urlOpener.open("https://www.markduenas.com/projects/visitingscheduler/")
     }
 
     fun rateApp() {
