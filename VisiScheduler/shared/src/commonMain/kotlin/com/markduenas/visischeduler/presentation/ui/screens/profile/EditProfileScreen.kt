@@ -39,6 +39,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.markduenas.visischeduler.platform.rememberCameraLauncher
+import com.markduenas.visischeduler.platform.rememberGalleryLauncher
 import com.markduenas.visischeduler.presentation.ui.components.settings.AvatarPicker
 import com.markduenas.visischeduler.presentation.ui.components.settings.AvatarSource
 import com.markduenas.visischeduler.presentation.viewmodel.settings.ProfileViewModel
@@ -57,6 +59,13 @@ fun EditProfileScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val user = uiState.user ?: return
+
+    val launchGallery = rememberGalleryLauncher { bytes ->
+        bytes?.let { viewModel.updateAvatar(it) }
+    }
+    val launchCamera = rememberCameraLauncher { bytes ->
+        bytes?.let { viewModel.updateAvatar(it) }
+    }
 
     var firstName by remember(user) { mutableStateOf(user.firstName) }
     var lastName by remember(user) { mutableStateOf(user.lastName) }
@@ -133,15 +142,9 @@ fun EditProfileScreen(
             AvatarPicker(
                 imageUrl = uiState.avatarUri,
                 onSourceSelected = { source ->
-                    // TODO: Handle camera/gallery selection
-                    // For now, we'll just log the selection
                     when (source) {
-                        AvatarSource.CAMERA -> {
-                            // Launch camera
-                        }
-                        AvatarSource.GALLERY -> {
-                            // Launch gallery
-                        }
+                        AvatarSource.CAMERA -> launchCamera()
+                        AvatarSource.GALLERY -> launchGallery()
                     }
                 },
                 size = 120.dp,

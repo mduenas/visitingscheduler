@@ -8,11 +8,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeUIViewController
 import com.markduenas.visischeduler.di.initKoin
+import com.markduenas.visischeduler.domain.repository.AuthRepository
 import com.markduenas.visischeduler.presentation.AuthStateProvider
 import com.markduenas.visischeduler.presentation.DefaultAuthStateProvider
 import com.markduenas.visischeduler.presentation.VisiSchedulerApp
 import com.markduenas.visischeduler.presentation.navigation.DeepLinkHandler
-import kotlinx.coroutines.delay
+import org.koin.core.context.GlobalContext
 import platform.UIKit.UIViewController
 
 /**
@@ -110,14 +111,16 @@ fun handleDeepLink(url: String, handler: DeepLinkHandler) {
 }
 
 /**
- * Check authentication status and update state accordingly.
+ * Check authentication status via Firebase Auth and update state accordingly.
  */
 private suspend fun checkAuthenticationStatus(authStateProvider: AuthStateProvider) {
     try {
-        // In a real app, this would check with the auth repository
-        // For now, simulate a brief loading then set to unauthenticated
-        delay(1500) // Simulate splash delay
-        authStateProvider.setUnauthenticated()
+        val authRepository = GlobalContext.get().get<AuthRepository>()
+        if (authRepository.isAuthenticated()) {
+            authStateProvider.setAuthenticated()
+        } else {
+            authStateProvider.setUnauthenticated()
+        }
     } catch (e: Exception) {
         authStateProvider.setUnauthenticated()
     }

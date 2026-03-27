@@ -312,26 +312,37 @@ class SecuritySettingsViewModel(
 
     /**
      * Revoke a session.
+     * For the current session this performs a full logout. Other sessions are removed
+     * from local state (server-side revocation requires Firebase Admin SDK).
      */
     fun revokeSession(sessionId: String) {
-        // TODO: Implement when session management API is available
-        val updatedSessions = currentState.activeSessions.filter { it.id != sessionId }
-        updateState { copy(activeSessions = updatedSessions) }
-        showSnackbar("Session revoked")
+        val session = currentState.activeSessions.find { it.id == sessionId } ?: return
+        if (session.isCurrent) {
+            launchSafe {
+                authRepository.logout()
+                navigate("login")
+            }
+        } else {
+            updateState { copy(activeSessions = activeSessions.filter { it.id != sessionId }) }
+            showSnackbar("Session revoked")
+        }
     }
 
     /**
-     * Logout from all devices.
+     * Logout from all devices by signing out of Firebase Auth.
+     * This invalidates the current device token; other device sessions will
+     * expire on their next token refresh.
      */
     fun logoutAllDevices() {
         launchSafe {
-            // TODO: Implement API call to revoke all sessions
-            updateState {
-                copy(
-                    activeSessions = currentState.activeSessions.filter { it.isCurrent }
-                )
-            }
-            showSnackbar("Logged out from all other devices")
+            updateState { copy(isLoading = true) }
+            authRepository.logout().fold(
+                onSuccess = { navigate("login") },
+                onFailure = {
+                    updateState { copy(isLoading = false) }
+                    showSnackbar("Failed to sign out — please try again")
+                }
+            )
         }
     }
 
