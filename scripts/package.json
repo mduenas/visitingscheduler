@@ -1,0 +1,12 @@
+{
+  "name": "kindvisit-deploy",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "android": "node deploy-android.js",
+    "ios": "bash deploy-ios.sh"
+  },
+  "dependencies": {
+    "googleapis": "^144.0.0"
+  }
+}

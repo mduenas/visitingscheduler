@@ -143,6 +143,48 @@ KindVisit is built with care for the people who give it.
 ## FEATURE GRAPHIC (Google Play — 1024×500px)
 Suggested copy: "Caring visits, made simple" on brand primary color background with app icon centered.
 
+## DEPLOYMENT SCRIPTS
+
+Both platforms have deploy scripts in `scripts/`. They require credentials outside the repo.
+
+### Android — `scripts/deploy-android.sh`
+```bash
+# Internal testing (default)
+./scripts/deploy-android.sh
+
+# Other tracks
+./scripts/deploy-android.sh --track alpha
+./scripts/deploy-android.sh --track production
+
+# Build only, no upload
+./scripts/deploy-android.sh --skip-upload
+```
+**Requires:**
+- `fastlane` installed (`gem install fastlane`)
+- `../play-store-key.json` — Google Play service account JSON key
+- Signing config in `VisiScheduler/local.properties`
+
+**Credentials lookup order:** `--service-account` flag → `PLAY_SERVICE_ACCOUNT` env var → `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH` env var → `../play-store-key.json`
+
+### iOS — `scripts/deploy-ios.sh`
+```bash
+# Build and upload to TestFlight
+./scripts/deploy-ios.sh
+
+# Build only
+./scripts/deploy-ios.sh --skip-upload
+```
+**Requires:**
+- Xcode + `xcodebuild`
+- App Store Connect API key (`.p8` file)
+- Default key path: `~/.config/AuthKey_TB52W6Z8MK.p8`
+- Key ID: `TB52W6Z8MK` / Issuer ID: `69a6de8a-a43a-47e3-e053-5b8c7c11a4d1`
+
+**Override via flags:** `--api-key-path`, `--api-key-id`, `--api-issuer-id`
+**Or env vars:** `APP_STORE_CONNECT_API_KEY_PATH`, `APP_STORE_CONNECT_API_KEY_ID`, `APP_STORE_CONNECT_API_ISSUER_ID`
+
+---
+
 ## SCREENSHOTS NEEDED
 **Android (Phone):** 1080×1920 or 1080×2340 — at least 2, up to 8
 **iOS (6.7" — required):** 1290×2796 (iPhone 16 Pro Max)

@@ -1,7 +1,6 @@
 package com.markduenas.visischeduler
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,7 +32,7 @@ import org.koin.android.ext.android.inject
  * Uses Compose for UI and Voyager for navigation.
  * Implements edge-to-edge display for modern Android design.
  */
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val adRepository: AdRepository by inject()
 
