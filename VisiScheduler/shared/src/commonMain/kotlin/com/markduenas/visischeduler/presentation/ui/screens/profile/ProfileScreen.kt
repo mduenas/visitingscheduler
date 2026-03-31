@@ -55,6 +55,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.markduenas.visischeduler.domain.entities.Role
+import com.markduenas.visischeduler.platform.rememberCameraLauncher
+import com.markduenas.visischeduler.platform.rememberGalleryLauncher
 import com.markduenas.visischeduler.presentation.ui.components.settings.AvatarPicker
 import com.markduenas.visischeduler.presentation.ui.components.settings.AvatarSource
 import com.markduenas.visischeduler.presentation.viewmodel.settings.ProfileUiState
@@ -75,6 +77,13 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val launchGallery = rememberGalleryLauncher { bytes ->
+        bytes?.let { viewModel.updateAvatar(it) }
+    }
+    val launchCamera = rememberCameraLauncher { bytes ->
+        bytes?.let { viewModel.updateAvatar(it) }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -113,7 +122,10 @@ fun ProfileScreen(
                 uiState = uiState,
                 onEditProfile = onNavigateToEditProfile,
                 onAvatarSourceSelected = { source ->
-                    // TODO: Handle camera/gallery selection
+                    when (source) {
+                        AvatarSource.CAMERA -> launchCamera()
+                        AvatarSource.GALLERY -> launchGallery()
+                    }
                 },
                 onNavigateToSettings = onNavigateToSettings,
                 onNavigateToNotifications = onNavigateToNotifications,

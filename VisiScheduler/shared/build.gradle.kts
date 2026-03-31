@@ -149,6 +149,9 @@ kotlin {
             // Activity Compose (rememberLauncherForActivityResult)
             implementation("androidx.activity:activity-compose:1.9.3")
 
+            // Image loading (Coil — Android; iOS uses NetworkImage stub until Coil 3)
+            implementation(libs.coil.compose)
+
             // Google Ads (AdMob)
             implementation("com.google.android.gms:play-services-ads:23.6.0")
 

@@ -40,6 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.markduenas.visischeduler.platform.NetworkImage
 
 /**
  * Avatar picker source options.
@@ -94,11 +95,13 @@ fun AvatarPicker(
                     color = MaterialTheme.colorScheme.primary
                 )
             } else if (imageUrl != null && imageUrl.isNotBlank()) {
-                // TODO: Replace with actual image loading (Coil/Kamel)
-                // For now, show placeholder
-                AvatarPlaceholder(
-                    initials = initials,
-                    size = size
+                // Placeholder shown behind; NetworkImage covers it once loaded
+                AvatarPlaceholder(initials = initials, size = size)
+                NetworkImage(
+                    url = imageUrl,
+                    contentDescription = "Profile photo",
+                    modifier = Modifier.size(size).clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
             } else {
                 AvatarPlaceholder(
@@ -302,11 +305,14 @@ fun SmallAvatar(
             ),
         contentAlignment = Alignment.Center
     ) {
+        AvatarPlaceholder(initials = initials, size = size)
         if (imageUrl != null && imageUrl.isNotBlank()) {
-            // TODO: Replace with actual image loading
-            AvatarPlaceholder(initials = initials, size = size)
-        } else {
-            AvatarPlaceholder(initials = initials, size = size)
+            NetworkImage(
+                url = imageUrl,
+                contentDescription = null,
+                modifier = Modifier.size(size).clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
         }
     }
 }
