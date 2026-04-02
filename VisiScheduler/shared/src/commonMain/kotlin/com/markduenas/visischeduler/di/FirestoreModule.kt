@@ -45,7 +45,8 @@ val firestoreModule = module {
     single<AuthRepository> {
         CommonFirestoreAuthRepository(
             auth = get(),
-            firestore = get()
+            firestore = get(),
+            biometricHandler = get()
         )
     }
 

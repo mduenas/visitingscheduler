@@ -5,6 +5,8 @@ import com.markduenas.visischeduler.domain.entities.Role
 import com.markduenas.visischeduler.domain.entities.User
 import com.markduenas.visischeduler.domain.repository.AuthRepository
 import com.markduenas.visischeduler.firebase.FirestoreDatabase
+import com.markduenas.visischeduler.platform.BiometricHandler
+import com.markduenas.visischeduler.platform.BiometricResult
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +20,8 @@ import kotlin.time.Clock
  */
 class CommonFirestoreAuthRepository(
     private val auth: FirebaseAuth,
-    private val firestore: FirestoreDatabase
+    private val firestore: FirestoreDatabase,
+    private val biometricHandler: BiometricHandler
 ) : AuthRepository {
 
     override val currentUser: Flow<User?>
@@ -46,9 +49,25 @@ class CommonFirestoreAuthRepository(
     }
 
     override suspend fun loginWithBiometric(): Result<User> = runCatching {
-        // Biometric login requires platform-specific implementation
-        // This is a placeholder that should be overridden per platform
-        throw UnsupportedOperationException("Biometric login not supported in common code")
+        if (!biometricHandler.isAvailable()) {
+            throw UnsupportedOperationException("Biometric authentication is not available on this device")
+        }
+        val result = biometricHandler.authenticate(
+            title = "Verify Identity",
+            subtitle = "Use biometrics to sign in",
+            negativeButtonText = "Cancel"
+        )
+        when (result) {
+            is BiometricResult.Success -> {
+                val uid = auth.currentUser?.uid
+                    ?: throw Exception("No active session — please log in with your password")
+                firestore.getUser(uid)?.toUser()
+                    ?: throw Exception("User profile not found")
+            }
+            is BiometricResult.Cancelled -> throw Exception("Biometric authentication cancelled")
+            is BiometricResult.NotAvailable -> throw UnsupportedOperationException("Biometric not available")
+            is BiometricResult.Error -> throw Exception(result.message)
+        }
     }
 
     override suspend fun register(
@@ -142,18 +161,26 @@ class CommonFirestoreAuthRepository(
         ))
     }
 
-    override suspend fun isBiometricAvailable(): Boolean {
-        // Platform-specific implementation required
-        return false
-    }
+    override suspend fun isBiometricAvailable(): Boolean = biometricHandler.isAvailable()
 
     override suspend fun enableBiometric(): Result<Unit> = runCatching {
-        throw UnsupportedOperationException("Biometric requires platform-specific implementation")
+        if (!biometricHandler.isAvailable()) {
+            throw UnsupportedOperationException("Biometric authentication is not available on this device")
+        }
+        val result = biometricHandler.authenticate(
+            title = "Enable Biometric Login",
+            subtitle = "Confirm your identity to enable biometric sign-in",
+            negativeButtonText = "Cancel"
+        )
+        when (result) {
+            is BiometricResult.Success -> Unit
+            is BiometricResult.Cancelled -> throw Exception("Biometric confirmation cancelled")
+            is BiometricResult.NotAvailable -> throw UnsupportedOperationException("Biometric not available")
+            is BiometricResult.Error -> throw Exception(result.message)
+        }
     }
 
-    override suspend fun disableBiometric(): Result<Unit> = runCatching {
-        throw UnsupportedOperationException("Biometric requires platform-specific implementation")
-    }
+    override suspend fun disableBiometric(): Result<Unit> = Result.success(Unit)
 
     override suspend fun verifyMfa(challengeId: String, code: String): Result<User> = runCatching {
         // MFA verification would require additional Firebase setup
