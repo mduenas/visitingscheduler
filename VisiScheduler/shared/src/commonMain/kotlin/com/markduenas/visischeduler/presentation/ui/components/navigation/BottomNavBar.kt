@@ -6,12 +6,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.automirrored.outlined.Message
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Inbox
-import androidx.compose.material.icons.outlined.Message
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -67,8 +67,8 @@ sealed class BottomNavDestination(
     data object Messages : BottomNavDestination(
         route = "messages",
         title = "Messages",
-        selectedIcon = Icons.Filled.Message,
-        unselectedIcon = Icons.Outlined.Message,
+        selectedIcon = Icons.AutoMirrored.Filled.Message,
+        unselectedIcon = Icons.AutoMirrored.Outlined.Message,
         contentDescription = "Messages"
     )
 

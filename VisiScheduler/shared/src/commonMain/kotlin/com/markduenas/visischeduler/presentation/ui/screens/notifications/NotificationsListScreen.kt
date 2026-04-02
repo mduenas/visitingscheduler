@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Announcement
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,7 +19,7 @@ import com.markduenas.visischeduler.domain.entities.Notification
 import com.markduenas.visischeduler.domain.entities.NotificationType
 import com.markduenas.visischeduler.presentation.state.NotificationFilter
 import com.markduenas.visischeduler.presentation.viewmodel.notifications.NotificationsViewModel
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -173,16 +175,12 @@ private fun NotificationListItem(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDismiss()
-                true
-            } else {
-                false
-            }
+    val dismissState = rememberSwipeToDismissBoxState()
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+            onDismiss()
         }
-    )
+    }
 
     SwipeToDismissBox(
         state = dismissState,
@@ -234,12 +232,12 @@ private fun NotificationListItem(
                         NotificationType.VISIT_CANCELLED -> Icons.Default.Block to MaterialTheme.colorScheme.error
                         NotificationType.VISIT_REMINDER -> Icons.Default.Alarm to MaterialTheme.colorScheme.tertiary
                         NotificationType.VISIT_REQUESTED -> Icons.Default.Schedule to MaterialTheme.colorScheme.secondary
-                        NotificationType.VISIT_CHECKED_IN -> Icons.Default.Login to MaterialTheme.colorScheme.primary
+                        NotificationType.VISIT_CHECKED_IN -> Icons.AutoMirrored.Filled.Login to MaterialTheme.colorScheme.primary
                         NotificationType.VISIT_COMPLETED -> Icons.Default.DoneAll to MaterialTheme.colorScheme.primary
                         NotificationType.SCHEDULE_CHANGE -> Icons.Default.Update to MaterialTheme.colorScheme.secondary
                         NotificationType.RESTRICTION_APPLIED -> Icons.Default.Gavel to MaterialTheme.colorScheme.error
                         NotificationType.ACCOUNT_STATUS -> Icons.Default.AccountCircle to MaterialTheme.colorScheme.primary
-                        NotificationType.SYSTEM_ANNOUNCEMENT -> Icons.Default.Announcement to MaterialTheme.colorScheme.onSurfaceVariant
+                        NotificationType.SYSTEM_ANNOUNCEMENT -> Icons.AutoMirrored.Filled.Announcement to MaterialTheme.colorScheme.onSurfaceVariant
                         NotificationType.APPROVAL_REQUEST -> Icons.Default.Pending to MaterialTheme.colorScheme.secondary
                         NotificationType.INFO -> Icons.Default.Info to MaterialTheme.colorScheme.onSurfaceVariant
                     }
@@ -311,7 +309,7 @@ private fun formatTimestamp(timestamp: Instant): String {
         diff.inWholeDays < 7 -> "${diff.inWholeDays}d ago"
         else -> {
             val date = timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
-            "${date.month.name.take(3)} ${date.dayOfMonth}"
+            "${date.month.name.take(3)} ${date.day}"
         }
     }
 }

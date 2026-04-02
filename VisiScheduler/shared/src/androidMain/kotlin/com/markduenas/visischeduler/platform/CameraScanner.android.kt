@@ -14,7 +14,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
@@ -57,15 +57,16 @@ actual fun CameraScanner(
                 .build()
             val scanner = BarcodeScanning.getClient(options)
 
-            val imageAnalyzer = ImageAnalysis.Builder()
+            @Suppress("DEPRECATION")
+            val imageAnalysisBuilder = ImageAnalysis.Builder()
                 .setTargetResolution(Size(1280, 720))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
-                .also { analysis ->
-                    analysis.setAnalyzer(cameraExecutor) { imageProxy ->
-                        processImageProxy(scanner, imageProxy, onQrCodeScanned, hasScanned)
-                    }
+            val imageAnalyzer = imageAnalysisBuilder.also { analysis ->
+                analysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                    processImageProxy(scanner, imageProxy, onQrCodeScanned, hasScanned)
                 }
+            }
 
             try {
                 cameraProvider.unbindAll()

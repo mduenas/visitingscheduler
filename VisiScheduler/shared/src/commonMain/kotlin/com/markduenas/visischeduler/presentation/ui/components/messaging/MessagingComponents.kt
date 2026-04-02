@@ -224,9 +224,9 @@ fun MessageBubble(
         Column(
             horizontalAlignment = if (isOwn) Alignment.End else Alignment.Start
         ) {
-            if (!isOwn && message.senderName != null) {
+            if (!isOwn) {
                 Text(
-                    text = message.senderName!!,
+                    text = message.senderName ?: "",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Medium,
@@ -604,7 +604,7 @@ private fun formatDate(date: LocalDate): String {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     )
-    return "${monthNames[date.monthNumber - 1]} ${date.dayOfMonth}"
+    return "${monthNames[date.month.ordinal]} ${date.day}"
 }
 
 private fun formatTime(instant: kotlin.time.Instant): String {

@@ -23,7 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.EventNote
+import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -209,7 +209,7 @@ fun getVisitorQuickActions(
 ): List<QuickAction> {
     return listOf(
         QuickAction(
-            icon = Icons.Default.EventNote,
+            icon = Icons.AutoMirrored.Filled.EventNote,
             label = "Request Visit",
             contentDescription = "Request a new visit",
             onClick = onRequestVisit,

@@ -1,6 +1,7 @@
 package com.markduenas.visischeduler.data.serialization
 
 import kotlin.time.Instant
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -28,6 +29,7 @@ object InstantSerializer : KSerializer<Instant> {
 /**
  * Nullable Instant serializer.
  */
+@OptIn(ExperimentalSerializationApi::class)
 object NullableInstantSerializer : KSerializer<Instant?> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("kotlin.time.Instant?", PrimitiveKind.STRING)

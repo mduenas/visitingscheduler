@@ -338,7 +338,7 @@ private fun formatDate(date: LocalDate): String {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     )
-    return "${monthNames[date.monthNumber - 1]} ${date.dayOfMonth}"
+    return "${monthNames[date.month.ordinal]} ${date.day}"
 }
 
 private fun formatTime(time: LocalTime): String {

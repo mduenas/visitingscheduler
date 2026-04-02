@@ -33,7 +33,7 @@ fun EditVisitScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     val monthDates = remember(uiState.selectedDate) {
-        generateMonthDates(uiState.selectedDate.year, uiState.selectedDate.monthNumber)
+        generateMonthDates(uiState.selectedDate.year, uiState.selectedDate.month.ordinal + 1)
     }
 
     var showConfirmation by remember { mutableStateOf(false) }

@@ -3,12 +3,12 @@ package com.markduenas.visischeduler.presentation.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.automirrored.outlined.Message
 import androidx.compose.material.icons.filled.Pending
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Message
 import androidx.compose.material.icons.outlined.Pending
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.runtime.Composable
@@ -111,8 +111,8 @@ sealed class MainTab(
      */
     data object Messages : MainTab(
         title = "Messages",
-        selectedIcon = Icons.Filled.Message,
-        unselectedIcon = Icons.Outlined.Message,
+        selectedIcon = Icons.AutoMirrored.Filled.Message,
+        unselectedIcon = Icons.AutoMirrored.Outlined.Message,
         route = "messages",
         tabIndex = 3u
     ) {

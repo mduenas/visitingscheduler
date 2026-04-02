@@ -9,7 +9,7 @@ import dev.gitlive.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 /**
  * Firestore implementation of notification repository logic.

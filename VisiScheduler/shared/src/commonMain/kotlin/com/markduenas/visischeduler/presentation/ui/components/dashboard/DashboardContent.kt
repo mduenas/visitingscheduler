@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -175,7 +176,7 @@ fun VisitorDashboardContent(
         if (upcomingVisits.isEmpty()) {
             EmptyStateCard(
                 message = "No upcoming visits scheduled",
-                icon = Icons.Default.EventNote,
+                icon = Icons.AutoMirrored.Filled.EventNote,
                 actionText = "Schedule a Visit",
                 onAction = onViewCalendarClick
             )

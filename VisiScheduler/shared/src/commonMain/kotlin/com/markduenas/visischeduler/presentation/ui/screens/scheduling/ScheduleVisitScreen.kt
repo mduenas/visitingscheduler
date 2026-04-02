@@ -43,7 +43,7 @@ fun ScheduleVisitScreen(
 
     // Generate month dates for calendar
     val monthDates = remember(uiState.selectedDate) {
-        generateMonthDates(uiState.selectedDate.year, uiState.selectedDate.monthNumber)
+        generateMonthDates(uiState.selectedDate.year, uiState.selectedDate.month.ordinal + 1)
     }
 
     var showConfirmation by remember { mutableStateOf(false) }

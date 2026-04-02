@@ -132,6 +132,7 @@ actual class SecureStorageImpl : SecureStorage {
         return (this as NSString).dataUsingEncoding(NSUTF8StringEncoding)
     }
 
+    @OptIn(kotlinx.cinterop.BetaInteropApi::class)
     private fun NSData.toKotlinString(): String? {
         return NSString.create(data = this, encoding = NSUTF8StringEncoding) as? String
     }

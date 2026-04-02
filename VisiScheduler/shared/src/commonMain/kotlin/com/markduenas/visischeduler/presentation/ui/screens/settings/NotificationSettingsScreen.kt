@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.FactCheck
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -101,7 +103,7 @@ fun NotificationSettingsScreen(
 
                 item {
                     NotificationToggleItem(
-                        icon = Icons.Default.FactCheck,
+                        icon = Icons.AutoMirrored.Filled.FactCheck,
                         title = "Visit Approvals",
                         subtitle = "Notify when a visit is approved or denied",
                         checked = uiState.approvalNotificationsEnabled,
@@ -180,7 +182,7 @@ fun NotificationSettingsScreen(
 
                 item {
                     NotificationToggleItem(
-                        icon = Icons.Default.VolumeUp,
+                        icon = Icons.AutoMirrored.Filled.VolumeUp,
                         title = "Notification Sound",
                         subtitle = "Play sound for notifications",
                         checked = uiState.soundEnabled,

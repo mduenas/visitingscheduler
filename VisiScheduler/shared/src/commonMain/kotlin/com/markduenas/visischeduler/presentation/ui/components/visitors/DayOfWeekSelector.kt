@@ -41,7 +41,6 @@ private fun DayOfWeek.shortName(): String {
         DayOfWeek.FRIDAY -> "F"
         DayOfWeek.SATURDAY -> "S"
         DayOfWeek.SUNDAY -> "S"
-        else -> ""
     }
 }
 
@@ -57,7 +56,6 @@ private fun DayOfWeek.fullName(): String {
         DayOfWeek.FRIDAY -> "Friday"
         DayOfWeek.SATURDAY -> "Saturday"
         DayOfWeek.SUNDAY -> "Sunday"
-        else -> ""
     }
 }
 
@@ -73,7 +71,6 @@ private fun DayOfWeek.abbreviation(): String {
         DayOfWeek.FRIDAY -> "Fr"
         DayOfWeek.SATURDAY -> "Sa"
         DayOfWeek.SUNDAY -> "Su"
-        else -> ""
     }
 }
 

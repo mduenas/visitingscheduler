@@ -36,6 +36,7 @@ actual fun CameraScanner(
         IosCameraScanner(onQrCodeScanned)
     }
 
+    @Suppress("DEPRECATION")
     UIKitView(
         factory = {
             scannerState.start()

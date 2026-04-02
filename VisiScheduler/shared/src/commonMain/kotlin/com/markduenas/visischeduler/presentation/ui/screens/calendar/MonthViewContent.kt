@@ -264,7 +264,7 @@ private fun MonthViewEmptyState(
 private fun formatSelectedDate(date: LocalDate): String {
     val dayOfWeek = date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
     val month = date.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
-    return "$dayOfWeek, $month ${date.dayOfMonth}"
+    return "$dayOfWeek, $month ${date.day}"
 }
 
 /**

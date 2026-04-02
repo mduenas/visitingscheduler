@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -232,7 +234,7 @@ fun CheckInButton(
                 Spacer(modifier = Modifier.width(8.dp))
             }
             Icon(
-                imageVector = Icons.Default.Login,
+                imageVector = Icons.AutoMirrored.Filled.Login,
                 contentDescription = null
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -422,7 +424,7 @@ fun CheckOutButton(
             Spacer(modifier = Modifier.width(8.dp))
         }
         Icon(
-            imageVector = Icons.Default.Logout,
+            imageVector = Icons.AutoMirrored.Filled.Logout,
             contentDescription = null
         )
         Spacer(modifier = Modifier.width(8.dp))

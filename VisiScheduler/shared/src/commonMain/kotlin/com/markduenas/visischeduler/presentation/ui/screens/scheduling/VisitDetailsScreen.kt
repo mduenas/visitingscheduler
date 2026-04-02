@@ -5,6 +5,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Launch
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -150,7 +152,7 @@ fun VisitDetailsScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
-                                    Icon(Icons.Default.Launch, contentDescription = null)
+                                    Icon(Icons.AutoMirrored.Filled.Launch, contentDescription = null)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("Join Call")
                                 }
@@ -263,7 +265,7 @@ private fun ActionButtons(
 
         if (uiState.canCheckOut) {
             Button(onClick = onCheckOut, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Default.ExitToApp, contentDescription = null)
+                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Check Out")
             }
@@ -371,7 +373,7 @@ private fun DenialDialog(
 
 // Helpers
 private fun formatDate(date: LocalDate): String {
-    return "${date.month} ${date.dayOfMonth}, ${date.year}"
+    return "${date.month} ${date.day}, ${date.year}"
 }
 
 private fun formatTime(time: LocalTime): String {

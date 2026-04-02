@@ -149,6 +149,9 @@ kotlin {
             // Activity Compose (rememberLauncherForActivityResult)
             implementation("androidx.activity:activity-compose:1.9.3")
 
+            // Lifecycle Compose (LocalLifecycleOwner)
+            implementation(libs.androidx.lifecycle.compose)
+
             // Image loading (Coil — Android; iOS uses NetworkImage stub until Coil 3)
             implementation(libs.coil.compose)
 

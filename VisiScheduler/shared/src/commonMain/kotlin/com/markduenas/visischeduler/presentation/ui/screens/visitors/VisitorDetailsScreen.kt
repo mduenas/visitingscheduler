@@ -393,7 +393,7 @@ fun VisitorDetailsScreen(
 
 // Helpers
 private fun formatDate(date: LocalDate): String {
-    return "${date.month} ${date.dayOfMonth}, ${date.year}"
+    return "${date.month} ${date.day}, ${date.year}"
 }
 
 private fun formatDate(instant: Instant): String {

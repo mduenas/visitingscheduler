@@ -65,7 +65,7 @@ fun RestrictionsScreen(
             ) {
                 // Filters
                 item {
-                    ScrollableTabRow(
+                    PrimaryScrollableTabRow(
                         selectedTabIndex = if (uiState.selectedType == null) 0 else RestrictionType.entries.indexOf(uiState.selectedType) + 1,
                         edgePadding = 0.dp,
                         containerColor = androidx.compose.ui.graphics.Color.Transparent,

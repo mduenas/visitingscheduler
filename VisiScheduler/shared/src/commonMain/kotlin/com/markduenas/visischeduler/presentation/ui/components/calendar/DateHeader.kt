@@ -266,5 +266,5 @@ private fun formatFullDate(date: LocalDate): String {
         Month.NOVEMBER -> "Nov"
         Month.DECEMBER -> "Dec"
     }
-    return "$dayOfWeek, $monthName ${date.dayOfMonth}, ${date.year}"
+    return "$dayOfWeek, $monthName ${date.day}, ${date.year}"
 }

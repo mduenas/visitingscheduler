@@ -321,8 +321,8 @@ private fun formatDateRange(start: LocalDate, end: LocalDate): String {
     val endMonth = end.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
 
     return if (start.month == end.month) {
-        "$startMonth ${start.dayOfMonth} - ${end.dayOfMonth}, ${start.year}"
+        "$startMonth ${start.day} - ${end.day}, ${start.year}"
     } else {
-        "$startMonth ${start.dayOfMonth} - $endMonth ${end.dayOfMonth}, ${start.year}"
+        "$startMonth ${start.day} - $endMonth ${end.day}, ${start.year}"
     }
 }

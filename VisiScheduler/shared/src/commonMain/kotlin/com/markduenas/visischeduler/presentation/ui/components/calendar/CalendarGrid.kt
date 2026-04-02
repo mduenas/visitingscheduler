@@ -147,7 +147,7 @@ private fun CalendarDayCell(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = date.dayOfMonth.toString(),
+                    text = date.day.toString(),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
                     color = when {
@@ -280,7 +280,7 @@ private fun WeekDayCell(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
-                    text = date.dayOfMonth.toString(),
+                    text = date.day.toString(),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
                     color = when {
