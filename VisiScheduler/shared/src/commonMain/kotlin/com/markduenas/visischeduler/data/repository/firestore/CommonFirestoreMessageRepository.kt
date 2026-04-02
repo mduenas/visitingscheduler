@@ -30,6 +30,9 @@ class CommonFirestoreMessageRepository(
     private val currentUserId: String?
         get() = auth.currentUser?.uid
 
+    // Cache messageId → conversationId so deleteMessage/editMessage can find the right path
+    private val messageConversationCache = mutableMapOf<String, String>()
+
     // ==================== Conversations ====================
 
     override fun getConversations(): Flow<List<Conversation>> {
@@ -193,7 +196,11 @@ class CommonFirestoreMessageRepository(
 
     override fun getMessages(conversationId: String): Flow<List<Message>> {
         return firestore.listenToMessages(conversationId)
-            .map { docs -> docs.mapNotNull { it.toMessage(conversationId) } }
+            .map { docs ->
+                docs.mapNotNull { it.toMessage(conversationId) }.also { messages ->
+                    messages.forEach { messageConversationCache[it.id] = conversationId }
+                }
+            }
     }
 
     override suspend fun getMessagesPaginated(
@@ -206,11 +213,21 @@ class CommonFirestoreMessageRepository(
             "conversationId",
             conversationId
         )
-        docs.mapNotNull { it.toMessage(conversationId) }.take(limit)
+        docs.mapNotNull { it.toMessage(conversationId) }.take(limit).also { messages ->
+            messages.forEach { messageConversationCache[it.id] = conversationId }
+        }
     }
 
     override suspend fun getMessageById(messageId: String): Result<Message> = runCatching {
-        throw UnsupportedOperationException("Need conversation ID to get message")
+        val conversationId = messageConversationCache[messageId]
+            ?: throw Exception("Message $messageId not in cache — load conversation messages first")
+        val docs = firestore.query(
+            "${FirestoreDatabase.COLLECTION_CONVERSATIONS}/$conversationId/${FirestoreDatabase.COLLECTION_MESSAGES}",
+            "id",
+            messageId
+        )
+        docs.firstOrNull()?.toMessage(conversationId)
+            ?: throw Exception("Message not found")
     }
 
     override suspend fun sendMessage(
@@ -260,11 +277,17 @@ class CommonFirestoreMessageRepository(
     }
 
     override suspend fun editMessage(messageId: String, newContent: String): Result<Message> = runCatching {
-        throw UnsupportedOperationException("Need conversation ID to edit message")
+        val conversationId = messageConversationCache[messageId]
+            ?: throw Exception("Message $messageId not in cache — load conversation messages first")
+        firestore.editMessage(conversationId, messageId, newContent)
+        getMessageById(messageId).getOrThrow()
     }
 
     override suspend fun deleteMessage(messageId: String): Result<Unit> = runCatching {
-        throw UnsupportedOperationException("Need conversation ID to delete message")
+        val conversationId = messageConversationCache[messageId]
+            ?: throw Exception("Message $messageId not in cache — load conversation messages first")
+        firestore.deleteMessage(conversationId, messageId)
+        messageConversationCache.remove(messageId)
     }
 
     override suspend fun markAsRead(conversationId: String): Result<Unit> = runCatching {

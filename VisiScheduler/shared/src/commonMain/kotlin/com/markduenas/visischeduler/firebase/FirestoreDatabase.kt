@@ -288,6 +288,25 @@ class FirestoreDatabase {
             .map { it.documents }
     }
 
+    suspend fun deleteMessage(conversationId: String, messageId: String) {
+        firestore.collection(COLLECTION_CONVERSATIONS)
+            .document(conversationId)
+            .collection(COLLECTION_MESSAGES)
+            .document(messageId)
+            .delete()
+    }
+
+    suspend fun editMessage(conversationId: String, messageId: String, newContent: String) {
+        firestore.collection(COLLECTION_CONVERSATIONS)
+            .document(conversationId)
+            .collection(COLLECTION_MESSAGES)
+            .document(messageId)
+            .update(mapOf(
+                "content" to newContent,
+                "editedAt" to serverTimestamp()
+            ))
+    }
+
     // ==================== Check-in Operations ====================
 
     suspend fun createCheckIn(data: Map<String, Any?>): String {
