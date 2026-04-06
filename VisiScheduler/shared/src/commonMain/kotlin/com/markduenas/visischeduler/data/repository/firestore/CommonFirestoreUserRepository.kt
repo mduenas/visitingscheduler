@@ -7,6 +7,8 @@ import com.markduenas.visischeduler.domain.repository.UserRepository
 import com.markduenas.visischeduler.firebase.FirestoreDatabase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.DocumentSnapshot
+import com.markduenas.visischeduler.platform.toStorageData
+import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -18,7 +20,8 @@ import kotlin.time.Clock
  */
 class CommonFirestoreUserRepository(
     private val firestore: FirestoreDatabase,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val storage: FirebaseStorage
 ) : UserRepository {
 
     private val currentUserId: String?
@@ -212,7 +215,13 @@ class CommonFirestoreUserRepository(
     }
 
     override suspend fun uploadProfileImage(imageData: ByteArray): Result<String> = runCatching {
-        throw UnsupportedOperationException("Profile image upload requires Firebase Storage integration")
+        val userId = currentUserId ?: throw Exception("Not authenticated")
+        val ref = storage.reference("profile_images/$userId.jpg")
+        ref.putData(imageData.toStorageData())
+        val downloadUrl = ref.getDownloadUrl()
+        // Persist the URL in the user's Firestore document
+        firestore.updateUser(userId, mapOf("photoUrl" to downloadUrl))
+        downloadUrl
     }
 
     override suspend fun deleteAccount(): Result<Unit> = runCatching {

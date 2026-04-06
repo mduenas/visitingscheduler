@@ -44,6 +44,9 @@ kotlin {
         pod("FirebaseAuth") {
             version = "~> 12.1"
         }
+        pod("FirebaseStorage") {
+            version = "~> 12.1"
+        }
     }
 
     // Add opt-in for experimental APIs
@@ -98,10 +101,11 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
 
-            // GitLive Firebase KMP SDK (cross-platform Firestore & Auth)
+            // GitLive Firebase KMP SDK (cross-platform Firestore, Auth & Storage)
             implementation(libs.gitlive.firebase.app)
             implementation(libs.gitlive.firebase.auth)
             implementation(libs.gitlive.firebase.firestore)
+            implementation(libs.gitlive.firebase.storage)
         }
 
         commonTest.dependencies {
@@ -138,6 +142,7 @@ kotlin {
             implementation("com.google.firebase:firebase-auth-ktx:23.2.0")
             implementation("com.google.firebase:firebase-analytics-ktx:22.4.0")
             implementation("com.google.firebase:firebase-crashlytics-ktx:19.4.2")
+            implementation("com.google.firebase:firebase-storage-ktx:21.0.1")
 
             // Security - EncryptedSharedPreferences
             implementation("androidx.security:security-crypto:1.1.0-alpha06")

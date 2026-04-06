@@ -163,6 +163,7 @@ firebase-storage = { module = "com.google.firebase:firebase-storage-ktx" }
 gitlive-firebase-app = { module = "dev.gitlive:firebase-app", version.ref = "gitlive-firebase" }
 gitlive-firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "gitlive-firebase" }
 gitlive-firebase-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = "gitlive-firebase" }
+gitlive-firebase-storage = { module = "dev.gitlive:firebase-storage", version.ref = "gitlive-firebase" }
 
 # AdMob
 admob-android = { module = "com.google.android.gms:play-services-ads", version.ref = "admob" }

@@ -21,6 +21,7 @@ import com.markduenas.visischeduler.domain.repository.VisitRepository
 import com.markduenas.visischeduler.firebase.FirestoreDatabase
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
+import dev.gitlive.firebase.storage.storage
 import org.koin.dsl.module
 
 /**
@@ -39,6 +40,8 @@ val firestoreModule = module {
 
     single { Firebase.auth }
 
+    single { Firebase.storage }
+
     // ==========================================
     // Authentication Repository
     // ==========================================
@@ -56,7 +59,8 @@ val firestoreModule = module {
     single<UserRepository> {
         CommonFirestoreUserRepository(
             firestore = get(),
-            auth = get()
+            auth = get(),
+            storage = get()
         )
     }
 
