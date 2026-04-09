@@ -44,9 +44,9 @@ kotlin {
         pod("FirebaseAuth") {
             version = "~> 12.1"
         }
-        pod("FirebaseStorage") {
-            version = "~> 12.1"
-        }
+        // Note: FirebaseStorage pod is NOT declared here — the GitLive
+        // firebase-storage SDK bundles its own cinterop for FirebaseStorage.
+        // Adding it explicitly causes duplicate symbol errors at link time.
     }
 
     // Add opt-in for experimental APIs
