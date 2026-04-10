@@ -118,4 +118,14 @@ interface UserRepository {
      * Sync user data from remote server.
      */
     suspend fun syncUser(): Result<User>
+
+    /**
+     * Enable MFA for the current user's account using the given email for code delivery.
+     */
+    suspend fun enableMfa(email: String): Result<Unit>
+
+    /**
+     * Disable MFA for the current user's account.
+     */
+    suspend fun disableMfa(): Result<Unit>
 }

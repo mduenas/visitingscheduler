@@ -4,6 +4,14 @@ import com.markduenas.visischeduler.domain.entities.User
 import com.markduenas.visischeduler.domain.repository.AuthRepository
 
 /**
+ * Represents the two possible outcomes of a successful login attempt.
+ */
+sealed class LoginResult {
+    data class Success(val user: User) : LoginResult()
+    data class MfaRequired(val challengeId: String, val maskedEmail: String) : LoginResult()
+}
+
+/**
  * Use case for user login operations.
  */
 class LoginUseCase(
@@ -11,11 +19,10 @@ class LoginUseCase(
 ) {
     /**
      * Login with email and password.
-     * @param email User's email address
-     * @param password User's password
-     * @return Result containing the authenticated User or an error
+     * Returns [LoginResult.MfaRequired] when the user has MFA enabled and a challenge has been sent.
+     * Returns [LoginResult.Success] when authentication is complete.
      */
-    suspend operator fun invoke(email: String, password: String): Result<User> {
+    suspend operator fun invoke(email: String, password: String): Result<LoginResult> {
         val trimmedEmail = email.trim()
 
         // Validate input
@@ -32,7 +39,20 @@ class LoginUseCase(
             return Result.failure(LoginException.InvalidPassword("Password must be at least 8 characters"))
         }
 
-        return authRepository.login(trimmedEmail.lowercase(), password)
+        val loginResult = authRepository.login(trimmedEmail.lowercase(), password)
+        return loginResult.map { user ->
+            if (user.mfaEnabled) {
+                val challengeResult = authRepository.loginWithMfaChallenge(user.id, user.mfaEmail ?: user.email)
+                challengeResult.fold(
+                    onSuccess = { challengeId ->
+                        LoginResult.MfaRequired(challengeId, user.mfaEmail ?: user.email)
+                    },
+                    onFailure = { throw it }
+                )
+            } else {
+                LoginResult.Success(user)
+            }
+        }
     }
 
     /**

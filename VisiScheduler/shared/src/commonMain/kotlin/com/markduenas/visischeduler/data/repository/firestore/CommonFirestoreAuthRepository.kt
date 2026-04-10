@@ -1,5 +1,6 @@
 package com.markduenas.visischeduler.data.repository.firestore
 
+import com.markduenas.visischeduler.domain.entities.DeviceSession
 import com.markduenas.visischeduler.domain.entities.NotificationPreferences
 import com.markduenas.visischeduler.domain.entities.Role
 import com.markduenas.visischeduler.domain.entities.User
@@ -7,12 +8,17 @@ import com.markduenas.visischeduler.domain.repository.AuthRepository
 import com.markduenas.visischeduler.firebase.FirestoreDatabase
 import com.markduenas.visischeduler.platform.BiometricHandler
 import com.markduenas.visischeduler.platform.BiometricResult
+import com.markduenas.visischeduler.platform.DeviceInfo
+import com.markduenas.visischeduler.platform.SecureStorage
+import com.markduenas.visischeduler.platform.SecureStorageKeys
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Instant
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
+import kotlin.uuid.Uuid
 
 /**
  * Cross-platform Firebase Auth implementation of AuthRepository.
@@ -21,7 +27,9 @@ import kotlin.time.Clock
 class CommonFirestoreAuthRepository(
     private val auth: FirebaseAuth,
     private val firestore: FirestoreDatabase,
-    private val biometricHandler: BiometricHandler
+    private val biometricHandler: BiometricHandler,
+    private val secureStorage: SecureStorage,
+    private val deviceInfo: DeviceInfo
 ) : AuthRepository {
 
     override val currentUser: Flow<User?>
@@ -43,6 +51,9 @@ class CommonFirestoreAuthRepository(
         firestore.updateUser(uid, mapOf(
             "lastLoginAt" to firestore.serverTimestamp()
         ))
+
+        // Register/update device session
+        upsertSessionForCurrentDevice(uid)
 
         firestore.getUser(uid)?.toUser()
             ?: throw Exception("User profile not found")
@@ -182,24 +193,155 @@ class CommonFirestoreAuthRepository(
 
     override suspend fun disableBiometric(): Result<Unit> = Result.success(Unit)
 
-    override suspend fun verifyMfa(challengeId: String, code: String): Result<User> = runCatching {
-        // MFA verification would require additional Firebase setup
-        throw UnsupportedOperationException("MFA not yet implemented")
+    override suspend fun loginWithMfaChallenge(userId: String, email: String): Result<String> = runCatching {
+        createAndSendMfaChallenge(userId, email)
     }
 
-    override suspend fun resendMfaCode(challengeId: String): Result<Unit> = runCatching {
-        throw UnsupportedOperationException("MFA not yet implemented")
+    override suspend fun verifyMfa(challengeId: String, code: String): Result<User> = runCatching {
+        val userId = validateAndConsumeChallenge(challengeId, code)
+        firestore.getUser(userId)?.toUser()
+            ?: throw Exception("User profile not found after MFA verification")
+    }
+
+    override suspend fun resendMfaCode(challengeId: String): Result<String> = runCatching {
+        val challenge = firestore.getMfaChallenge(challengeId)
+            ?: throw Exception("Challenge not found")
+        val userId = challenge.get<String>("userId") ?: throw Exception("Invalid challenge data")
+        val destination = challenge.get<String>("destination") ?: throw Exception("Invalid challenge data")
+        firestore.markMfaChallengeUsed(challengeId)
+        createAndSendMfaChallenge(userId, destination)
     }
 
     override suspend fun setupMfa(
         method: com.markduenas.visischeduler.presentation.viewmodel.auth.MfaMethod,
         destination: String
     ): Result<String> = runCatching {
-        throw UnsupportedOperationException("MFA setup not yet implemented")
+        if (method != com.markduenas.visischeduler.presentation.viewmodel.auth.MfaMethod.EMAIL) {
+            throw UnsupportedOperationException("Only email MFA is currently supported")
+        }
+        val uid = auth.currentUser?.uid ?: throw Exception("Not authenticated")
+        createAndSendMfaChallenge(uid, destination)
     }
 
     override suspend fun confirmMfaSetup(challengeId: String, code: String): Result<Unit> = runCatching {
-        throw UnsupportedOperationException("MFA setup not yet implemented")
+        val userId = validateAndConsumeChallenge(challengeId, code)
+        val challenge = firestore.getMfaChallenge(challengeId)
+        val destination = challenge?.get<String>("destination") ?: return@runCatching
+        firestore.updateUser(userId, mapOf(
+            "mfaEnabled" to true,
+            "mfaEmail" to destination,
+            "updatedAt" to firestore.serverTimestamp()
+        ))
+    }
+
+    // ==================== Session Management ====================
+
+    override suspend fun getActiveSessions(): Result<List<DeviceSession>> = runCatching {
+        val uid = auth.currentUser?.uid ?: throw Exception("Not authenticated")
+        val currentDeviceId = getOrCreateDeviceId()
+        firestore.getActiveSessions(uid).mapNotNull { doc ->
+            doc.toDeviceSession(currentDeviceId)
+        }
+    }
+
+    override suspend fun revokeSession(deviceId: String): Result<Unit> = runCatching {
+        val uid = auth.currentUser?.uid ?: throw Exception("Not authenticated")
+        firestore.revokeSession(uid, deviceId)
+        if (deviceId == getOrCreateDeviceId()) {
+            auth.signOut()
+        }
+    }
+
+    override suspend fun revokeAllSessions(): Result<Unit> = runCatching {
+        val uid = auth.currentUser?.uid ?: throw Exception("Not authenticated")
+        firestore.revokeAllSessions(uid)
+        auth.signOut()
+    }
+
+    override suspend fun updateCurrentSessionActivity(): Result<Unit> = runCatching {
+        val uid = auth.currentUser?.uid ?: return@runCatching
+        val deviceId = getOrCreateDeviceId()
+        firestore.upsertSession(uid, deviceId, mapOf(
+            "lastActiveAt" to firestore.serverTimestamp()
+        ))
+    }
+
+    // ==================== Session Helpers ====================
+
+    private fun getOrCreateDeviceId(): String {
+        return secureStorage.getString(SecureStorageKeys.DEVICE_ID) ?: run {
+            @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+            val newId = Uuid.random().toString()
+            secureStorage.putString(SecureStorageKeys.DEVICE_ID, newId)
+            newId
+        }
+    }
+
+    private suspend fun upsertSessionForCurrentDevice(userId: String) {
+        val deviceId = getOrCreateDeviceId()
+        firestore.upsertSession(userId, deviceId, mapOf(
+            "deviceId" to deviceId,
+            "deviceName" to deviceInfo.deviceName,
+            "deviceType" to deviceInfo.deviceType,
+            "userId" to userId,
+            "createdAt" to Clock.System.now().toEpochMilliseconds(),
+            "lastActiveAt" to firestore.serverTimestamp(),
+            "isRevoked" to false
+        ))
+    }
+
+    private fun DocumentSnapshot.toDeviceSession(currentDeviceId: String): DeviceSession? {
+        return try {
+            DeviceSession(
+                deviceId = id,
+                deviceName = get("deviceName") ?: "Unknown Device",
+                deviceType = get("deviceType") ?: "Unknown",
+                userId = get("userId") ?: return null,
+                createdAt = get<Long?>("createdAt")?.let { Instant.fromEpochMilliseconds(it) }
+                    ?: Instant.fromEpochMilliseconds(0),
+                lastActiveAt = get<Long?>("lastActiveAt")?.let { Instant.fromEpochMilliseconds(it) }
+                    ?: Instant.fromEpochMilliseconds(0),
+                isRevoked = get("isRevoked") ?: false,
+                isCurrent = id == currentDeviceId
+            )
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Generates a 6-digit OTP, stores it in Firestore with a 10-minute TTL, and emails it.
+     * Returns the new challenge document ID.
+     */
+    private suspend fun createAndSendMfaChallenge(userId: String, email: String): String {
+        val code = (100000..999999).random().toString()
+        val expiresAt = Clock.System.now().plus(10.minutes).toEpochMilliseconds()
+        val challengeId = firestore.createMfaChallenge(mapOf(
+            "userId" to userId,
+            "code" to code,
+            "method" to "EMAIL",
+            "destination" to email,
+            "expiresAt" to expiresAt,
+            "used" to false
+        ))
+        firestore.sendMfaEmail(email, code)
+        return challengeId
+    }
+
+    /**
+     * Validates the OTP against the stored challenge, marks it used, and returns the userId.
+     */
+    private suspend fun validateAndConsumeChallenge(challengeId: String, code: String): String {
+        val challenge = firestore.getMfaChallenge(challengeId)
+            ?: throw Exception("Verification code not found or expired")
+        val used = challenge.get<Boolean>("used") ?: false
+        if (used) throw Exception("This code has already been used")
+        val expiresAt = challenge.get<Long>("expiresAt") ?: 0L
+        if (Clock.System.now().toEpochMilliseconds() > expiresAt) throw Exception("Verification code has expired")
+        val storedCode = challenge.get<String>("code") ?: throw Exception("Invalid challenge data")
+        if (storedCode != code) throw Exception("Incorrect verification code")
+        firestore.markMfaChallengeUsed(challengeId)
+        return challenge.get("userId") ?: throw Exception("Invalid challenge data")
     }
 
     // ==================== Mapping Functions ====================
@@ -234,7 +376,9 @@ class CommonFirestoreAuthRepository(
                         approvalNotifications = it["approvalNotifications"] as? Boolean ?: true,
                         scheduleChanges = it["scheduleChanges"] as? Boolean ?: true
                     )
-                } ?: NotificationPreferences()
+                } ?: NotificationPreferences(),
+                mfaEnabled = get("mfaEnabled") ?: false,
+                mfaEmail = get("mfaEmail")
             )
         } catch (e: Exception) {
             null

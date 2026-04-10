@@ -54,3 +54,11 @@ interface SecureStorage {
  * Expect declaration for platform-specific secure storage implementation.
  */
 expect class SecureStorageImpl : SecureStorage
+
+/**
+ * Well-known keys for secure storage.
+ */
+object SecureStorageKeys {
+    /** Persistent device identifier, generated once on first app launch. */
+    const val DEVICE_ID = "device_id"
+}

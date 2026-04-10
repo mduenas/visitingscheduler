@@ -106,6 +106,10 @@ kotlin {
             implementation(libs.gitlive.firebase.auth)
             implementation(libs.gitlive.firebase.firestore)
             implementation(libs.gitlive.firebase.storage)
+
+            // Image loading (Coil 3 — multiplatform, works on both Android and iOS)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
         }
 
         commonTest.dependencies {
@@ -156,9 +160,6 @@ kotlin {
 
             // Lifecycle Compose (LocalLifecycleOwner)
             implementation(libs.androidx.lifecycle.compose)
-
-            // Image loading (Coil — Android; iOS uses NetworkImage stub until Coil 3)
-            implementation(libs.coil.compose)
 
             // Google Ads (AdMob)
             implementation("com.google.android.gms:play-services-ads:23.6.0")

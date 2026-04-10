@@ -34,6 +34,11 @@ class FirestoreDatabase {
         // Subcollection names
         const val SUBCOLLECTION_VISITORS = "visitors"
         const val SUBCOLLECTION_COORDINATORS = "coordinators"
+        const val SUBCOLLECTION_SESSIONS = "sessions"
+
+        // Top-level collections for platform features
+        const val COLLECTION_MFA_CHALLENGES = "mfa_challenges"
+        const val COLLECTION_MAIL = "mail"
     }
 
     // ==================== Generic CRUD Operations ====================
@@ -408,6 +413,73 @@ class FirestoreDatabase {
             .where { "isAvailable" equalTo true }
             .snapshots
             .map { it.documents }
+    }
+
+    // ==================== MFA Operations ====================
+
+    suspend fun createMfaChallenge(data: Map<String, Any?>): String {
+        return createFromMap(COLLECTION_MFA_CHALLENGES, data)
+    }
+
+    suspend fun getMfaChallenge(challengeId: String): DocumentSnapshot? {
+        return getById(COLLECTION_MFA_CHALLENGES, challengeId)
+    }
+
+    suspend fun markMfaChallengeUsed(challengeId: String) {
+        update(COLLECTION_MFA_CHALLENGES, challengeId, mapOf("used" to true))
+    }
+
+    /**
+     * Queues an email for delivery via the Firebase Trigger Email extension.
+     * The extension must be installed and configured to watch the `mail` collection.
+     */
+    suspend fun sendMfaEmail(to: String, code: String) {
+        createFromMap(COLLECTION_MAIL, mapOf(
+            "to" to to,
+            "message" to mapOf(
+                "subject" to "Your KindVisit verification code",
+                "text" to "Your verification code is: $code\n\nThis code expires in 10 minutes. Do not share it with anyone."
+            )
+        ))
+    }
+
+    // ==================== Session Operations ====================
+
+    suspend fun upsertSession(userId: String, deviceId: String, data: Map<String, Any?>) {
+        val filteredData = data.filterValues { it != null }
+        firestore.collection(COLLECTION_USERS)
+            .document(userId)
+            .collection(SUBCOLLECTION_SESSIONS)
+            .document(deviceId)
+            .set(filteredData, merge = true)
+    }
+
+    suspend fun getActiveSessions(userId: String): List<DocumentSnapshot> {
+        return firestore.collection(COLLECTION_USERS)
+            .document(userId)
+            .collection(SUBCOLLECTION_SESSIONS)
+            .where { "isRevoked" equalTo false }
+            .get()
+            .documents
+    }
+
+    suspend fun revokeSession(userId: String, deviceId: String) {
+        firestore.collection(COLLECTION_USERS)
+            .document(userId)
+            .collection(SUBCOLLECTION_SESSIONS)
+            .document(deviceId)
+            .update(mapOf("isRevoked" to true))
+    }
+
+    suspend fun revokeAllSessions(userId: String) {
+        val allSessions = firestore.collection(COLLECTION_USERS)
+            .document(userId)
+            .collection(SUBCOLLECTION_SESSIONS)
+            .get()
+            .documents
+        allSessions.forEach { doc ->
+            revokeSession(userId, doc.id)
+        }
     }
 
     // ==================== Utility ====================

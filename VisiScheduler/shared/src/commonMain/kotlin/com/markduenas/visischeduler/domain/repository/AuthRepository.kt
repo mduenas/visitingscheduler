@@ -1,5 +1,6 @@
 package com.markduenas.visischeduler.domain.repository
 
+import com.markduenas.visischeduler.domain.entities.DeviceSession
 import com.markduenas.visischeduler.domain.entities.User
 import kotlinx.coroutines.flow.Flow
 
@@ -111,11 +112,11 @@ interface AuthRepository {
     suspend fun verifyMfa(challengeId: String, code: String): Result<User>
 
     /**
-     * Resend MFA code.
-     * @param challengeId The MFA challenge ID
-     * @return Result indicating success or failure
+     * Resend MFA code and return the new challenge ID.
+     * @param challengeId The current MFA challenge ID
+     * @return Result containing the new challenge ID
      */
-    suspend fun resendMfaCode(challengeId: String): Result<Unit>
+    suspend fun resendMfaCode(challengeId: String): Result<String>
 
     /**
      * Start MFA setup flow.
@@ -132,4 +133,24 @@ interface AuthRepository {
      * @return Result indicating success or failure
      */
     suspend fun confirmMfaSetup(challengeId: String, code: String): Result<Unit>
+
+    /**
+     * Create an MFA challenge for the given user after successful password authentication.
+     * Sends a verification code to the user's MFA email and returns the challenge ID.
+     */
+    suspend fun loginWithMfaChallenge(userId: String, email: String): Result<String>
+
+    // ==================== Session Management ====================
+
+    /** Returns all active (non-revoked) sessions for the current user. */
+    suspend fun getActiveSessions(): Result<List<DeviceSession>>
+
+    /** Revokes a specific session by device ID. Revokes own session = logout. */
+    suspend fun revokeSession(deviceId: String): Result<Unit>
+
+    /** Revokes all sessions and signs out the current device. */
+    suspend fun revokeAllSessions(): Result<Unit>
+
+    /** Updates the lastActiveAt timestamp for the current device's session. */
+    suspend fun updateCurrentSessionActivity(): Result<Unit>
 }

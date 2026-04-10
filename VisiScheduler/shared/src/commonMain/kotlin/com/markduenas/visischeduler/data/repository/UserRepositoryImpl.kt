@@ -184,6 +184,12 @@ class UserRepositoryImpl(
         }
     }
 
+    override suspend fun enableMfa(email: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("MFA not supported by REST backend"))
+
+    override suspend fun disableMfa(): Result<Unit> =
+        Result.failure(UnsupportedOperationException("MFA not supported by REST backend"))
+
     private fun cacheUser(user: User) {
         database.visiSchedulerQueries.insertUser(
             id = user.id,

@@ -115,6 +115,7 @@ sealed class AppScreen : Screen {
         @Composable override fun Content() {
             val navigator = LocalNavigator.currentOrThrow
             val viewModel: LoginViewModel = koinInject()
+            HandleEvents(viewModel, navigator)
             LoginScreen(
                 viewModel = viewModel,
                 onLoginSuccess = { navigator.replaceAll(Dashboard) },
@@ -672,6 +673,7 @@ private fun HandleEvents(viewModel: BaseViewModel<*>, navigator: Navigator) {
                         route == "settings" -> navigator.push(AppScreen.Settings)
                         route == "notification_settings" -> navigator.push(AppScreen.NotificationSettings)
                         route == "security_settings" -> navigator.push(AppScreen.SecuritySettings)
+                        route.startsWith("mfa/") -> navigator.push(AppScreen.Mfa(route.substringAfter("mfa/")))
                         route == "mfa_setup" -> navigator.push(AppScreen.MfaSetup)
                         route == "change_password" || route == "settings/security/change-password" -> navigator.push(AppScreen.ChangePassword)
                         route == "add_beneficiary" -> navigator.push(AppScreen.AddBeneficiary())

@@ -1,6 +1,7 @@
 package com.markduenas.visischeduler.presentation.viewmodel.settings
 
 import com.markduenas.visischeduler.common.error.AppException
+import com.markduenas.visischeduler.domain.entities.DeviceSession
 import com.markduenas.visischeduler.domain.repository.AuthRepository
 import com.markduenas.visischeduler.domain.repository.UserRepository
 import com.markduenas.visischeduler.platform.SecureStorage
@@ -128,26 +129,32 @@ class SecuritySettingsViewModel(
     }
 
     /**
-     * Load active sessions for current user.
+     * Load active sessions from Firestore.
      */
     private fun loadActiveSessions() {
-        // TODO: Implement when session management API is available
-        // For now, show a mock current session
-        updateState {
-            copy(
-                activeSessions = listOf(
-                    ActiveSession(
-                        id = "current",
-                        deviceName = "Current Device",
-                        deviceType = "Mobile",
-                        location = null,
-                        lastActive = "Now",
-                        isCurrent = true
-                    )
-                )
+        launchSafe {
+            authRepository.getActiveSessions().fold(
+                onSuccess = { sessions ->
+                    updateState {
+                        copy(activeSessions = sessions.map { it.toUiModel() })
+                    }
+                },
+                onFailure = {
+                    // Non-fatal: show empty list on failure
+                    updateState { copy(activeSessions = emptyList()) }
+                }
             )
         }
     }
+
+    private fun DeviceSession.toUiModel() = ActiveSession(
+        id = deviceId,
+        deviceName = deviceName,
+        deviceType = deviceType,
+        location = null,
+        lastActive = lastActiveAt.toString().take(16).replace('T', ' '),
+        isCurrent = isCurrent
+    )
 
     /**
      * Toggle biometric authentication.
@@ -197,10 +204,12 @@ class SecuritySettingsViewModel(
             updateState { copy(mfaSetupInProgress = true) }
             navigate("mfa_setup")
         } else {
-            // Disable MFA
-            secureStorage.putBoolean(KEY_MFA_ENABLED, false)
-            updateState { copy(mfaEnabled = false) }
-            showSnackbar("Two-factor authentication disabled")
+            launchSafe {
+                userRepository.disableMfa()
+                secureStorage.putBoolean(KEY_MFA_ENABLED, false)
+                updateState { copy(mfaEnabled = false) }
+                showSnackbar("Two-factor authentication disabled")
+            }
         }
     }
 
@@ -311,32 +320,34 @@ class SecuritySettingsViewModel(
     }
 
     /**
-     * Revoke a session.
-     * For the current session this performs a full logout. Other sessions are removed
-     * from local state (server-side revocation requires Firebase Admin SDK).
+     * Revoke a session by device ID. Revoking own session performs a full logout.
+     * Revoking another session marks it revoked in Firestore — that device will be
+     * forced to login on its next foreground activity check.
      */
     fun revokeSession(sessionId: String) {
-        val session = currentState.activeSessions.find { it.id == sessionId } ?: return
-        if (session.isCurrent) {
-            launchSafe {
-                authRepository.logout()
-                navigate("login")
-            }
-        } else {
-            updateState { copy(activeSessions = activeSessions.filter { it.id != sessionId }) }
-            showSnackbar("Session revoked")
+        launchSafe {
+            authRepository.revokeSession(sessionId).fold(
+                onSuccess = {
+                    val isOwnSession = currentState.activeSessions.find { it.id == sessionId }?.isCurrent == true
+                    if (isOwnSession) {
+                        navigate("login")
+                    } else {
+                        updateState { copy(activeSessions = activeSessions.filter { it.id != sessionId }) }
+                        showSnackbar("Session revoked")
+                    }
+                },
+                onFailure = { showSnackbar("Failed to revoke session") }
+            )
         }
     }
 
     /**
-     * Logout from all devices by signing out of Firebase Auth.
-     * This invalidates the current device token; other device sessions will
-     * expire on their next token refresh.
+     * Revoke all sessions and sign out from all devices.
      */
     fun logoutAllDevices() {
         launchSafe {
             updateState { copy(isLoading = true) }
-            authRepository.logout().fold(
+            authRepository.revokeAllSessions().fold(
                 onSuccess = { navigate("login") },
                 onFailure = {
                     updateState { copy(isLoading = false) }

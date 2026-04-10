@@ -19,6 +19,8 @@ import com.markduenas.visischeduler.domain.repository.TimeSlotRepository
 import com.markduenas.visischeduler.domain.repository.UserRepository
 import com.markduenas.visischeduler.domain.repository.VisitRepository
 import com.markduenas.visischeduler.firebase.FirestoreDatabase
+import com.markduenas.visischeduler.platform.SessionMonitor
+import com.markduenas.visischeduler.platform.getDeviceInfo
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.storage.storage
@@ -49,9 +51,13 @@ val firestoreModule = module {
         CommonFirestoreAuthRepository(
             auth = get(),
             firestore = get(),
-            biometricHandler = get()
+            biometricHandler = get(),
+            secureStorage = get(),
+            deviceInfo = getDeviceInfo()
         )
     }
+
+    single { SessionMonitor(get()) }
 
     // ==========================================
     // User Repository

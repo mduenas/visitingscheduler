@@ -130,9 +130,10 @@ class MfaViewModel(
         viewModelScope.launch {
             val result = authRepository.resendMfaCode(currentState.challengeId)
             result.fold(
-                onSuccess = {
+                onSuccess = { newChallengeId ->
                     _mfaState.value = _mfaState.value.copy(
                         isLoading = false,
+                        challengeId = newChallengeId,
                         code = "",
                         attemptsRemaining = 3
                     )

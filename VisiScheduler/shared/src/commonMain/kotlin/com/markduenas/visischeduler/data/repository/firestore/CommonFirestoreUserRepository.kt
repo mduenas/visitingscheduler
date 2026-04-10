@@ -242,6 +242,24 @@ class CommonFirestoreUserRepository(
             ?: throw Exception("User not found")
     }
 
+    override suspend fun enableMfa(email: String): Result<Unit> = runCatching {
+        val userId = currentUserId ?: throw Exception("Not authenticated")
+        firestore.updateUser(userId, mapOf(
+            "mfaEnabled" to true,
+            "mfaEmail" to email,
+            "updatedAt" to firestore.serverTimestamp()
+        ))
+    }
+
+    override suspend fun disableMfa(): Result<Unit> = runCatching {
+        val userId = currentUserId ?: throw Exception("Not authenticated")
+        firestore.updateUser(userId, mapOf(
+            "mfaEnabled" to false,
+            "mfaEmail" to null,
+            "updatedAt" to firestore.serverTimestamp()
+        ))
+    }
+
     // ==================== Mapping Functions ====================
 
     private fun DocumentSnapshot.toUser(): User? {
@@ -265,7 +283,9 @@ class CommonFirestoreUserRepository(
                 updatedAt = get<Long?>("updatedAt")?.let { Instant.fromEpochMilliseconds(it) } ?: now,
                 lastLoginAt = get<Long?>("lastLoginAt")?.let { Instant.fromEpochMilliseconds(it) },
                 associatedBeneficiaryIds = get("associatedBeneficiaryIds") ?: emptyList(),
-                notificationPreferences = parseNotificationPreferences(this)
+                notificationPreferences = parseNotificationPreferences(this),
+                mfaEnabled = get("mfaEnabled") ?: false,
+                mfaEmail = get("mfaEmail")
             )
         } catch (e: Exception) {
             null

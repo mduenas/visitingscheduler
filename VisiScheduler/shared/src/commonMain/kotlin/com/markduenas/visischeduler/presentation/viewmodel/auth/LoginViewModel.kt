@@ -3,6 +3,7 @@ package com.markduenas.visischeduler.presentation.viewmodel.auth
 import com.markduenas.visischeduler.domain.entities.User
 import com.markduenas.visischeduler.domain.repository.AuthRepository
 import com.markduenas.visischeduler.domain.usecase.LoginException
+import com.markduenas.visischeduler.domain.usecase.LoginResult
 import com.markduenas.visischeduler.domain.usecase.LoginUseCase
 import com.markduenas.visischeduler.presentation.viewmodel.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -119,13 +120,29 @@ class LoginViewModel(
             val result = loginUseCase(currentState.email, currentState.password)
 
             result.fold(
-                onSuccess = { user ->
-                    _loginState.value = _loginState.value.copy(
-                        isLoading = false,
-                        loginSuccess = true,
-                        user = user
-                    )
-                    showSnackbar("Welcome back, ${user.firstName}!")
+                onSuccess = { loginResult ->
+                    when (loginResult) {
+                        is LoginResult.Success -> {
+                            _loginState.value = _loginState.value.copy(
+                                isLoading = false,
+                                loginSuccess = true,
+                                user = loginResult.user
+                            )
+                            showSnackbar("Welcome back, ${loginResult.user.firstName}!")
+                        }
+                        is LoginResult.MfaRequired -> {
+                            _loginState.value = _loginState.value.copy(
+                                isLoading = false,
+                                requiresMfa = true,
+                                mfaChallenge = MfaChallenge(
+                                    challengeId = loginResult.challengeId,
+                                    method = MfaMethod.EMAIL,
+                                    maskedDestination = loginResult.maskedEmail
+                                )
+                            )
+                            navigate("mfa/${loginResult.challengeId}")
+                        }
+                    }
                 },
                 onFailure = { exception ->
                     handleLoginError(exception)
@@ -163,7 +180,7 @@ class LoginViewModel(
     }
 
     /**
-     * Verify MFA code.
+     * Verify MFA code entered by the user on the MFA screen.
      */
     fun verifyMfaCode(code: String) {
         val challenge = _loginState.value.mfaChallenge ?: return
@@ -174,13 +191,22 @@ class LoginViewModel(
         )
 
         viewModelScope.launch {
-            // In a real implementation, this would call the auth repository
-            // authRepository.verifyMfa(challenge.challengeId, code)
-            // For now, we'll simulate the MFA flow
-            _loginState.value = _loginState.value.copy(
-                isLoading = false,
-                requiresMfa = false,
-                mfaChallenge = null
+            authRepository.verifyMfa(challenge.challengeId, code).fold(
+                onSuccess = { user ->
+                    _loginState.value = _loginState.value.copy(
+                        isLoading = false,
+                        requiresMfa = false,
+                        mfaChallenge = null,
+                        loginSuccess = true,
+                        user = user
+                    )
+                },
+                onFailure = { exception ->
+                    _loginState.value = _loginState.value.copy(
+                        isLoading = false,
+                        generalError = exception.message ?: "Verification failed"
+                    )
+                }
             )
         }
     }

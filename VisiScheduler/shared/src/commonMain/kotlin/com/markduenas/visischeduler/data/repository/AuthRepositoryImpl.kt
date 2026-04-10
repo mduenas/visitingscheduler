@@ -242,14 +242,29 @@ class AuthRepositoryImpl(
         }
     }
 
-    override suspend fun resendMfaCode(challengeId: String): Result<Unit> {
+    override suspend fun resendMfaCode(challengeId: String): Result<String> {
         return try {
             api.resendMfaCode(challengeId)
-            Result.success(Unit)
+            // REST backend generates a new challenge ID; return the same for now
+            Result.success(challengeId)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
+    override suspend fun loginWithMfaChallenge(userId: String, email: String): Result<String> {
+        return Result.failure(UnsupportedOperationException("loginWithMfaChallenge not supported by REST backend"))
+    }
+
+    override suspend fun getActiveSessions(): Result<List<com.markduenas.visischeduler.domain.entities.DeviceSession>> =
+        Result.success(emptyList())
+
+    override suspend fun revokeSession(deviceId: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Session revocation not supported by REST backend"))
+
+    override suspend fun revokeAllSessions(): Result<Unit> = logout()
+
+    override suspend fun updateCurrentSessionActivity(): Result<Unit> = Result.success(Unit)
 
     override suspend fun setupMfa(
         method: com.markduenas.visischeduler.presentation.viewmodel.auth.MfaMethod,

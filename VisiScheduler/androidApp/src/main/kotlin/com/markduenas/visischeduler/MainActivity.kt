@@ -20,10 +20,14 @@ import com.markduenas.visischeduler.data.repository.AdRepositoryImpl
 import com.markduenas.visischeduler.domain.repository.AdRepository
 import com.markduenas.visischeduler.platform.AndroidBiometricHandler
 import com.markduenas.visischeduler.platform.AndroidPermissionManager
+import com.markduenas.visischeduler.platform.SessionMonitor
 import com.markduenas.visischeduler.presentation.components.AdMobBanner
 import com.markduenas.visischeduler.ui.screens.SplashScreen
 import com.markduenas.visischeduler.ui.theme.VisiSchedulerTheme
 import java.lang.ref.WeakReference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 /**
@@ -35,6 +39,7 @@ import org.koin.android.ext.android.inject
 class MainActivity : FragmentActivity() {
 
     private val adRepository: AdRepository by inject()
+    private val sessionMonitor: SessionMonitor by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +66,7 @@ class MainActivity : FragmentActivity() {
         val ref = WeakReference(this as FragmentActivity)
         AndroidBiometricHandler.currentActivity = ref
         AndroidPermissionManager.currentActivity = ref
+        CoroutineScope(Dispatchers.IO).launch { sessionMonitor.onForeground() }
     }
 
     override fun onPause() {

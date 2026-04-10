@@ -41,7 +41,11 @@ data class User(
     /** Associated beneficiary IDs for visitors */
     val associatedBeneficiaryIds: List<String> = emptyList(),
     /** Notification preferences */
-    val notificationPreferences: NotificationPreferences = NotificationPreferences()
+    val notificationPreferences: NotificationPreferences = NotificationPreferences(),
+    /** Whether two-factor authentication is enabled */
+    val mfaEnabled: Boolean = false,
+    /** Email address used for MFA codes (may differ from login email) */
+    val mfaEmail: String? = null
 ) {
     val fullName: String
         get() = "$firstName $lastName"
