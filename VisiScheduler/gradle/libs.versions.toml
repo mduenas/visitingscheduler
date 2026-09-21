@@ -16,7 +16,7 @@ gitlive-firebase = "2.1.0"
 admob = "23.6.0"
 
 # Billing (In-App Purchases)
-billing = "7.1.1"
+billing = "8.0.0"
 
 # KotlinX
 kotlinx-coroutines = "1.10.2"

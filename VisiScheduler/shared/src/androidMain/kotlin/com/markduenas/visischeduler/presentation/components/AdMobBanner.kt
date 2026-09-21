@@ -1,5 +1,6 @@
 package com.markduenas.visischeduler.presentation.components
 
+import android.content.pm.ApplicationInfo
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -37,7 +38,15 @@ fun AdMobBanner(
     }
 
     val context = LocalContext.current
-    val adUnitId = AdMobConstants.getBannerAdUnitId(isAndroid = true, isDebug = false)
+    // Prefer BuildConfig.USE_TEST_ADS (debug/staging/beta); fall back to debuggable flag
+    val useTestAds = try {
+        Class.forName("com.markduenas.visischeduler.BuildConfig")
+            .getField("USE_TEST_ADS")
+            .getBoolean(null)
+    } catch (_: Exception) {
+        (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    }
+    val adUnitId = AdMobConstants.getBannerAdUnitId(isAndroid = true, isDebug = useTestAds)
 
     AndroidView(
         modifier = modifier

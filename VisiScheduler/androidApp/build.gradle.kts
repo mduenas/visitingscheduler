@@ -75,7 +75,7 @@ kotlin {
 
 android {
     namespace = "com.markduenas.visischeduler"
-    compileSdk = 35
+    compileSdk = 36
 
     // Load local signing config (gitignored). CI/CD uses env vars instead.
     val localProps = Properties().also { props ->
@@ -97,7 +97,7 @@ android {
     defaultConfig {
         applicationId = "com.markduenas.visischeduler"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -105,6 +105,8 @@ android {
         // BuildConfig fields for environment configuration
         buildConfigField("String", "API_BASE_URL", "\"https://api.visischeduler.com/v1\"")
         buildConfigField("Boolean", "ENABLE_LOGGING", "true")
+        // Default true: non-store builds should not generate real ad impressions
+        buildConfigField("Boolean", "USE_TEST_ADS", "true")
     }
 
     buildTypes {
@@ -115,6 +117,7 @@ android {
             versionNameSuffix = "-debug"
             buildConfigField("String", "API_BASE_URL", "\"https://dev-api.visischeduler.com/v1\"")
             buildConfigField("Boolean", "ENABLE_LOGGING", "true")
+            buildConfigField("Boolean", "USE_TEST_ADS", "true")
         }
 
         release {
@@ -128,6 +131,9 @@ android {
             )
             buildConfigField("String", "API_BASE_URL", "\"https://api.visischeduler.com/v1\"")
             buildConfigField("Boolean", "ENABLE_LOGGING", "false")
+            // Store production only — set false for Play production; keep true while
+            // shipping internal/beta release artifacts that must not use real ad units.
+            buildConfigField("Boolean", "USE_TEST_ADS", "false")
         }
 
         create("staging") {
@@ -136,6 +142,7 @@ android {
             versionNameSuffix = "-staging"
             buildConfigField("String", "API_BASE_URL", "\"https://staging-api.visischeduler.com/v1\"")
             buildConfigField("Boolean", "ENABLE_LOGGING", "true")
+            buildConfigField("Boolean", "USE_TEST_ADS", "true")
         }
     }
 

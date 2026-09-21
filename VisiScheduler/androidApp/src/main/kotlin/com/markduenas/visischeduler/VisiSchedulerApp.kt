@@ -34,6 +34,20 @@ class VisiSchedulerApp : Application() {
         FirebaseApp.initializeApp(this)
 
         // Initialize AdMob
+        // Register test devices so dev/QA taps never count as real ad traffic
+        // (Google logs your device's real hash to Logcat the first time an ad
+        // loads on it: "Use RequestConfiguration.Builder().setTestDeviceIds(...)"
+        // - copy that hash into the list below.)
+        MobileAds.setRequestConfiguration(
+            com.google.android.gms.ads.RequestConfiguration.Builder()
+                .setTestDeviceIds(
+                    listOf(
+                        com.google.android.gms.ads.AdRequest.DEVICE_ID_EMULATOR
+                        // "ADD_YOUR_REAL_DEVICE_HASH_HERE",
+                    )
+                )
+                .build()
+        )
         MobileAds.initialize(this) { }
 
         // Initialize Napier logging

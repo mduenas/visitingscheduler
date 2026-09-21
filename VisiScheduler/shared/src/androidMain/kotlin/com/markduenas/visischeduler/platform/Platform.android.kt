@@ -17,7 +17,14 @@ import kotlinx.coroutines.CompletableDeferred
 class AndroidPlatform : Platform {
     override val name: String = "Android"
     override val version: String = Build.VERSION.RELEASE
-    override val isDebug: Boolean = false
+    override val isDebug: Boolean
+        get() = try {
+            Class.forName("com.markduenas.visischeduler.BuildConfig")
+                .getField("DEBUG")
+                .getBoolean(null)
+        } catch (_: Exception) {
+            false
+        }
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform()

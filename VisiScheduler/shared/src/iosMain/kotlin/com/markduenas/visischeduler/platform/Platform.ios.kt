@@ -95,7 +95,14 @@ actual fun getPermissionManager(): PermissionManager = throw IllegalStateExcepti
 class IosPlatform : Platform {
     override val name: String = "iOS"
     override val version: String = platform.UIKit.UIDevice.currentDevice.systemVersion
-    override val isDebug: Boolean = false
+    override val isDebug: Boolean
+        get() {
+            val bundlePath = platform.Foundation.NSBundle.mainBundle.bundlePath
+            return bundlePath.contains("Debug", ignoreCase = true) ||
+                bundlePath.contains("Simulator", ignoreCase = true) ||
+                bundlePath.contains("CoreSimulator", ignoreCase = true) ||
+                bundlePath.contains("DerivedData", ignoreCase = true)
+        }
 }
 
 actual fun getPlatform(): Platform = IosPlatform()

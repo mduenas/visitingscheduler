@@ -188,3 +188,6 @@ echo "Uploading to TestFlight..."
 
 popd >/dev/null
 echo "iOS deployment complete."
+# shellcheck source=/dev/null
+source "$CODE_ROOT/.project-tracker/lib-deploy.sh"
+log_deploy "$CODE_ROOT" "$(basename "$REPO_ROOT")" "ios" "testflight" "$(detect_version_ios "$REPO_ROOT")"

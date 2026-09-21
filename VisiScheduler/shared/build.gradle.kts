@@ -139,7 +139,7 @@ kotlin {
             implementation(libs.koin.android)
 
             // Billing
-            implementation("com.android.billingclient:billing-ktx:6.1.0")
+            implementation("com.android.billingclient:billing-ktx:8.0.0")
 
             // Firebase (explicit versions without BOM)
             implementation("com.google.firebase:firebase-firestore-ktx:25.1.4")
@@ -208,7 +208,7 @@ kotlin {
 
 android {
     namespace = "com.markduenas.visischeduler.shared"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26

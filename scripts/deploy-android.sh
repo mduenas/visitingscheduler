@@ -150,3 +150,6 @@ if [[ -n "${TMP_KEYSTORE:-}" && -f "${TMP_KEYSTORE:-}" ]]; then
 fi
 
 echo "Android deployment complete."
+# shellcheck source=/dev/null
+source "$CODE_ROOT/.project-tracker/lib-deploy.sh"
+log_deploy "$CODE_ROOT" "$(basename "$REPO_ROOT")" "android" "$TRACK" "$(detect_version_android "$REPO_ROOT")"
